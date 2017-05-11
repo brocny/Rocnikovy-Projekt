@@ -49,8 +49,8 @@ namespace Kinect_Test
         private FaceFrameSource[] faceFrameSources;
         private FaceFrameReader[] faceFrameReaders;
 
-        private readonly int displayWidth;
-        private readonly int displayHeight;
+        private int displayWidth;
+        private int displayHeight;
         
        
         
@@ -63,17 +63,10 @@ namespace Kinect_Test
 
 
             kinect = KinectSensor.GetDefault();
-            
             kinect.IsAvailableChanged += Kinect_IsAvailableChanged;
-
-            var frameDesc = kinect.ColorFrameSource.FrameDescription;
-            displayHeight = Math.Min(frameDesc.Height, pictureBox1.Height);
-            displayWidth = Math.Min(frameDesc.Width, pictureBox1.Width);
-            bmp = new Bitmap(displayWidth, displayHeight);
-            gr = Graphics.FromImage(bmp);
-
-            //InitializeFaceComponents();
             InitializeColorComponents();
+
+            InitializeDisplayComponents();
 
             InitializeBodyComponents();
 
@@ -82,6 +75,15 @@ namespace Kinect_Test
             pictureBox1.Image = bmp;
             coordinateMapper = kinect.CoordinateMapper;
             kinect.Open();
+        }
+
+        void InitializeDisplayComponents()
+        {
+            var frameDesc = colorFrameSource.FrameDescription;
+            displayHeight = Math.Min(frameDesc.Height, pictureBox1.Height);
+            displayWidth = Math.Min(frameDesc.Width, pictureBox1.Width);
+            bmp = new Bitmap(displayWidth, displayHeight);
+            gr = Graphics.FromImage(bmp);
         }
 
         void InitializeColorComponents()
@@ -208,7 +210,7 @@ namespace Kinect_Test
                         
                         if (jointType == JointType.Head && colorPoint.X >= 0 && colorPoint.Y >= 0)
                         {
-                            DrawBoxAroundNeckJoint(colorPoint);
+                            DrawColorBoxAroundPoint(colorPoint);
                         }
 
                         gr.FillEllipse(Brushes.BlueViolet, colorPoint.X * displayWidth / colorWidth, colorPoint.Y * displayHeight / colorHeight, JointSize, JointSize);
@@ -259,7 +261,7 @@ namespace Kinect_Test
 
         }
 
-        private void DrawBoxAroundNeckJoint(ColorSpacePoint neckPoint)
+        private void DrawColorBoxAroundPoint(ColorSpacePoint neckPoint)
         {
 
            
