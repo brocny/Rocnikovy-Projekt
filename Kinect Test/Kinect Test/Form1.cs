@@ -18,7 +18,7 @@ namespace Kinect_Test
     {
         private Graphics gr;
 
-        private const int JointSize = 5;
+        private const int JointSize = 7;
 
         private Bitmap bmp;
 
@@ -51,6 +51,8 @@ namespace Kinect_Test
 
         private int displayWidth;
         private int displayHeight;
+
+        private Brush[] bodyBrushes = { Brushes.LawnGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink, Brushes.Red};
         
        
         
@@ -163,7 +165,6 @@ namespace Kinect_Test
                     }
                     frame.CopyConvertedFrameDataToArray(colorFrameBuffer, ColorImageFormat.Rgba);
                     lastColorFrameTime = DateTime.Now;
-                   // label1.Text += frame.ColorCameraSettings.FrameInterval.Milliseconds.ToString() + "ms ";
                 }
             }
                 
@@ -191,29 +192,29 @@ namespace Kinect_Test
 
             if (dataReceived)
             {
-                gr.FillRectangle(Brushes.DarkGray, pictureBox1.ClientRectangle);
+                gr.FillRectangle(Brushes.DimGray, pictureBox1.ClientRectangle);
                 
 
-                foreach (var body in bodies)
+                for(int i = 0; i < bodies.Length; i++)
                 {
-                    foreach (var jointType in body.Joints.Keys)
+                    foreach (var jointType in bodies[i].Joints.Keys)
                     {
 
 
-                        CameraSpacePoint cameraPoint = body.Joints[jointType].Position;
+                        CameraSpacePoint cameraPoint = bodies[i].Joints[jointType].Position;
                         if (cameraPoint.Z < 0)
                         {
                             cameraPoint.Z = 0.1f;
                         }
                         ColorSpacePoint colorPoint =
-                            coordinateMapper.MapCameraPointToColorSpace(body.Joints[jointType].Position);
+                            coordinateMapper.MapCameraPointToColorSpace(bodies[i].Joints[jointType].Position);
                         
                         if (jointType == JointType.Head && colorPoint.X >= 0 && colorPoint.Y >= 0)
                         {
-                            DrawColorBoxAroundPoint(colorPoint);
+                            DrawColorBoxAroundPoint(colorPoint, (int)(300 / cameraPoint.Z), (int)(350 / cameraPoint.Z));
                         }
 
-                        gr.FillEllipse(Brushes.BlueViolet, colorPoint.X * displayWidth / colorWidth, colorPoint.Y * displayHeight / colorHeight, JointSize, JointSize);
+                        gr.FillEllipse(bodyBrushes[i], colorPoint.X * displayWidth / colorWidth, colorPoint.Y * displayHeight / colorHeight, JointSize, JointSize);
 
                     }
                 }
@@ -261,22 +262,22 @@ namespace Kinect_Test
 
         }
 
-        private void DrawColorBoxAroundPoint(ColorSpacePoint neckPoint)
+        private void DrawColorBoxAroundPoint(ColorSpacePoint neckPoint, int boxWidth = 160, int boxHeight = 200)
         {
 
            
             if (colorFrameBuffer != null)
             {
-                var x = (int)(neckPoint.X - 100);
+                var x = (int)(neckPoint.X - boxWidth / 2);
                 if (x < 0) x = 0;
                 if (x > colorWidth) x = colorWidth;
 
-                var y = (int)(neckPoint.Y - 150);
+                var y = (int)(neckPoint.Y - boxHeight * 5 / 9);
                 if (y < 0) y = 0;
                 if (y > colorHeight) y = colorHeight;
 
-                var width = Math.Min(colorWidth - x, 200);
-                var height = Math.Min(colorHeight - y, 250);
+                var width = Math.Min(colorWidth - x, boxWidth);
+                var height = Math.Min(colorHeight - y, boxHeight);
 
                 var buffer = colorFrameBuffer;
                 for (int i = 0; i < width; i++)
@@ -287,12 +288,8 @@ namespace Kinect_Test
                         bmp.SetPixel((x+i) * displayWidth / colorWidth, (y+j) * displayHeight / colorHeight, Color.FromArgb(255, buffer[bufferAddr], buffer[bufferAddr + 1], buffer[bufferAddr + 2] ));
                     }
                 }
-                label1.Text = (DateTime.Now - lastColorFrameTime).Milliseconds.ToString();
+                label1.Text = string.Format("FPS: {0:F2}",(1000f / (DateTime.Now - lastColorFrameTime).Milliseconds));
                 pictureBox1.Invalidate();
-
-
-
-                //bmp.UnlockBits(data);
             }
         }
             
