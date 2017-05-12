@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
@@ -49,20 +50,69 @@ namespace Kinect_Test
         private FaceFrameSource[] faceFrameSources;
         private FaceFrameReader[] faceFrameReaders;
 
+        private List<Tuple<JointType, JointType>> bones;
+
         private int displayWidth;
         private int displayHeight;
 
-        private Brush[] bodyBrushes = { Brushes.LawnGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink, Brushes.Red};
-        
-       
-        
+        private Brush[] bodyBrushes = { Brushes.LimeGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink, Brushes.Red};
+        private Pen[] bodyPens;
+
+
+        public void InitBones()
+        {
+            bones = new List<Tuple<JointType, JointType>>
+            {
+                new Tuple<JointType, JointType>(JointType.Head, JointType.Neck),
+
+                // Torso
+                new Tuple<JointType, JointType>(JointType.Neck, JointType.SpineShoulder),
+                new Tuple<JointType, JointType>(JointType.SpineShoulder, JointType.SpineMid),
+                new Tuple<JointType, JointType>(JointType.SpineMid, JointType.SpineBase),
+                new Tuple<JointType, JointType>(JointType.SpineShoulder, JointType.ShoulderRight),
+                new Tuple<JointType, JointType>(JointType.SpineShoulder, JointType.ShoulderLeft),
+                new Tuple<JointType, JointType>(JointType.SpineBase, JointType.HipRight),
+                new Tuple<JointType, JointType>(JointType.SpineBase, JointType.HipLeft),
+
+                // Right Arm
+                new Tuple<JointType, JointType>(JointType.ShoulderRight, JointType.ElbowRight),
+                new Tuple<JointType, JointType>(JointType.ElbowRight, JointType.WristRight),
+                new Tuple<JointType, JointType>(JointType.WristRight, JointType.HandRight),
+                new Tuple<JointType, JointType>(JointType.HandRight, JointType.HandTipRight),
+                new Tuple<JointType, JointType>(JointType.WristRight, JointType.ThumbRight),
+
+                // Left Arm
+                new Tuple<JointType, JointType>(JointType.ShoulderLeft, JointType.ElbowLeft),
+                new Tuple<JointType, JointType>(JointType.ElbowLeft, JointType.WristLeft),
+                new Tuple<JointType, JointType>(JointType.WristLeft, JointType.HandLeft),
+                new Tuple<JointType, JointType>(JointType.HandLeft, JointType.HandTipLeft),
+                new Tuple<JointType, JointType>(JointType.WristLeft, JointType.ThumbLeft),
+
+                // Right Leg
+                new Tuple<JointType, JointType>(JointType.HipRight, JointType.KneeRight),
+                new Tuple<JointType, JointType>(JointType.KneeRight, JointType.AnkleRight),
+                new Tuple<JointType, JointType>(JointType.AnkleRight, JointType.FootRight),
+
+                // Left Leg
+                new Tuple<JointType, JointType>(JointType.HipLeft, JointType.KneeLeft),
+                new Tuple<JointType, JointType>(JointType.KneeLeft, JointType.AnkleLeft),
+                new Tuple<JointType, JointType>(JointType.AnkleLeft, JointType.FootLeft)
+            };
+
+            bodyPens = new Pen[bodyBrushes.Length];
+            for (int i = 0; i < bodyBrushes.Length; i++)
+            {
+                bodyPens[i] = new Pen(bodyBrushes[i], 1f);
+          
+            }
+            
+        }
+
 
         public Form1()
         {
             
             InitializeComponent();
-            // pictureBox1.Invalidate();
-
 
             kinect = KinectSensor.GetDefault();
             kinect.IsAvailableChanged += Kinect_IsAvailableChanged;
@@ -71,6 +121,8 @@ namespace Kinect_Test
             InitializeDisplayComponents();
 
             InitializeBodyComponents();
+
+            InitBones();
 
             gr.FillRectangle(Brushes.Black, pictureBox1.ClientRectangle);
             
@@ -123,7 +175,7 @@ namespace Kinect_Test
 
         private void Kinect_IsAvailableChanged(object sender, IsAvailableChangedEventArgs e)
         {
-            label1.Text = e.IsAvailable ? "" : "Kinect sensor not available!";
+            statusLabel.Text = e.IsAvailable ? "" : "Kinect sensor not available!";
         }
 
         private void FaceReader_FrameArrived(object sender, FaceFrameArrivedEventArgs e)
@@ -193,10 +245,13 @@ namespace Kinect_Test
             if (dataReceived)
             {
                 gr.FillRectangle(Brushes.DimGray, pictureBox1.ClientRectangle);
-                
 
                 for(int i = 0; i < bodies.Length; i++)
                 {
+
+                    Dictionary<JointType, ColorSpacePoint> jointColorSpacePoints =
+                        new Dictionary<JointType, ColorSpacePoint>();
+
                     foreach (var jointType in bodies[i].Joints.Keys)
                     {
 
@@ -206,9 +261,12 @@ namespace Kinect_Test
                         {
                             cameraPoint.Z = 0.1f;
                         }
+                        
+
                         ColorSpacePoint colorPoint =
                             coordinateMapper.MapCameraPointToColorSpace(bodies[i].Joints[jointType].Position);
-                        
+
+                        jointColorSpacePoints.Add(jointType, colorPoint);
                         if (jointType == JointType.Head && colorPoint.X >= 0 && colorPoint.Y >= 0)
                         {
                             DrawColorBoxAroundPoint(colorPoint, (int)(300 / cameraPoint.Z), (int)(350 / cameraPoint.Z));
@@ -217,6 +275,14 @@ namespace Kinect_Test
                         gr.FillEllipse(bodyBrushes[i], colorPoint.X * displayWidth / colorWidth, colorPoint.Y * displayHeight / colorHeight, JointSize, JointSize);
 
                     }
+
+                    foreach (var bone in bones)
+                    {
+                        DrawBone(bodies[i].Joints, jointColorSpacePoints, bone.Item1, bone.Item2, i);
+                        pictureBox1.Invalidate();
+                    }
+
+                    
                 }
 
             }
@@ -257,11 +323,6 @@ namespace Kinect_Test
                 -(rectI.Top - rectI.Bottom) * displayHeight / colorHeight);
         }
 
-        private void pictureBox1_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void DrawColorBoxAroundPoint(ColorSpacePoint neckPoint, int boxWidth = 160, int boxHeight = 200)
         {
 
@@ -272,7 +333,7 @@ namespace Kinect_Test
                 if (x < 0) x = 0;
                 if (x > colorWidth) x = colorWidth;
 
-                var y = (int)(neckPoint.Y - boxHeight * 5 / 9);
+                var y = (int)(neckPoint.Y - boxHeight * 6 / 11);
                 if (y < 0) y = 0;
                 if (y > colorHeight) y = colorHeight;
 
@@ -285,14 +346,33 @@ namespace Kinect_Test
                     for (int j = 0; j < height; j++)
                     {
                         int bufferAddr = 4 * ((y + j) * colorWidth + x + i);
+                        //TODO: Fast pixel data access via pointers
                         bmp.SetPixel((x+i) * displayWidth / colorWidth, (y+j) * displayHeight / colorHeight, Color.FromArgb(255, buffer[bufferAddr], buffer[bufferAddr + 1], buffer[bufferAddr + 2] ));
                     }
                 }
-                label1.Text = string.Format("FPS: {0:F2}",(1000f / (DateTime.Now - lastColorFrameTime).Milliseconds));
+                statusLabel.Text = string.Format("FPS: {0:F2}",(1000f / (DateTime.Now - lastColorFrameTime).Milliseconds));
                 pictureBox1.Invalidate();
             }
         }
+
+        private void DrawBone(IReadOnlyDictionary<JointType, Joint> joints, IDictionary<JointType, ColorSpacePoint> jointCameraSpacePoints, JointType jointType0, JointType jointType1, int bodyIndex)
+        {
+            Joint joint0 = joints[jointType0];
+            Joint joint1 = joints[jointType1];
+
+            // If we can't find either of these joints, exit
+            if (joint0.TrackingState == TrackingState.NotTracked ||
+                joint1.TrackingState == TrackingState.NotTracked)
+            {
+                return;
+            }
             
+            
+
+            gr.DrawLine(bodyPens[bodyIndex], jointCameraSpacePoints[jointType0].X * displayWidth / colorWidth, jointCameraSpacePoints[jointType0].Y * displayHeight / colorHeight,
+                jointCameraSpacePoints[jointType1].X * displayWidth / colorWidth, jointCameraSpacePoints[jointType1].Y * displayHeight / colorHeight);
+        }
+
 
         private void button1_Click(object sender, EventArgs e)
         {
