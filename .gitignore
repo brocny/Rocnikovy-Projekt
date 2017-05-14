@@ -2,6 +2,13 @@
 Thumbs.db
 ehthumbs.db
 
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+
 # Folder config file
 Desktop.ini
 
@@ -15,8 +22,32 @@ $RECYCLE.BIN/
 *.msp
 *.exe
 *.dll
-bin\*
-obj\*
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+#Visual Studio
+.vs/
+
+# Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+#Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
 
 # Windows shortcuts
 *.lnk
