@@ -45,10 +45,7 @@ namespace Kinect_Test
 
         private DateTime lastColorFrameTime;
 
-
-        private FaceFrameResult[] faceFrameResults;
-        private FaceFrameSource[] faceFrameSources;
-        private FaceFrameReader[] faceFrameReaders;
+        
 
         private List<Tuple<JointType, JointType>> bones;
 
@@ -159,50 +156,14 @@ namespace Kinect_Test
             bodyFrameReader = bodyFrameSource.OpenReader();
             bodyFrameReader.FrameArrived += BodyReader_FrameArrived;
         }
-        
-        private void InitializeFaceComponents()
-        {
-            faceFrameResults = new FaceFrameResult[bodyCount];
-            faceFrameReaders = new FaceFrameReader[bodyCount];
-            faceFrameSources = new FaceFrameSource[bodyCount];
-            for (int i = 0; i < bodyCount; i++)
-            {
-                faceFrameSources[i] = new FaceFrameSource(kinect, 0, FaceFrameFeatures.BoundingBoxInColorSpace);
-                faceFrameReaders[i] = faceFrameSources[i].OpenReader();
-                faceFrameReaders[i].FrameArrived += FaceReader_FrameArrived;
-            }
-        }
 
         private void Kinect_IsAvailableChanged(object sender, IsAvailableChangedEventArgs e)
         {
             statusLabel.Text = e.IsAvailable ? "" : "Kinect sensor not available!";
         }
 
-        private void FaceReader_FrameArrived(object sender, FaceFrameArrivedEventArgs e)
-        {
-            using (var faceFrame = e.FrameReference.AcquireFrame())
-            {
-                var faceFrameResult = faceFrame?.FaceFrameResult;
-                
-                if (faceFrameResult != null)
-                {
-                    faceFrameResults[GetFaceSourceIndex(faceFrame.FaceFrameSource)] = faceFrameResult;
-                }
-            }
-        }
 
-
-        private int GetFaceSourceIndex(FaceFrameSource faceFrameSource)
-        {
-            for (int i = 0; i < faceFrameSources.Length; i++)
-            {
-                if (faceFrameSource == faceFrameSources[i])
-                {
-                    return i;
-                }
-            }
-            return -1;
-        }
+   
 
         private void ColorReader_FrameArrived(object sender, ColorFrameArrivedEventArgs e)
         {
@@ -273,67 +234,34 @@ namespace Kinect_Test
                         }
 
                         gr.FillEllipse(bodyBrushes[i], colorPoint.X * displayWidth / colorWidth, colorPoint.Y * displayHeight / colorHeight, JointSize, JointSize);
-
                     }
 
                     foreach (var bone in bones)
                     {
                         DrawBone(bodies[i].Joints, jointColorSpacePoints, bone.Item1, bone.Item2, i);
-                        pictureBox1.Invalidate();
                     }
 
                     
                 }
 
             }
-            /*for (int i = 0; i < faceFrameResults.Length; i++)
-            {
-                if (faceFrameSources[i].IsTrackingIdValid)
-                {
-                    if (faceFrameResults[i] != null)
-                    {
-                        var faceRectI = faceFrameResults[i].FaceBoundingBoxInColorSpace;
-                        var rect = pictureBox1.ClientRectangle;//RectIToRect(faceRectI);
-                        var data = bmp.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
-                        
-                        gr.FillRectangle(Brushes.Yellow, pictureBox1.ClientRectangle);
-
-                        colorFrame?.CopyConvertedFrameDataToIntPtr(data.Scan0, (uint)(data.Width * data.Height * 4), ColorImageFormat.Rgba);
-                         
-                    }
-                }
-                else
-                {
-                    if (bodies[i] != null && bodies[i].IsTracked)
-                    {
-                        faceFrameSources[i].TrackingId = bodies[i].TrackingId;
-                    }
-                }
-            }*/
+          
             pictureBox1.Invalidate();
             
         }
 
-        private Rectangle RectIToRect(RectI rectI)
-        {
-            return new Rectangle(
-                rectI.Left * displayWidth / colorWidth,
-                rectI.Top * displayHeight / colorHeight,
-                -(rectI.Left - rectI.Right) * displayWidth / colorWidth,
-                -(rectI.Top - rectI.Bottom) * displayHeight / colorHeight);
-        }
 
-        private void DrawColorBoxAroundPoint(ColorSpacePoint neckPoint, int boxWidth = 160, int boxHeight = 200)
+        private void DrawColorBoxAroundPoint(ColorSpacePoint colorPoint, int boxWidth = 160, int boxHeight = 200)
         {
 
            
             if (colorFrameBuffer != null)
             {
-                var x = (int)(neckPoint.X - boxWidth / 2);
+                var x = (int)(colorPoint.X - boxWidth / 2);
                 if (x < 0) x = 0;
                 if (x > colorWidth) x = colorWidth;
 
-                var y = (int)(neckPoint.Y - boxHeight * 6 / 11);
+                var y = (int)(colorPoint.Y - boxHeight * 6 / 11);
                 if (y < 0) y = 0;
                 if (y > colorHeight) y = colorHeight;
 
@@ -346,12 +274,13 @@ namespace Kinect_Test
                     for (int j = 0; j < height; j++)
                     {
                         int bufferAddr = 4 * ((y + j) * colorWidth + x + i);
-                        //TODO: Fast pixel data access via pointers
-                        bmp.SetPixel((x+i) * displayWidth / colorWidth, (y+j) * displayHeight / colorHeight, Color.FromArgb(255, buffer[bufferAddr], buffer[bufferAddr + 1], buffer[bufferAddr + 2] ));
+                        Color pixelColor = Color.FromArgb(255, buffer[bufferAddr], buffer[bufferAddr + 1],
+                            buffer[bufferAddr + 2]);
+                        // TODO: Fast pixel data access via pointers
+                        bmp.SetPixel((x+i) * displayWidth / colorWidth, (y+j) * displayHeight / colorHeight, pixelColor);
                     }
                 }
                 statusLabel.Text = string.Format("FPS: {0:F2}",(1000f / (DateTime.Now - lastColorFrameTime).Milliseconds));
-                pictureBox1.Invalidate();
             }
         }
 
@@ -367,8 +296,6 @@ namespace Kinect_Test
                 return;
             }
             
-            
-
             gr.DrawLine(bodyPens[bodyIndex], jointCameraSpacePoints[jointType0].X * displayWidth / colorWidth, jointCameraSpacePoints[jointType0].Y * displayHeight / colorHeight,
                 jointCameraSpacePoints[jointType1].X * displayWidth / colorWidth, jointCameraSpacePoints[jointType1].Y * displayHeight / colorHeight);
         }
