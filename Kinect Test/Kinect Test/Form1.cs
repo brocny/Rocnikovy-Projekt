@@ -1,17 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Kinect;
-using Microsoft.Kinect.Face;
 
 namespace Kinect_Test
 {
@@ -45,14 +36,18 @@ namespace Kinect_Test
 
         private DateTime lastColorFrameTime;
 
-        
 
         private List<Tuple<JointType, JointType>> bones;
 
         private int displayWidth;
         private int displayHeight;
 
-        private Brush[] bodyBrushes = { Brushes.LimeGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink, Brushes.Red};
+        private Brush[] bodyBrushes =
+        {
+            Brushes.LimeGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink,
+            Brushes.Red
+        };
+
         private Pen[] bodyPens;
 
 
@@ -100,15 +95,12 @@ namespace Kinect_Test
             for (int i = 0; i < bodyBrushes.Length; i++)
             {
                 bodyPens[i] = new Pen(bodyBrushes[i], 1f);
-          
             }
-            
         }
 
 
         public Form1()
         {
-            
             InitializeComponent();
 
             kinect = KinectSensor.GetDefault();
@@ -122,7 +114,7 @@ namespace Kinect_Test
             InitBones();
 
             gr.FillRectangle(Brushes.Black, pictureBox1.ClientRectangle);
-            
+
             pictureBox1.Image = bmp;
             coordinateMapper = kinect.CoordinateMapper;
             kinect.Open();
@@ -163,8 +155,6 @@ namespace Kinect_Test
         }
 
 
-   
-
         private void ColorReader_FrameArrived(object sender, ColorFrameArrivedEventArgs e)
         {
             using (var frame = e.FrameReference.AcquireFrame())
@@ -174,14 +164,11 @@ namespace Kinect_Test
                     if (colorFrameBuffer == null)
                     {
                         colorFrameBuffer = new byte[frame.FrameDescription.Width * frame.FrameDescription.Height * 4];
-                        
                     }
                     frame.CopyConvertedFrameDataToArray(colorFrameBuffer, ColorImageFormat.Rgba);
                     lastColorFrameTime = DateTime.Now;
                 }
             }
-                
-            
         }
 
         private void BodyReader_FrameArrived(object sender, BodyFrameArrivedEventArgs e)
@@ -190,7 +177,7 @@ namespace Kinect_Test
 
             using (var frame = e.FrameReference.AcquireFrame())
             {
-               if (frame != null)
+                if (frame != null)
                 {
                     if (bodies == null)
                     {
@@ -199,30 +186,27 @@ namespace Kinect_Test
 
                     frame.GetAndRefreshBodyData(bodies);
                     dataReceived = true;
-                } 
+                }
             }
-                
+
 
             if (dataReceived)
             {
                 gr.FillRectangle(Brushes.DimGray, pictureBox1.ClientRectangle);
 
-                for(int i = 0; i < bodies.Length; i++)
+                for (int i = 0; i < bodies.Length; i++)
                 {
-
                     Dictionary<JointType, ColorSpacePoint> jointColorSpacePoints =
                         new Dictionary<JointType, ColorSpacePoint>();
 
                     foreach (var jointType in bodies[i].Joints.Keys)
                     {
-
-
                         CameraSpacePoint cameraPoint = bodies[i].Joints[jointType].Position;
                         if (cameraPoint.Z < 0)
                         {
                             cameraPoint.Z = 0.1f;
                         }
-                        
+
 
                         ColorSpacePoint colorPoint =
                             coordinateMapper.MapCameraPointToColorSpace(bodies[i].Joints[jointType].Position);
@@ -230,38 +214,33 @@ namespace Kinect_Test
                         jointColorSpacePoints.Add(jointType, colorPoint);
                         if (jointType == JointType.Head && colorPoint.X >= 0 && colorPoint.Y >= 0)
                         {
-                            DrawColorBoxAroundPoint(colorPoint, (int)(300 / cameraPoint.Z), (int)(350 / cameraPoint.Z));
+                            DrawColorBoxAroundPoint(colorPoint, (int) (300 / cameraPoint.Z), (int) (350 / cameraPoint.Z));
                         }
 
-                        gr.FillEllipse(bodyBrushes[i], colorPoint.X * displayWidth / colorWidth, colorPoint.Y * displayHeight / colorHeight, JointSize, JointSize);
+                        gr.FillEllipse(bodyBrushes[i], colorPoint.X * displayWidth / colorWidth,
+                            colorPoint.Y * displayHeight / colorHeight, JointSize, JointSize);
                     }
 
                     foreach (var bone in bones)
                     {
                         DrawBone(bodies[i].Joints, jointColorSpacePoints, bone.Item1, bone.Item2, i);
                     }
-
-                    
                 }
-
             }
-          
+
             pictureBox1.Invalidate();
-            
         }
 
 
         private void DrawColorBoxAroundPoint(ColorSpacePoint colorPoint, int boxWidth = 160, int boxHeight = 200)
         {
-
-           
             if (colorFrameBuffer != null)
             {
-                var x = (int)(colorPoint.X - boxWidth / 2);
+                var x = (int) (colorPoint.X - boxWidth / 2);
                 if (x < 0) x = 0;
                 if (x > colorWidth) x = colorWidth;
 
-                var y = (int)(colorPoint.Y - boxHeight * 6 / 11);
+                var y = (int) (colorPoint.Y - boxHeight * 6 / 11);
                 if (y < 0) y = 0;
                 if (y > colorHeight) y = colorHeight;
 
@@ -274,17 +253,22 @@ namespace Kinect_Test
                     for (int j = 0; j < height; j++)
                     {
                         int bufferAddr = 4 * ((y + j) * colorWidth + x + i);
+                        // TODO: Interpolation?
                         Color pixelColor = Color.FromArgb(255, buffer[bufferAddr], buffer[bufferAddr + 1],
                             buffer[bufferAddr + 2]);
                         // TODO: Fast pixel data access via pointers
-                        bmp.SetPixel((x+i) * displayWidth / colorWidth, (y+j) * displayHeight / colorHeight, pixelColor);
+                        bmp.SetPixel((x + i) * displayWidth / colorWidth, (y + j) * displayHeight / colorHeight,
+                            pixelColor);
                     }
                 }
-                statusLabel.Text = string.Format("FPS: {0:F2}",(1000f / (DateTime.Now - lastColorFrameTime).Milliseconds));
+                statusLabel.Text = string.Format("FPS: {0:F2}",
+                    (1000f / (DateTime.Now - lastColorFrameTime).Milliseconds));
             }
         }
 
-        private void DrawBone(IReadOnlyDictionary<JointType, Joint> joints, IDictionary<JointType, ColorSpacePoint> jointCameraSpacePoints, JointType jointType0, JointType jointType1, int bodyIndex)
+        private void DrawBone(IReadOnlyDictionary<JointType, Joint> joints,
+            IDictionary<JointType, ColorSpacePoint> jointCameraSpacePoints, JointType jointType0, JointType jointType1,
+            int bodyIndex)
         {
             Joint joint0 = joints[jointType0];
             Joint joint1 = joints[jointType1];
@@ -295,9 +279,11 @@ namespace Kinect_Test
             {
                 return;
             }
-            
-            gr.DrawLine(bodyPens[bodyIndex], jointCameraSpacePoints[jointType0].X * displayWidth / colorWidth, jointCameraSpacePoints[jointType0].Y * displayHeight / colorHeight,
-                jointCameraSpacePoints[jointType1].X * displayWidth / colorWidth, jointCameraSpacePoints[jointType1].Y * displayHeight / colorHeight);
+
+            gr.DrawLine(bodyPens[bodyIndex], jointCameraSpacePoints[jointType0].X * displayWidth / colorWidth,
+                jointCameraSpacePoints[jointType0].Y * displayHeight / colorHeight,
+                jointCameraSpacePoints[jointType1].X * displayWidth / colorWidth,
+                jointCameraSpacePoints[jointType1].Y * displayHeight / colorHeight);
         }
 
 
