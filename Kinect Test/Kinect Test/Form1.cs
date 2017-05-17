@@ -103,6 +103,8 @@ namespace Kinect_Test
         {
             InitializeComponent();
 
+            
+
             kinect = KinectSensor.GetDefault();
             kinect.IsAvailableChanged += Kinect_IsAvailableChanged;
             InitializeColorComponents();
@@ -253,7 +255,6 @@ namespace Kinect_Test
                     for (int j = 0; j < height; j++)
                     {
                         int bufferAddr = 4 * ((y + j) * colorWidth + x + i);
-                        // TODO: Interpolation?
                         Color pixelColor = Color.FromArgb(255, buffer[bufferAddr], buffer[bufferAddr + 1],
                             buffer[bufferAddr + 2]);
                         // TODO: Fast pixel data access via pointers
