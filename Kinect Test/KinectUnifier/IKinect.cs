@@ -9,6 +9,8 @@ namespace KinectUnifier
 {
     public interface IKinect
     {
+        bool IsKinectOne { get; }
+
         void Open();
 
         void OpenColorManager();
@@ -16,6 +18,7 @@ namespace KinectUnifier
 
         IBodyManager BodyManager { get; }
         IColorManager ColorManager { get; }
+        ICoordinateMapper CoordinateMapper { get; }
 
         bool IsRunning { get; }
 

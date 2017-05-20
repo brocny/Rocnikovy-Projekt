@@ -12,8 +12,13 @@ namespace KinectUnifier
     }
 
     public class ColorFrameReadyEventArgs
-    {
-        
+    { 
+        private IColorFrame ColorFrame { get; }
+
+        public ColorFrameReadyEventArgs(IColorFrame colorFrame)
+        {
+            this.ColorFrame = colorFrame;
+        }
     }
 
     public interface IColorFrame : IDisposable
