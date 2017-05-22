@@ -4,20 +4,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
+using System.Runtime.CompilerServices;
+
 
 namespace KinectUnifier
 {
-    public struct Point3
+    public struct Point4F
     {
-        public int X;
-        public int Y;
-        public int Z;
+        public float X;
+        public float Y;
+        public float Z;
+        public float W;
 
-        public Point3(int x, int y, int z)
+        public Point4F(float x, float y, float z, float w)
         {
             X = x;
             Y = y;
             Z = z;
+            W = w;
         }
     }
 
@@ -32,18 +36,6 @@ namespace KinectUnifier
             X = x;
             Y = y;
             Z = z;
-        }
-    }
-
-    public struct Point2
-    {
-        public int X;
-        public int Y;
-
-        public Point2(int x, int y)
-        {
-            X = x;
-            Y = y;
         }
     }
 

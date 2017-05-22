@@ -8,7 +8,7 @@ using KinectUnifier;
 using Microsoft.Kinect;
 using JointType = KinectUnifier.JointType;
 
-namespace Kinect_Test
+namespace KinectOne
 {
     public class KinectOne : IKinect
     {
@@ -20,16 +20,17 @@ namespace Kinect_Test
         public IColorManager ColorManager => _colorManager;
         public ICoordinateMapper CoordinateMapper => _coordinateMapper ?? (_coordinateMapper = new CoordinateMapperOne(KinectSensor.CoordinateMapper));
 
-        public bool IsRunning => KinectSensor.IsOpen;
-
         private BodyManagerOne _bodyManager;
         private ColorManagerOne _colorManager;
         private CoordinateMapperOne _coordinateMapper;
         
+        public bool IsRunning => KinectSensor.IsOpen;
 
         public KinectOne()
         {
             KinectSensor = KinectSensor.GetDefault();
+            _bodyManager = new BodyManagerOne(this);
+            _colorManager = new ColorManagerOne(this);
         }
 
         public void Open()
@@ -37,14 +38,9 @@ namespace Kinect_Test
             KinectSensor.Open();
         }
 
-        public void OpenBodyManager()
+        public void Close()
         {
-            _bodyManager = new BodyManagerOne(this);
-        }
-
-        public void OpenColorManager()
-        {
-            _colorManager = new ColorManagerOne(this);
+            KinectSensor.Close();
         }
     }
 
@@ -52,18 +48,18 @@ namespace Kinect_Test
     {
         private KinectOne _kinectOne;
 
-        private BodyFrameReader bodyFrameReader;
-        private BodyFrameSource bodyFrameSource;
+        private BodyFrameReader _bodyFrameReader;
+        private BodyFrameSource _bodyFrameSource;
 
-        public int BodyCount => bodyFrameSource.BodyCount;
+        public int BodyCount => _bodyFrameSource.BodyCount;
 
         public BodyManagerOne(KinectOne kinectOne)
         {
             _kinectOne = kinectOne;
-            bodyFrameSource = _kinectOne.KinectSensor.BodyFrameSource;
-            bodyFrameReader = bodyFrameSource.OpenReader();
+            _bodyFrameSource = _kinectOne.KinectSensor.BodyFrameSource;
+            
 
-            bodyFrameReader.FrameArrived += BodyFrameReader_FrameArrived;
+            
         }
 
         public event EventHandler<BodyFrameReadyEventArgs> BodyFrameReady;
@@ -74,6 +70,17 @@ namespace Kinect_Test
             BodyFrameReady?.Invoke(this, new BodyFrameReadyEventArgs(new BodyFrameOne(bodyFrame)));
         }
 
+        public void Open()
+        {
+            _bodyFrameReader = _bodyFrameSource.OpenReader();
+            _bodyFrameReader.FrameArrived += BodyFrameReader_FrameArrived;
+        }
+
+        public void Close()
+        {
+            _bodyFrameReader.Dispose();
+        }
+
         public class BodyFrameOne : IBodyFrame
         {
             private BodyFrame _bodyFrame;
@@ -81,6 +88,17 @@ namespace Kinect_Test
             public BodyFrameOne(BodyFrame bodyFrame)
             {
                 _bodyFrame = bodyFrame;
+            }
+
+            public int BodyCount => _bodyFrame.BodyCount;
+
+            public Point4F FloorClipPlane
+            {
+                get
+                {
+                    var fcp = _bodyFrame.FloorClipPlane;
+                    return new Point4F(fcp.X, fcp.Y, fcp.Y, fcp.W);
+                }
             }
 
             public void CopyBodiesTo(IBody[] bodies)
@@ -96,6 +114,8 @@ namespace Kinect_Test
 
             #region IDisposable Support
             private bool disposedValue = false; // To detect redundant calls
+
+            
 
             protected virtual void Dispose(bool disposing)
             {
@@ -126,6 +146,7 @@ namespace Kinect_Test
             {
                 _body = body;
                 _joints = new Dictionary<JointType, IJoint>(21);
+                //TODO: Do this in O(1) instead of O(n)
                 for (int i = 0; i <= 20; i++)
                 {
                     _joints.Add((KinectUnifier.JointType)i, new JointOne(_body.Joints[(Microsoft.Kinect.JointType)i]));
@@ -141,12 +162,15 @@ namespace Kinect_Test
         public class JointOne : IJoint
         {
             private Joint _joint;
-            public Point3F CameraSpacePoint => new Point3F(_joint.Position.X, _joint.Position.Y, _joint.Position.Z);
-
+            
             public JointOne(Joint joint)
             {
                 _joint = joint;
             }
+
+            public Point3F Position => new Point3F(_joint.Position.X, _joint.Position.Y, _joint.Position.Z);
+            public bool IsTracked => _joint.TrackingState == TrackingState.Tracked;
+
         }
 
     }
@@ -155,17 +179,17 @@ namespace Kinect_Test
     {
         private KinectOne _kinectOne;
 
-        private ColorFrameReader colorFrameReader;
-        private ColorFrameSource colorFrameSource;
+        private ColorFrameReader _colorFrameReader;
+        private ColorFrameSource _colorFrameSource;
 
-       
+        public int WidthPixels => _colorFrameSource.FrameDescription.Width;
+        public int HeightPixels => _colorFrameSource.FrameDescription.Height;
 
         public ColorManagerOne(KinectOne kinectOneOne)
         {
             _kinectOne = kinectOneOne;
-            colorFrameSource = _kinectOne.KinectSensor.ColorFrameSource;
-            colorFrameReader = colorFrameSource.OpenReader();
-            colorFrameReader.FrameArrived += ColorFrameReader_FrameArrived;
+            _colorFrameSource = _kinectOne.KinectSensor.ColorFrameSource;
+            
         }
 
         private void ColorFrameReader_FrameArrived(object sender, ColorFrameArrivedEventArgs e)
@@ -173,7 +197,17 @@ namespace Kinect_Test
             var colorFrame = e.FrameReference.AcquireFrame();
             ColorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrameOne(colorFrame)));
         }
-        
+
+        public void Open(bool preferResolutionOverFps)
+        {
+            _colorFrameReader = _colorFrameSource.OpenReader();
+            _colorFrameReader.FrameArrived += ColorFrameReader_FrameArrived;
+        }
+
+        public void Close()
+        {
+            _colorFrameReader.Dispose();
+        }
 
         public event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady;
 
@@ -232,14 +266,36 @@ namespace Kinect_Test
 
         }
 
-        public void MapCameraPointsToColorSpace(Point3F[] cameraPoints, Point2F colorPoints)
+        public void MapCameraPointsToColorSpace(Point3F[] cameraPoints, Point2F[] colorPoints)
         {
-            throw new NotImplementedException();
+            for (int i = 0; i < cameraPoints.Length && i < colorPoints.Length; i++)
+            {
+                var colorSpacePoint =
+                    _coordinateMapper.MapCameraPointToColorSpace(new CameraSpacePoint()
+                    {
+                        X = cameraPoints[i].X,
+                        Y = cameraPoints[i].Y,
+                        Z = cameraPoints[i].Z
+                    });
+
+                colorPoints[i] = new Point2F(colorSpacePoint.X, colorSpacePoint.Y);
+            }
         }
 
         public void MapCameraPointsToDepthSpace(Point3F[] cameraPoints, Point2F[] depthPoints)
         {
-            throw new NotImplementedException();
+            for (int i = 0; i < cameraPoints.Length && i < depthPoints.Length; i++)
+            {
+                var depthSpacePoint =
+                _coordinateMapper.MapCameraPointToDepthSpace(new CameraSpacePoint()
+                {
+                    X = cameraPoints[i].X,
+                    Y = cameraPoints[i].Y,
+                    Z = cameraPoints[i].Z
+                });
+
+                depthPoints[i] = new Point2F(depthSpacePoint.X, depthSpacePoint.Y);
+            }
         }
 
         public Point2F MapCameraPointToColorSpace(Point3F cameraPoint)

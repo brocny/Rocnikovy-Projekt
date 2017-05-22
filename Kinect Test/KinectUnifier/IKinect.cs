@@ -12,9 +12,7 @@ namespace KinectUnifier
         bool IsKinectOne { get; }
 
         void Open();
-
-        void OpenColorManager();
-        void OpenBodyManager();
+        void Close();
 
         IBodyManager BodyManager { get; }
         IColorManager ColorManager { get; }

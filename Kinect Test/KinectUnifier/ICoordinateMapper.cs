@@ -12,9 +12,7 @@ namespace KinectUnifier
         Point2F MapCameraPointToDepthSpace(Point3F cameraPoint);
         void MapCameraPointsToDepthSpace(Point3F[] cameraPoints, Point2F[] depthPoints);
 
-        Point2F MapCameraPointToColorSpace(Point3F camerPoint);
-        void MapCameraPointsToColorSpace(Point3F[] cameraPoints, Point2F colorPoints);
-
-
+        Point2F MapCameraPointToColorSpace(Point3F cameraPoint);
+        void MapCameraPointsToColorSpace(Point3F[] cameraPoints, Point2F[] colorPoints);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,11 +10,16 @@ namespace KinectUnifier
     public interface IColorManager
     {
         event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady;
+        int WidthPixels { get; }
+        int HeightPixels { get; }
+
+        void Open(bool preferResolutionOverFps);
+        void Close();
     }
 
     public class ColorFrameReadyEventArgs
     { 
-        private IColorFrame ColorFrame { get; }
+        public IColorFrame ColorFrame { get; }
 
         public ColorFrameReadyEventArgs(IColorFrame colorFrame)
         {
