@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using KinectUnifier;
-using Microsoft.Kinect;
 
 namespace Kinect_Test
 {
@@ -99,7 +98,7 @@ namespace Kinect_Test
 
 
 
-            _kinect = KinectFactory.KinectFactory.GetKinectOne();
+            _kinect = KinectFactory.KinectFactory.GetKinect360();
             InitializeColorComponents();
 
             InitializeDisplayComponents();

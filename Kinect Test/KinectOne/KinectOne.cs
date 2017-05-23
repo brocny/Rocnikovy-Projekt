@@ -67,7 +67,11 @@ namespace KinectOne
         private void BodyFrameReader_FrameArrived(object sender, BodyFrameArrivedEventArgs e)
         {
             var bodyFrame = e.FrameReference.AcquireFrame();
-            BodyFrameReady?.Invoke(this, new BodyFrameReadyEventArgs(new BodyFrameOne(bodyFrame)));
+            if (bodyFrame != null)
+            {
+                BodyFrameReady?.Invoke(this, new BodyFrameReadyEventArgs(new BodyFrameOne(bodyFrame)));
+            }
+            
         }
 
         public void Open()
@@ -195,7 +199,11 @@ namespace KinectOne
         private void ColorFrameReader_FrameArrived(object sender, ColorFrameArrivedEventArgs e)
         {
             var colorFrame = e.FrameReference.AcquireFrame();
-            ColorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrameOne(colorFrame)));
+            if (colorFrame != null)
+            {
+                ColorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrameOne(colorFrame)));
+            }
+            
         }
 
         public void Open(bool preferResolutionOverFps)

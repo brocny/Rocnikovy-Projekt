@@ -28,7 +28,15 @@ namespace Kinect360
 
         public Kinect360()
         {
-            KinectSensor = KinectSensor.KinectSensors.FirstOrDefault(x => x.Status == KinectStatus.Connected);
+            foreach (var potentialSensor in KinectSensor.KinectSensors)
+            {
+                if (potentialSensor.Status == KinectStatus.Connected)
+                {
+                    KinectSensor = potentialSensor;
+                    break;
+                }
+            }
+            
             _bodyManager = new BodyManager360(this);
             _colorManager = new ColorManager360(this);
         }
