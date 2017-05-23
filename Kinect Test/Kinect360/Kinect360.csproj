@@ -32,6 +32,7 @@
   <ItemGroup>
     <Reference Include="Microsoft.Kinect18">
       <HintPath>..\..\..\..\Skola\Rocnikovy projekt\Samples C#\[1.8]Face Tracking Basics\FaceTrackingBasics-WPF\bin\x86\Debug\Microsoft.Kinect18.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

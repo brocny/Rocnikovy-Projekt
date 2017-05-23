@@ -51,6 +51,7 @@
     <ProjectReference Include="..\KinectOne\KinectOne.csproj">
       <Project>{90dca39a-dc42-4d9a-8f85-7cad272350bb}</Project>
       <Name>KinectOne</Name>
+      <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\KinectUnifier\KinectUnifier.csproj">
       <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>

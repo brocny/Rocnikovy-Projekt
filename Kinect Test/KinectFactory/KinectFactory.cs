@@ -8,17 +8,19 @@ using KinectUnifier;
 
 namespace KinectFactory
 {
+    using Kinect360;
+    using KinectOne;
     public static class KinectFactory
     {
         public static IKinect GetKinect360()
         {
-            return new Kinect360.Kinect360();
+            return new Kinect360();
         }
 
 
         public static IKinect GetKinectOne()
-        {   
-            return new Kinect360.Kinect360();
+        {
+            return new KinectOne();
         }
     }
 }

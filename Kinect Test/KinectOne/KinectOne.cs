@@ -330,7 +330,4 @@ namespace KinectOne
             return new Point2F(depthSpacePoint.X, depthSpacePoint.Y);
         }
     }
-
-
-
 }
