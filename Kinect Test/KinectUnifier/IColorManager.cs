@@ -12,6 +12,7 @@ namespace KinectUnifier
         event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady;
         int WidthPixels { get; }
         int HeightPixels { get; }
+        int BytesPerPixel { get; }
 
         void Open(bool preferResolutionOverFps);
         void Close();

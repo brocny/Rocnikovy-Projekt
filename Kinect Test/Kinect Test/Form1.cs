@@ -30,6 +30,7 @@ namespace Kinect_Test
 
         private int _colorHeight;
         private int _colorWidth;
+        private int _colorBytesPerPixel;
 
         private DateTime _lastColorFrameTime;
 
@@ -125,7 +126,7 @@ namespace Kinect_Test
         void InitializeColorComponents()
         {
             _colorManager = _kinect.ColorManager;
-            _colorManager.Open(true);
+            _colorManager.Open(false);
             _colorManager.ColorFrameReady += _colorManager_ColorFrameReady;
             _colorWidth = _colorManager.WidthPixels;
             _colorHeight = _colorManager.HeightPixels;
@@ -138,6 +139,7 @@ namespace Kinect_Test
                 {
                     if (frame != null)
                     {
+                        _colorBytesPerPixel = frame.BytesPerPixel;
                         if (_colorFrameBuffer == null)
                         {
                             _colorFrameBuffer = new byte[frame.PixelDataLength];
@@ -204,10 +206,11 @@ namespace Kinect_Test
                         if (jointType == JointType.Head && colorPoint.X >= 0 && colorPoint.Y >= 0)
                         {
                             DrawColorBoxAroundPoint(colorPoint, (int) (300 / cameraPoint.Z), (int) (350 / cameraPoint.Z));
+                            _graphics.FillEllipse(_bodyBrushes[i], colorPoint.X * _displayWidth / _colorWidth,
+                            colorPoint.Y * _displayHeight / _colorHeight, JointSize, JointSize);
                         }
 
-                        _graphics.FillEllipse(_bodyBrushes[i], colorPoint.X * _displayWidth / _colorWidth,
-                            colorPoint.Y * _displayHeight / _colorHeight, JointSize, JointSize);
+                        
                     }
 
                     foreach (var bone in _bones)
@@ -240,9 +243,9 @@ namespace Kinect_Test
                 {
                     for (int j = 0; j < height; j++)
                     {
-                        int bufferAddr = 4 * ((y + j) * _colorWidth + x + i);
-                        Color pixelColor = Color.FromArgb(255, buffer[bufferAddr], buffer[bufferAddr + 1],
-                            buffer[bufferAddr + 2]);
+                        int bufferAddr =  _colorBytesPerPixel * ((y + j) * _colorWidth + x + i);
+                        Color pixelColor = Color.FromArgb(255, buffer[bufferAddr + 2], buffer[bufferAddr + 1],
+                            buffer[bufferAddr]);
                         // TODO: Fast pixel data access via pointers
                         _bmp.SetPixel((x + i) * _displayWidth / _colorWidth, (y + j) * _displayHeight / _colorHeight,
                             pixelColor);
@@ -257,8 +260,14 @@ namespace Kinect_Test
             IDictionary<JointType, Point2F> jointColorSpacePoints, JointType jointType0, JointType jointType1,
             int bodyIndex)
         {
-            IJoint joint0 = joints[jointType0];
-            IJoint joint1 = joints[jointType1];
+            IJoint joint0;
+            IJoint joint1;
+            if (!joints.TryGetValue(jointType0, out joint0) || !joints.TryGetValue(jointType1, out joint1))
+            {
+                return;
+            }
+            
+            
 
             // If we can't find either of these joints, exit
             if (!joint1.IsTracked || !joint0.IsTracked)

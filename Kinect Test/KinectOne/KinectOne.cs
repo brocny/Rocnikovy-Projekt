@@ -188,6 +188,7 @@ namespace KinectOne
 
         public int WidthPixels => _colorFrameSource.FrameDescription.Width;
         public int HeightPixels => _colorFrameSource.FrameDescription.Height;
+        public int BytesPerPixel => (int)_colorFrameSource.FrameDescription.BytesPerPixel;
 
         public ColorManagerOne(KinectOne kinectOneOne)
         {
@@ -238,7 +239,7 @@ namespace KinectOne
 
             public void CopyFramePixelDataToArray(byte[] buffer)
             {
-                _colorFrame.CopyConvertedFrameDataToArray(buffer, ColorImageFormat.Rgba);
+                _colorFrame.CopyConvertedFrameDataToArray(buffer, ColorImageFormat.Bgra);
             }
 
             #region IDisposable Support

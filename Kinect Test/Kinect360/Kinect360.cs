@@ -36,6 +36,8 @@ namespace Kinect360
                     break;
                 }
             }
+            if (KinectSensor == null)
+                throw new Exception("null");
             
             _bodyManager = new BodyManager360(this);
             _colorManager = new ColorManager360(this);
@@ -72,7 +74,10 @@ namespace Kinect360
         private void KinectSensor_SkeletonFrameReady(object sender, SkeletonFrameReadyEventArgs e)
         {
             var skeletonFrame = e.OpenSkeletonFrame();
-            BodyFrameReady?.Invoke(this, new BodyFrameReadyEventArgs(new BodyFrame360(skeletonFrame)));
+            if (skeletonFrame != null)
+            {
+                BodyFrameReady?.Invoke(this, new BodyFrameReadyEventArgs(new BodyFrame360(skeletonFrame)));
+            }
         }
 
         public void Open()
@@ -154,7 +159,7 @@ namespace Kinect360
                 _joints = new Dictionary<KinectUnifier.JointType, IJoint>(21);
 
                 //TODO: Do this in O(1) instead of O(n)
-                for (int i = 0; i <= 20; i++)
+                for (int i = 0; i < 20; i++)
                 {
                     _joints.Add((KinectUnifier.JointType)i, new Joint360(_body.Joints[(Microsoft.Kinect.JointType)i]));
                 }
@@ -201,13 +206,18 @@ namespace Kinect360
 
         public int WidthPixels => ColorImageFormat == ColorImageFormat.RgbResolution640x480Fps30 ? 640 : 1280;
         public int HeightPixels => ColorImageFormat == ColorImageFormat.RgbResolution640x480Fps30 ? 480 : 960;
+        public int BytesPerPixel => _colorStream.FrameBytesPerPixel;
 
         
 
         private void KinectSensor_ColorFrameReady(object sender, ColorImageFrameReadyEventArgs e)
         {
             var colorImageFrame = e.OpenColorImageFrame();
-            ColorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrame360(colorImageFrame)));
+            if (colorImageFrame != null)
+            {
+                ColorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrame360(colorImageFrame)));
+            }
+            
         }
 
         public event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady;
@@ -281,9 +291,11 @@ namespace Kinect360
         private CoordinateMapper _coordinateMapper;
         private Kinect360 _kinect360;
 
-        public CoordinateMapper360(Kinect360 _kinect360)
+        public CoordinateMapper360(Kinect360 kinect360)
         {
+            _kinect360 = kinect360;
             _coordinateMapper = _kinect360.KinectSensor.CoordinateMapper;
+            
         }
 
         public void MapCameraPointsToColorSpace(Point3F[] cameraPoints, Point2F[] colorPoints)
@@ -326,7 +338,7 @@ namespace Kinect360
                    X = cameraPoint.X,
                    Y = cameraPoint.Y,
                    Z = cameraPoint.Z
-               }, _kinect360._colorManager == null ? ColorImageFormat.InfraredResolution640x480Fps30 : _kinect360._colorManager.ColorImageFormat);
+               }, _kinect360._colorManager == null ? ColorImageFormat.RgbResolution640x480Fps30 : _kinect360._colorManager.ColorImageFormat);
             return new Point2F(colorSpacePoint.X, colorSpacePoint.Y);
         }
 
