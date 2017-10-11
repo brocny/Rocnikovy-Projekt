@@ -249,12 +249,13 @@ namespace Kinect_Test
 
             var bmpX = x * _displayWidth / _colorWidth;
             var bmpY = y * _displayHeight / _colorHeight;
-            var bmpWidth = x * _displayWidth / _colorWidth;
-            var bmpHeight = y * _displayHeight / _colorHeight;
+            var bmpWidth = width * _displayWidth / _colorWidth;
+            var bmpHeight = height * _displayHeight / _colorHeight;
 
             var buffer = _colorFrameBuffer;
 
-            if (bmpWidth == 0 || bmpHeight == 0) return;
+            if (bmpWidth == 0 || bmpHeight == 0)
+                return;
 
             var bmpData = _bmp.LockBits(new Rectangle(bmpX, bmpY, bmpWidth, bmpHeight),
                 ImageLockMode.WriteOnly,
