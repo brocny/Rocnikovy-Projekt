@@ -57,9 +57,6 @@ namespace KinectOne
         {
             _kinectOne = kinectOne;
             _bodyFrameSource = _kinectOne.KinectSensor.BodyFrameSource;
-            
-
-            
         }
 
         public event EventHandler<BodyFrameReadyEventArgs> BodyFrameReady;

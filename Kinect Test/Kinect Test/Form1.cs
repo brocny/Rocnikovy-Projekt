@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Windows.Forms;
 using KinectUnifier;
-
 namespace Kinect_Test
 {
     public partial class Form1 : Form
     {
         private Graphics _graphics;
 
-        private const int JointSize = 7;
+        private const float JointSize = 7;
 
         private Bitmap _bmp;
 
@@ -96,10 +96,8 @@ namespace Kinect_Test
         public Form1()
         {
             InitializeComponent();
-
-
-
-            _kinect = KinectFactory.KinectFactory.GetKinect360();
+            
+            _kinect = KinectFactory.KinectFactory.GetKinect();
             InitializeColorComponents();
 
             InitializeDisplayComponents();
@@ -126,7 +124,7 @@ namespace Kinect_Test
         void InitializeColorComponents()
         {
             _colorManager = _kinect.ColorManager;
-            _colorManager.Open(false);
+            _colorManager.Open(preferResolutionOverFps: true);
             _colorManager.ColorFrameReady += _colorManager_ColorFrameReady;
             _colorWidth = _colorManager.WidthPixels;
             _colorHeight = _colorManager.HeightPixels;
@@ -170,7 +168,7 @@ namespace Kinect_Test
             {
                 if (frame != null)
                 {
-                    if (_bodies == null)
+                    if (_bodies.Length < frame.BodyCount)
                     {
                         _bodies = new IBody[frame.BodyCount];
                     }
@@ -183,6 +181,7 @@ namespace Kinect_Test
 
             if (dataReceived)
             {
+                // clear screen
                 _graphics.FillRectangle(Brushes.DimGray, pictureBox1.ClientRectangle);
 
                 for (int i = 0; i < _bodies.Length; i++)
@@ -203,14 +202,23 @@ namespace Kinect_Test
                             _coordinateMapper.MapCameraPointToColorSpace(_bodies[i].Joints[jointType].Position);
 
                         jointColorSpacePoints.Add(jointType, colorPoint);
+                        var pointX = colorPoint.X * _displayWidth / _colorWidth - JointSize / 2;
+                        var pointY = colorPoint.Y * _displayHeight / _colorHeight - JointSize / 2;
+                        if (pointX >= 0 && pointX <= _displayWidth && pointY >= 0 && pointY < _displayHeight)
+                        {
+                            _graphics.FillEllipse(_bodyBrushes[i], pointX, pointY, JointSize, JointSize);
+                        }
+                        
+
                         if (jointType == JointType.Head && colorPoint.X >= 0 && colorPoint.Y >= 0)
                         {
-                            DrawColorBoxAroundPoint(colorPoint, (int) (300 / cameraPoint.Z), (int) (350 / cameraPoint.Z));
-                            _graphics.FillEllipse(_bodyBrushes[i], colorPoint.X * _displayWidth / _colorWidth,
-                            colorPoint.Y * _displayHeight / _colorHeight, JointSize, JointSize);
+                            // Draw picture around head
+                            DrawColorBoxAroundPoint(
+                                colorPoint,
+                                (int) (_kinect.ColorManager.WidthPixels / (cameraPoint.Z * 6)),
+                                (int) (_kinect.ColorManager.HeightPixels / (cameraPoint.Z * 3))
+                                );    
                         }
-
-                        
                     }
 
                     foreach (var bone in _bones)
@@ -225,35 +233,52 @@ namespace Kinect_Test
 
         private void DrawColorBoxAroundPoint(Point2F colorPoint, int boxWidth = 160, int boxHeight = 200)
         {
-            if (_colorFrameBuffer != null)
+            if (boxWidth == 0 || boxHeight == 0 || _colorFrameBuffer == null)
+                return;
+
+            var x = (int) (colorPoint.X - boxWidth / 2);
+            if (x < 0) x = 0;
+            if (x > _colorWidth) x = _colorWidth;
+
+            var y = (int) (colorPoint.Y - boxHeight * 6 / 11);
+            if (y < 0) y = 0;
+            if (y > _colorHeight) y = _colorHeight;
+
+            var width = Math.Min(_colorWidth - x, boxWidth);
+            var height = Math.Min(_colorHeight - y, boxHeight);
+
+            var bmpX = x * _displayWidth / _colorWidth;
+            var bmpY = y * _displayHeight / _colorHeight;
+            var bmpWidth = x * _displayWidth / _colorWidth;
+            var bmpHeight = y * _displayHeight / _colorHeight;
+
+            var buffer = _colorFrameBuffer;
+
+            if (bmpWidth == 0 || bmpHeight == 0) return;
+
+            var bmpData = _bmp.LockBits(new Rectangle(bmpX, bmpY, bmpWidth, bmpHeight),
+                ImageLockMode.WriteOnly,
+                _bmp.PixelFormat);
+            unsafe
             {
-                var x = (int) (colorPoint.X - boxWidth / 2);
-                if (x < 0) x = 0;
-                if (x > _colorWidth) x = _colorWidth;
-
-                var y = (int) (colorPoint.Y - boxHeight * 6 / 11);
-                if (y < 0) y = 0;
-                if (y > _colorHeight) y = _colorHeight;
-
-                var width = Math.Min(_colorWidth - x, boxWidth);
-                var height = Math.Min(_colorHeight - y, boxHeight);
-
-                var buffer = _colorFrameBuffer;
-                for (int i = 0; i < width; i++)
+                byte* bmpPointer = (byte*) bmpData.Scan0;
+                for (int i = 0; i < height; ++i)
                 {
-                    for (int j = 0; j < height; j++)
+                    int bufAddr = _colorBytesPerPixel * ((y + i) * _colorWidth + x);
+                    int bmpLineAddr = i * _displayHeight / _colorHeight * bmpData.Stride;
+                    for (int j = 0; j < width; ++j)
                     {
-                        int bufferAddr =  _colorBytesPerPixel * ((y + j) * _colorWidth + x + i);
-                        Color pixelColor = Color.FromArgb(255, buffer[bufferAddr + 2], buffer[bufferAddr + 1],
-                            buffer[bufferAddr]);
-                        // TODO: Fast pixel data access via pointers
-                        _bmp.SetPixel((x + i) * _displayWidth / _colorWidth, (y + j) * _displayHeight / _colorHeight,
-                            pixelColor);
+                        var bmpAddr = bmpLineAddr + j * _displayWidth / _colorWidth * 4;  
+                        bmpPointer[bmpAddr] = buffer[bufAddr];
+                        bmpPointer[bmpAddr + 1] = buffer[bufAddr + 1];
+                        bmpPointer[bmpAddr + 2] = buffer[bufAddr + 2];
+
+                        bufAddr += _colorBytesPerPixel;
                     }
                 }
-                statusLabel.Text = string.Format("FPS: {0:F2}",
-                    (1000f / (DateTime.Now - _lastColorFrameTime).Milliseconds));
-            }
+            } 
+            _bmp.UnlockBits(bmpData);
+            statusLabel.Text = $"FPS: {1000f / (DateTime.Now - _lastColorFrameTime).Milliseconds:F2}";
         }
 
         private void DrawBone(IReadOnlyDictionary<JointType, IJoint> joints,
@@ -275,10 +300,12 @@ namespace Kinect_Test
                 return;
             }
 
-            _graphics.DrawLine(_bodyPens[bodyIndex], jointColorSpacePoints[jointType0].X * _displayWidth / _colorWidth,
+            _graphics.DrawLine(_bodyPens[bodyIndex], 
+                jointColorSpacePoints[jointType0].X * _displayWidth / _colorWidth,
                 jointColorSpacePoints[jointType0].Y * _displayHeight / _colorHeight,
                 jointColorSpacePoints[jointType1].X * _displayWidth / _colorWidth,
-                jointColorSpacePoints[jointType1].Y * _displayHeight / _colorHeight);
+                jointColorSpacePoints[jointType1].Y * _displayHeight / _colorHeight
+                );
         }
 
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using KinectUnifier;
 using Microsoft.Kinect;
+using JointType = KinectUnifier.JointType;
 
 
 namespace Kinect360
@@ -37,7 +38,7 @@ namespace Kinect360
                 }
             }
             if (KinectSensor == null)
-                throw new Exception("null");
+                throw new Exception("No Kinect device found!");
             
             _bodyManager = new BodyManager360(this);
             _colorManager = new ColorManager360(this);
@@ -56,7 +57,7 @@ namespace Kinect360
 
     class BodyManager360 : IBodyManager
     {
-        private Kinect360 _kinect360;
+        private Kinect360 _kinect360; 
         private SkeletonStream _skeletonStream;
         public int BodyCount => _skeletonStream.FrameSkeletonArrayLength;
 
@@ -152,16 +153,30 @@ namespace Kinect360
         public class Body360 : IBody
         {
             private Skeleton _body;
+            // needed because joint numbers are slightly different in SDK 1.8 vs 2.0
+            private readonly KinectUnifier.JointType[] _jointNumbers =
+            {
+                // 0 : Spine + head
+                JointType.HipCenter, JointType.SpineMid, JointType.ShoulderCenter, JointType.Head,
+                // 4 : Left arm
+                JointType.ShoulderLeft, JointType.ElbowLeft, JointType.WristLeft, JointType.HandLeft,
+                // 8 : Right arm
+                JointType.ShoulderRight, JointType.ElbowRight, JointType.WristRight, JointType.HandRight,
+                // 12 : Left leg
+                JointType.HipLeft, JointType.KneeLeft, JointType.AnkleLeft, JointType.FootLeft,
+                // 16 : Right leg
+                JointType.HipRight, JointType.KneeRight, JointType.AnkleRight, JointType.FootRight,
+            };
 
             public Body360(Skeleton body)
             {
                 _body = body;
-                _joints = new Dictionary<KinectUnifier.JointType, IJoint>(21);
+                _joints = new Dictionary<KinectUnifier.JointType, IJoint>(20);
 
                 //TODO: Do this in O(1) instead of O(n)
                 for (int i = 0; i < 20; i++)
                 {
-                    _joints.Add((KinectUnifier.JointType)i, new Joint360(_body.Joints[(Microsoft.Kinect.JointType)i]));
+                    _joints.Add(_jointNumbers[i], new Joint360(_body.Joints[(Microsoft.Kinect.JointType)i]));
                 }
             }
             

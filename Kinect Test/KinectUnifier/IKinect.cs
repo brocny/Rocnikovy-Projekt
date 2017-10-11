@@ -19,7 +19,5 @@ namespace KinectUnifier
         ICoordinateMapper CoordinateMapper { get; }
 
         bool IsRunning { get; }
-
-        
     }
 }
