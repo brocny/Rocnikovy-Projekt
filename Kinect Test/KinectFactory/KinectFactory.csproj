@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>KinectFactory</RootNamespace>
     <AssemblyName>KinectFactory</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -44,9 +45,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Kinect360\Kinect360.csproj">
-      <Project>{06501c40-b1c2-4f80-8fb3-c9cdb390649b}</Project>
-      <Name>Kinect360</Name>
+    <ProjectReference Include="..\KinectOne\KinectOne.csproj">
+      <Project>{90dca39a-dc42-4d9a-8f85-7cad272350bb}</Project>
+      <Name>KinectOne</Name>
     </ProjectReference>
     <ProjectReference Include="..\KinectUnifier\KinectUnifier.csproj">
       <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>

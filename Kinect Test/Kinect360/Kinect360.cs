@@ -152,21 +152,11 @@ namespace Kinect360
 
         public class Body360 : IBody
         {
-            private Skeleton _body;
-            // needed because joint numbers are slightly different in SDK 1.8 vs 2.0
-            private readonly KinectUnifier.JointType[] _jointNumbers =
-            {
-                // 0 : Spine + head
-                JointType.HipCenter, JointType.SpineMid, JointType.ShoulderCenter, JointType.Head,
-                // 4 : Left arm
-                JointType.ShoulderLeft, JointType.ElbowLeft, JointType.WristLeft, JointType.HandLeft,
-                // 8 : Right arm
-                JointType.ShoulderRight, JointType.ElbowRight, JointType.WristRight, JointType.HandRight,
-                // 12 : Left leg
-                JointType.HipLeft, JointType.KneeLeft, JointType.AnkleLeft, JointType.FootLeft,
-                // 16 : Right leg
-                JointType.HipRight, JointType.KneeRight, JointType.AnkleRight, JointType.FootRight,
-            };
+           
+            public IReadOnlyDictionary<KinectUnifier.JointType, IJoint> Joints => _joints;
+            public IReadOnlyList<ValueTuple<JointType, JointType>> Bones => _bones;
+            public bool IsTracked => _body.TrackingState == SkeletonTrackingState.Tracked;
+
 
             public Body360(Skeleton body)
             {
@@ -180,11 +170,65 @@ namespace Kinect360
                 }
             }
             
-            public IReadOnlyDictionary<KinectUnifier.JointType, IJoint> Joints => _joints;
             private Dictionary<KinectUnifier.JointType, IJoint> _joints;
-            
 
-            public bool IsTracked => _body.TrackingState == SkeletonTrackingState.Tracked;
+            private Skeleton _body;
+            // needed because joint numbers are slightly different in SDK 1.8 vs 2.0
+            private static readonly KinectUnifier.JointType[] _jointNumbers =
+            {
+                // 0 : Spine + head
+                JointType.HipCenter, JointType.SpineMid, JointType.ShoulderCenter, JointType.Head,
+                // 4 : Left arm
+                JointType.ShoulderLeft, JointType.ElbowLeft, JointType.WristLeft, JointType.HandLeft,
+                // 8 : Right arm
+                JointType.ShoulderRight, JointType.ElbowRight, JointType.WristRight, JointType.HandRight,
+                // 12 : Left leg
+                JointType.HipLeft, JointType.KneeLeft, JointType.AnkleLeft, JointType.FootLeft,
+                // 16 : Right leg
+                JointType.HipRight, JointType.KneeRight, JointType.AnkleRight, JointType.FootRight,
+            };
+
+            private static List<ValueTuple<JointType, JointType>> _bones = new List<ValueTuple<JointType, JointType>>
+            {
+                // Torso
+                new ValueTuple<JointType, JointType>(JointType.Head, JointType.Neck),
+                new ValueTuple<JointType, JointType>(JointType.Neck, JointType.ShoulderCenter),
+                new ValueTuple<JointType, JointType>(JointType.ShoulderCenter, JointType.SpineMid),
+                new ValueTuple<JointType, JointType>(JointType.SpineMid, JointType.HipCenter),
+                new ValueTuple<JointType, JointType>(JointType.ShoulderCenter, JointType.ShoulderRight),
+                new ValueTuple<JointType, JointType>(JointType.ShoulderCenter, JointType.ShoulderLeft),
+                new ValueTuple<JointType, JointType>(JointType.HipCenter, JointType.HipRight),
+                new ValueTuple<JointType, JointType>(JointType.HipCenter, JointType.HipLeft),
+
+                // Right Arm
+                new ValueTuple<JointType, JointType>(JointType.ShoulderRight, JointType.ElbowRight),
+                new ValueTuple<JointType, JointType>(JointType.ElbowRight, JointType.WristRight),
+                new ValueTuple<JointType, JointType>(JointType.WristRight, JointType.HandRight),
+
+                // Left Arm
+                new ValueTuple<JointType, JointType>(JointType.ShoulderLeft, JointType.ElbowLeft),
+                new ValueTuple<JointType, JointType>(JointType.ElbowLeft, JointType.WristLeft),
+                new ValueTuple<JointType, JointType>(JointType.WristLeft, JointType.HandLeft),
+
+                // Right Leg
+                new ValueTuple<JointType, JointType>(JointType.HipRight, JointType.KneeRight),
+                new ValueTuple<JointType, JointType>(JointType.KneeRight, JointType.AnkleRight),
+                new ValueTuple<JointType, JointType>(JointType.AnkleRight, JointType.FootRight),
+
+                // Left Leg
+                new ValueTuple<JointType, JointType>(JointType.HipLeft, JointType.KneeLeft),
+                new ValueTuple<JointType, JointType>(JointType.KneeLeft, JointType.AnkleLeft),
+                new ValueTuple<JointType, JointType>(JointType.AnkleLeft, JointType.FootLeft),
+
+                // Left hand 
+                new ValueTuple<JointType, JointType>(JointType.HandLeft, JointType.HandTipLeft),
+                new ValueTuple<JointType, JointType>(JointType.HandLeft, JointType.ThumbLeft),
+
+                // Right hand
+                new ValueTuple<JointType, JointType>(JointType.HandRight, JointType.HandTipRight),
+                new ValueTuple<JointType, JointType>(JointType.HandRight, JointType.ThumbRight)
+        };
+
         }
 
         public class Joint360 : IJoint
@@ -199,8 +243,6 @@ namespace Kinect360
             public bool IsTracked => _joint.TrackingState == JointTrackingState.Tracked;
             public Point3F Position => new Point3F(_joint.Position.X, _joint.Position.Y, _joint.Position.Z);
         }
-
-        
     }
 
     internal class ColorManager360 : IColorManager

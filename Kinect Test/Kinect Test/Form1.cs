@@ -10,7 +10,7 @@ namespace Kinect_Test
     {
         private Graphics _graphics;
 
-        private const float JointSize = 7;
+        private const float JointSize = 8;
 
         private Bitmap _bmp;
 
@@ -34,9 +34,6 @@ namespace Kinect_Test
 
         private DateTime _lastColorFrameTime;
 
-
-        private List<Tuple<JointType, JointType>> _bones;
-
         private int _displayWidth;
         private int _displayHeight;
 
@@ -51,44 +48,10 @@ namespace Kinect_Test
 
         public void InitBones()
         {
-            _bones = new List<Tuple<JointType, JointType>>
-            {
-                new Tuple<JointType, JointType>(JointType.Head, JointType.Neck),
-
-                // Torso
-                new Tuple<JointType, JointType>(JointType.Neck, JointType.ShoulderCenter),
-                new Tuple<JointType, JointType>(JointType.ShoulderCenter, JointType.SpineMid),
-                new Tuple<JointType, JointType>(JointType.SpineMid, JointType.HipCenter),
-                new Tuple<JointType, JointType>(JointType.ShoulderCenter, JointType.ShoulderRight),
-                new Tuple<JointType, JointType>(JointType.ShoulderCenter, JointType.ShoulderLeft),
-                new Tuple<JointType, JointType>(JointType.HipCenter, JointType.HipRight),
-                new Tuple<JointType, JointType>(JointType.HipCenter, JointType.HipLeft),
-
-                // Right Arm
-                new Tuple<JointType, JointType>(JointType.ShoulderRight, JointType.ElbowRight),
-                new Tuple<JointType, JointType>(JointType.ElbowRight, JointType.WristRight),
-                new Tuple<JointType, JointType>(JointType.WristRight, JointType.HandRight),
-
-                // Left Arm
-                new Tuple<JointType, JointType>(JointType.ShoulderLeft, JointType.ElbowLeft),
-                new Tuple<JointType, JointType>(JointType.ElbowLeft, JointType.WristLeft),
-                new Tuple<JointType, JointType>(JointType.WristLeft, JointType.HandLeft),
-
-                // Right Leg
-                new Tuple<JointType, JointType>(JointType.HipRight, JointType.KneeRight),
-                new Tuple<JointType, JointType>(JointType.KneeRight, JointType.AnkleRight),
-                new Tuple<JointType, JointType>(JointType.AnkleRight, JointType.FootRight),
-
-                // Left Leg
-                new Tuple<JointType, JointType>(JointType.HipLeft, JointType.KneeLeft),
-                new Tuple<JointType, JointType>(JointType.KneeLeft, JointType.AnkleLeft),
-                new Tuple<JointType, JointType>(JointType.AnkleLeft, JointType.FootLeft)
-            };
-
             _bodyPens = new Pen[_bodyBrushes.Length];
             for (int i = 0; i < _bodyBrushes.Length; i++)
             {
-                _bodyPens[i] = new Pen(_bodyBrushes[i], 1f);
+                _bodyPens[i] = new Pen(_bodyBrushes[i], 6f);
             }
         }
 
@@ -221,7 +184,7 @@ namespace Kinect_Test
                         }
                     }
 
-                    foreach (var bone in _bones)
+                    foreach (var bone in _bodies[i].Bones)
                     {
                         DrawBone(_bodies[i].Joints, jointColorSpacePoints, bone.Item1, bone.Item2, i);
                     }

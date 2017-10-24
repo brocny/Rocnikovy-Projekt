@@ -142,18 +142,53 @@ namespace KinectOne
         public class BodyOne : IBody
         {
             private Body _body;
+            static readonly List<ValueTuple<JointType, JointType>> bones = new List<ValueTuple<JointType, JointType>>
+            {
+                // Torso
+                new ValueTuple<JointType, JointType>(JointType.Head, JointType.Neck),
+                new ValueTuple<JointType, JointType>(JointType.Neck, JointType.ShoulderCenter),
+                new ValueTuple<JointType, JointType>(JointType.ShoulderCenter, JointType.SpineMid),
+                new ValueTuple<JointType, JointType>(JointType.SpineMid, JointType.HipCenter),
+                new ValueTuple<JointType, JointType>(JointType.ShoulderCenter, JointType.ShoulderRight),
+                new ValueTuple<JointType, JointType>(JointType.ShoulderCenter, JointType.ShoulderLeft),
+                new ValueTuple<JointType, JointType>(JointType.HipCenter, JointType.HipRight),
+                new ValueTuple<JointType, JointType>(JointType.HipCenter, JointType.HipLeft),
+
+                // Right Arm
+                new ValueTuple<JointType, JointType>(JointType.ShoulderRight, JointType.ElbowRight),
+                new ValueTuple<JointType, JointType>(JointType.ElbowRight, JointType.WristRight),
+                new ValueTuple<JointType, JointType>(JointType.WristRight, JointType.HandRight),
+
+                // Left Arm
+                new ValueTuple<JointType, JointType>(JointType.ShoulderLeft, JointType.ElbowLeft),
+                new ValueTuple<JointType, JointType>(JointType.ElbowLeft, JointType.WristLeft),
+                new ValueTuple<JointType, JointType>(JointType.WristLeft, JointType.HandLeft),
+
+                // Right Leg
+                new ValueTuple<JointType, JointType>(JointType.HipRight, JointType.KneeRight),
+                new ValueTuple<JointType, JointType>(JointType.KneeRight, JointType.AnkleRight),
+                new ValueTuple<JointType, JointType>(JointType.AnkleRight, JointType.FootRight),
+
+                // Left Leg
+                new ValueTuple<JointType, JointType>(JointType.HipLeft, JointType.KneeLeft),
+                new ValueTuple<JointType, JointType>(JointType.KneeLeft, JointType.AnkleLeft),
+                new ValueTuple<JointType, JointType>(JointType.AnkleLeft, JointType.FootLeft)
+            };
+
+            public IReadOnlyList<ValueTuple<JointType, JointType>> Bones => bones;
 
             public BodyOne(Body body)
             {
                 _body = body;
-                _joints = new Dictionary<JointType, IJoint>(21);
+                _joints = new Dictionary<JointType, IJoint>(25);
                 //TODO: Do this in O(1) instead of O(n)
-                for (int i = 0; i <= 20; i++)
+                foreach (var joint in _body.Joints)
                 {
-                    _joints.Add((KinectUnifier.JointType)i, new JointOne(_body.Joints[(Microsoft.Kinect.JointType)i]));
+                    _joints.Add((JointType)(int)joint.Key, new JointOne(joint.Value));
                 }
             }
 
+            
             public IReadOnlyDictionary<KinectUnifier.JointType, IJoint> Joints => _joints;
             private Dictionary<KinectUnifier.JointType, IJoint> _joints;
 

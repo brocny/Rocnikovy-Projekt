@@ -47,13 +47,16 @@ namespace KinectUnifier
         ShoulderRight, ElbowRight, WristRight, HandRight,
         HipLeft, KneeLeft, AnkleLeft, FootLeft,
         HipRight, KneeRight, AnkleRight, FootRight,
-        ShoulderCenter
+        ShoulderCenter,
+        HandTipLeft, ThumbLeft,
+        HandTipRight, ThumbRight
     }
 
 
     public interface IBody
     {
         IReadOnlyDictionary<JointType, IJoint> Joints { get; }
+        IReadOnlyList<ValueTuple<JointType, JointType>> Bones { get; }
         bool IsTracked { get; }
     }
 
