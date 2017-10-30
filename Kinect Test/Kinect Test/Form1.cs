@@ -133,9 +133,8 @@ namespace Kinect_Test
                 {
                     if (_bodies.Length < frame.BodyCount)
                     {
-                        _bodies = new IBody[frame.BodyCount];
+                        Array.Resize(ref _bodies, frame.BodyCount);
                     }
-
                     frame.CopyBodiesTo(_bodies);
                     dataReceived = true;
                 }

@@ -4,14 +4,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A103B1BD-322F-4A8F-B0EB-58393DE5D453}</ProjectGuid>
+    <ProjectGuid>{C5C7B973-A73C-4F44-8DFC-3C741F4B28A6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>KinectUnifier</RootNamespace>
-    <AssemblyName>KinectUnifier</AssemblyName>
+    <RootNamespace>Face</RootNamespace>
+    <AssemblyName>Face</AssemblyName>
     <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,12 +40,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ICoordinateMapper.cs" />
-    <Compile Include="Util.cs" />
-    <Compile Include="IBodyManager.cs" />
-    <Compile Include="IColorManager.cs" />
-    <Compile Include="IKinect.cs" />
+    <Compile Include="IFaceLIb.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KinectFactory\KinectFactory.csproj">
+      <Project>{67644ffe-d3e4-4670-94a7-b12f076857c4}</Project>
+      <Name>KinectFactory</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\KinectUnifier\KinectUnifier.csproj">
+      <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
+      <Name>KinectUnifier</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
