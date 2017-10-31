@@ -274,6 +274,11 @@ namespace KinectOne
                 _colorFrame.CopyConvertedFrameDataToArray(buffer, ColorImageFormat.Bgra);
             }
 
+            public void CopyFramePixelDataToIntPtr(IntPtr ptr, int pixelDataLength)
+            {
+                _colorFrame.CopyConvertedFrameDataToIntPtr(ptr, (uint)pixelDataLength, ColorImageFormat.Bgra);
+            }
+
             #region IDisposable Support
             private bool disposedValue = false; // To detect redundant calls
 

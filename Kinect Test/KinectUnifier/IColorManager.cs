@@ -34,6 +34,7 @@ namespace KinectUnifier
         int PixelDataLength { get; }
 
         void CopyFramePixelDataToArray(byte[] buffer);
+        void CopyFramePixelDataToIntPtr(IntPtr ptr, int pixelDataLength);
 
         int Height { get; }
         int Width { get; }

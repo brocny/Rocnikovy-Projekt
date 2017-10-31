@@ -316,6 +316,11 @@ namespace Kinect360
                 _colorImageFrame.CopyPixelDataTo(buffer);
             }
 
+            public void CopyFramePixelDataToIntPtr(IntPtr ptr, int pixelDataLength)
+            {
+                _colorImageFrame.CopyPixelDataTo(ptr, pixelDataLength);
+            }
+
             #region IDisposable Support
             private bool disposedValue = false; 
 
