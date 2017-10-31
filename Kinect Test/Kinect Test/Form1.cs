@@ -130,48 +130,39 @@ namespace Kinect_Test
 
         private void _bodyManager_BodyFrameReady(object sender, BodyFrameReadyEventArgs e)
         {
-            bool dataReceived = false;
-
             using (var frame = e.BodyFrame)
             {
-                if (frame != null)
+                if (frame == null) return;
+                if (_bodies.Length < frame.BodyCount)
                 {
-                    if (_bodies.Length < frame.BodyCount)
-                    {
-                        Array.Resize(ref _bodies, frame.BodyCount);
-                    }
-                    frame.CopyBodiesTo(_bodies);
-                    dataReceived = true;
+                    Array.Resize(ref _bodies, frame.BodyCount);
                 }
+                frame.CopyBodiesTo(_bodies);
             }
+            
+            // clear screen
+            _graphics.FillRectangle(Brushes.DimGray, pictureBox1.ClientRectangle);
 
-
-            if (dataReceived)
+            for (int i = 0; i < _bodies.Length; i++)
             {
-                // clear screen
-                _graphics.FillRectangle(Brushes.DimGray, pictureBox1.ClientRectangle);
-
-                for (int i = 0; i < _bodies.Length; i++)
+                var jointColorSpacePoints = Util.MapJointsToColorSpace(_bodies[i], _coordinateMapper);
+                foreach (var jointType in _bodies[i].Joints.Keys)
                 {
-                    var jointColorSpacePoints = Util.MapJointsToColorSpace(_bodies[i], _coordinateMapper);
-                    foreach (var jointType in _bodies[i].Joints.Keys)
-                    {
-                        DrawJoint(jointColorSpacePoints[jointType], _bodyBrushes[i]);
-                    }
-
-                    var faceRect = Util.TryGetHeadRectangleInColorSpace(_bodies[i], _coordinateMapper);
-                    if (faceRect.HasValue)
-                    {
-                        DrawColorBox(faceRect.Value);
-                    }
-
-                    foreach (var bone in _bodies[i].Bones)
-                    {
-                        DrawBone(_bodies[i].Joints, jointColorSpacePoints, bone.Item1, bone.Item2, i);
-                    }
+                    DrawJoint(jointColorSpacePoints[jointType], _bodyBrushes[i]);
                 }
-            }
 
+                var faceRect = Util.TryGetHeadRectangleInColorSpace(_bodies[i], _coordinateMapper);
+                if (faceRect.HasValue)
+                {
+                    DrawColorBox(faceRect.Value);
+                }
+
+                foreach (var bone in _bodies[i].Bones)
+                {
+                    DrawBone(_bodies[i].Joints, jointColorSpacePoints, bone.Item1, bone.Item2, i);
+                }  
+            }
+            
             pictureBox1.Invalidate();
         }
 
