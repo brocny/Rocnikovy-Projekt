@@ -3,7 +3,12 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
+using System.Windows.Media;
 using KinectUnifier;
+using Brush = System.Drawing.Brush;
+using Brushes = System.Drawing.Brushes;
+using Pen = System.Drawing.Pen;
+
 namespace Kinect_Test
 {
     public partial class Form1 : Form
@@ -148,39 +153,16 @@ namespace Kinect_Test
 
                 for (int i = 0; i < _bodies.Length; i++)
                 {
-                    Dictionary<JointType, Point2F> jointColorSpacePoints =
-                        new Dictionary<JointType, Point2F>();
-
+                    var jointColorSpacePoints = Util.MapJointsToColorSpace(_bodies[i], _coordinateMapper);
                     foreach (var jointType in _bodies[i].Joints.Keys)
                     {
-                        Point3F cameraPoint = _bodies[i].Joints[jointType].Position;
-                        if (cameraPoint.Z < 0)
-                        {
-                            cameraPoint.Z = 0.1f;
-                        }
+                        DrawJoint(jointColorSpacePoints[jointType], _bodyBrushes[i]);
+                    }
 
-
-                        Point2F colorPoint =
-                            _coordinateMapper.MapCameraPointToColorSpace(_bodies[i].Joints[jointType].Position);
-
-                        jointColorSpacePoints.Add(jointType, colorPoint);
-                        var pointX = colorPoint.X * _displayWidth / _colorWidth - JointSize / 2;
-                        var pointY = colorPoint.Y * _displayHeight / _colorHeight - JointSize / 2;
-                        if (pointX >= 0 && pointX <= _displayWidth && pointY >= 0 && pointY < _displayHeight)
-                        {
-                            _graphics.FillEllipse(_bodyBrushes[i], pointX, pointY, JointSize, JointSize);
-                        }
-                        
-
-                        if (jointType == JointType.Head && colorPoint.X >= 0 && colorPoint.Y >= 0)
-                        {
-                            // Draw picture around head
-                            DrawColorBoxAroundPoint(
-                                colorPoint,
-                                (int) (_kinect.ColorManager.WidthPixels / (cameraPoint.Z * 6)),
-                                (int) (_kinect.ColorManager.HeightPixels / (cameraPoint.Z * 3))
-                                );    
-                        }
+                    var faceRect = Util.TryGetHeadRectangleInColorSpace(_bodies[i], _coordinateMapper);
+                    if (faceRect.HasValue)
+                    {
+                        DrawColorBox(faceRect.Value);
                     }
 
                     foreach (var bone in _bodies[i].Bones)
@@ -193,28 +175,39 @@ namespace Kinect_Test
             pictureBox1.Invalidate();
         }
 
-        private void DrawColorBoxAroundPoint(Point2F colorPoint, int boxWidth = 160, int boxHeight = 200)
+        void DrawJoint(Point2F location, Brush brush)
         {
-            if (boxWidth == 0 || boxHeight == 0 || _colorFrameBuffer == null)
-                return;
+            var pointX = location.X * _displayWidth / _colorWidth - JointSize / 2;
+            var pointY = location.Y * _displayHeight / _colorHeight - JointSize / 2;
+            if (pointX >= 0 && pointX <= _displayWidth && pointY >= 0 && pointY < _displayHeight)
+            {
+                _graphics.FillEllipse(brush, pointX, pointY, JointSize, JointSize);
+            }
+        }
 
-            var x = (int) (colorPoint.X - boxWidth / 2);
+    private void DrawColorBox(Rectangle rect)
+        {
+            if (rect.Width == 0 || rect.Height == 0 || _colorFrameBuffer == null)
+                return;
+            var x = rect.X;
             if (x < 0) x = 0;
             if (x > _colorWidth) x = _colorWidth;
 
-            var y = (int) (colorPoint.Y - boxHeight * 6 / 11);
+            var y = rect.Y;
             if (y < 0) y = 0;
-            if (y > _colorHeight) y = _colorHeight;
+            if (y > _colorWidth) y = _colorWidth;
 
-            var width = Math.Min(_colorWidth - x, boxWidth);
-            var height = Math.Min(_colorHeight - y, boxHeight);
-
-            var bmpX = x * _displayWidth / _colorWidth;
-            var bmpY = y * _displayHeight / _colorHeight;
-            var bmpWidth = width * _displayWidth / _colorWidth;
-            var bmpHeight = height * _displayHeight / _colorHeight;
+            var height = rect.Height;
+            var width = rect.Width;
+            if (x + width > _colorWidth) width = _colorWidth - x;
+            if (y + height > _colorHeight) height = _colorHeight - y;
 
             var buffer = _colorFrameBuffer;
+
+            var bmpX = x * _displayWidth / _colorWidth;
+            var bmpY = y * _displayWidth / _colorWidth;
+            var bmpWidth = rect.Width * _displayWidth / _colorWidth;
+            var bmpHeight = rect.Height * _displayHeight / _colorHeight;
 
             if (bmpWidth == 0 || bmpHeight == 0)
                 return;
@@ -224,14 +217,14 @@ namespace Kinect_Test
                 _bmp.PixelFormat);
             unsafe
             {
-                byte* bmpPointer = (byte*) bmpData.Scan0;
+                byte* bmpPointer = (byte*)bmpData.Scan0;
                 for (int i = 0; i < height; ++i)
                 {
                     int bufAddr = _colorBytesPerPixel * ((y + i) * _colorWidth + x);
                     int bmpLineAddr = i * _displayHeight / _colorHeight * bmpData.Stride;
                     for (int j = 0; j < width; ++j)
                     {
-                        var bmpAddr = bmpLineAddr + j * _displayWidth / _colorWidth * 4;  
+                        var bmpAddr = bmpLineAddr + j * _displayWidth / _colorWidth * 4;
                         bmpPointer[bmpAddr] = buffer[bufAddr];
                         bmpPointer[bmpAddr + 1] = buffer[bufAddr + 1];
                         bmpPointer[bmpAddr + 2] = buffer[bufAddr + 2];
@@ -239,7 +232,7 @@ namespace Kinect_Test
                         bufAddr += _colorBytesPerPixel;
                     }
                 }
-            } 
+            }
             _bmp.UnlockBits(bmpData);
             statusLabel.Text = $"FPS: {1000f / (DateTime.Now - _lastColorFrameTime).Milliseconds:F2}";
         }
