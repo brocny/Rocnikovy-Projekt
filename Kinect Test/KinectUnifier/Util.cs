@@ -7,7 +7,7 @@ namespace KinectUnifier
 {
     public static class Util
     {
-        static IDictionary<JointType, Point2F> MapJointsToColorSpace(IBody body, ICoordinateMapper mapper)
+        public static IDictionary<JointType, Point2F> MapJointsToColorSpace(IBody body, ICoordinateMapper mapper)
         {
             var ret = new Dictionary<JointType, Point2F>();
 
@@ -28,25 +28,26 @@ namespace KinectUnifier
             return ret;
         }
 
-        static Rectangle? TryGetHeadRectangleInColorSpace(IBody body, ICoordinateMapper mapper)
+        public static Rectangle? TryGetHeadRectangleInColorSpace(IBody body, ICoordinateMapper mapper)
         {
             IJoint headJoint;
             IJoint neckJoint;
+            
             if (!body.Joints.TryGetValue(JointType.Head, out headJoint) || !body.Joints.TryGetValue(JointType.Neck, out neckJoint)) return null;
+            if (!headJoint.IsTracked || !neckJoint.IsTracked) return null;
 
             var headJointCameraPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
-            var neckJointCameraPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
+            var neckJointCameraPos = mapper.MapCameraPointToColorSpace(neckJoint.Position);
             float headNeckDistance = headJointCameraPos.DistanceTo(neckJointCameraPos);
             bool isFaceVertical = Math.Abs(headJointCameraPos.Y - neckJointCameraPos.Y) >
                                   Math.Abs(headJointCameraPos.X - neckJointCameraPos.X);
-            var width = isFaceVertical ? headNeckDistance / 1.2f : headNeckDistance * 1.2f;
-            var height = isFaceVertical ? headNeckDistance * 1.2f : headNeckDistance / 1.2f;
+            var width =  isFaceVertical ? headNeckDistance * 1.75f : headNeckDistance * 2.5f;
+            var height = isFaceVertical ? headNeckDistance * 2.5f : headNeckDistance * 1.75f;
             return new Rectangle(
-                (int)(headJointCameraPos.X - headNeckDistance), 
-                (int)(headJointCameraPos.Y - headNeckDistance), 
+                (int)(headJointCameraPos.X - width / 2), 
+                (int)(headJointCameraPos.Y - height / 1.8f), 
                 (int)width, 
                 (int)height);
-
         }
     }
 
