@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Runtime.InteropServices;
 
 
 namespace KinectUnifier
@@ -28,13 +31,17 @@ namespace KinectUnifier
             return ret;
         }
 
-        public static Rectangle? TryGetHeadRectangleInColorSpace(IBody body, ICoordinateMapper mapper)
+        public static bool TryGetHeadRectangleInColorSpace(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
         {
             IJoint headJoint;
             IJoint neckJoint;
-            
-            if (!body.Joints.TryGetValue(JointType.Head, out headJoint) || !body.Joints.TryGetValue(JointType.Neck, out neckJoint)) return null;
-            if (!headJoint.IsTracked || !neckJoint.IsTracked) return null;
+
+            faceRect = Rectangle.Empty;
+            rotationAngle = 0;
+
+            if (!body.Joints.TryGetValue(JointType.Head, out headJoint) ||
+                !body.Joints.TryGetValue(JointType.Neck, out neckJoint)) return false;
+            if (!headJoint.IsTracked || !neckJoint.IsTracked) return false;
 
             var headJointCameraPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
             var neckJointCameraPos = mapper.MapCameraPointToColorSpace(neckJoint.Position);
@@ -43,11 +50,27 @@ namespace KinectUnifier
                                   Math.Abs(headJointCameraPos.X - neckJointCameraPos.X);
             var width =  isFaceVertical ? headNeckDistance * 1.75f : headNeckDistance * 2.5f;
             var height = isFaceVertical ? headNeckDistance * 2.5f : headNeckDistance * 1.75f;
-            return new Rectangle(
+
+            rotationAngle = Math.Asin(headJointCameraPos.X - neckJointCameraPos.X / headNeckDistance);
+
+            faceRect =  new Rectangle(
                 (int)(headJointCameraPos.X - width / 2), 
                 (int)(headJointCameraPos.Y - height / 1.8f), 
                 (int)width, 
                 (int)height);
+
+            return true;
+        }
+
+        public static Bitmap BytesToBitmap(byte[] buffer, int width, int height, int bytesPerPixel)
+        {
+            if (buffer == null) return null;
+            var bmp = new Bitmap(width, height);
+            var bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite,
+                PixelFormat.Format32bppRgb);
+            Marshal.Copy(buffer, 0, bmpData.Scan0, width * height * bytesPerPixel);
+            bmp.UnlockBits(bmpData);
+            return bmp;
         }
     }
 

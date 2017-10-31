@@ -10,8 +10,6 @@ namespace Face
 {
     public interface IFaceLIb
     {
-        void BindKinect(IKinect kinect);
-        void 
 
     }
 }
