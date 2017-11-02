@@ -8,18 +8,31 @@ using Face;
 using KinectUnifier;
 using Luxand;
 
-namespace LuxandFace
+namespace LuxandFaceLib
 {
     public class LuxandFace : IFaceLIb
     {
         private IKinect _kinect;
         private IBody[] _bodies;
-        private FSDK.CImage _lastImage = new FSDK.CImage();
-        private FSDK.CImage[] _lastFaceImage;
-        private List<FSDK.TFacePosition> _facePositions;
+        private int _lastImageHandle;
+        private FSDK.CImage[] _lastFaceImages;
+        private FSDK.TFacePosition[] _facePositions;
 
         private byte[] _frameBuffer;
         
+        public LuxandFace()
+        {
+            
+        }
+
+        public LuxandFace(int frameWidth, int frameHeight, int frameBytesPerPixel)
+        {
+            FrameHeight = frameHeight;
+            FrameWidth = frameWidth;
+            FrameBytesPerPixel = frameBytesPerPixel;
+            if(frameBytesPerPixel != 4)
+                throw new Exception();
+        }
 
         public void InitializeLibrary()
         {
@@ -30,70 +43,88 @@ namespace LuxandFace
             }
             
             FSDK.InitializeLibrary();
+        }
+       
 
+        
+
+        public Point[] GetFacialFeatures(int faceIndex)
+        {
+            var facePosition = _facePositions[faceIndex];
+            FSDK.TPoint[] temp;
+
+            if (FSDK.FSDKE_OK != FSDK.DetectFacialFeaturesInRegion(_lastImageHandle, ref facePosition, out temp))
+                return null;
+
+            return temp.Select(x => x.ToPoint()).ToArray();
         }
 
-        public void BindKinect(IKinect kinect)
+        public byte[] GetFaceTemplate(int faceIndex)
         {
-            _kinect = kinect;
-            _kinect.Open();
-            _kinect.ColorManager.ColorFrameReady += ColorManagerOnColorFrameReady;
-            _kinect.BodyManager.BodyFrameReady += BodyManagerOnBodyFrameReady;
-        }
-
-        private void BodyManagerOnBodyFrameReady(object sender, BodyFrameReadyEventArgs e)
-        {
-            using (var frame = e.BodyFrame)
+           
+            var facePostion = _facePositions[faceIndex];
+            if (FSDK.FSDKE_OK != FSDK.GetFaceTemplateInRegion(_lastImageHandle, ref facePostion, out var retVal))
             {
-                if (frame == null) return;
-
-                if (_bodies == null || _bodies.Length < frame.BodyCount)
-                {
-                    _bodies = new IBody[frame.BodyCount];
-                }
-
-                frame.CopyBodiesTo(_bodies);
-                _facePositions.Clear();
-                foreach (var body in _bodies)
-                {
-                    if(!Util.TryGetHeadRectangleInColorSpace(body, _kinect.CoordinateMapper, out var rect, out var rotAngle))
-                    {
-                        continue;
-                    }
-
-                    _facePositions.Add(new FSDK.TFacePosition()
-                    {
-                        angle = rotAngle,
-                        w = rect.Width,
-                        xc = rect.X - rect.Width,
-                        yc = rect.Y - rect.Height
-                    });
-                }
-
-            }
-        }
-
-        private void ColorManagerOnColorFrameReady(object sender, ColorFrameReadyEventArgs e)
-        {
-            int frameWidth;
-            int frameHeight;
-            int frameBpp;
-            using (var frame = e.ColorFrame)
-            {
-                if (frame == null) return;
-                if (_frameBuffer == null || _frameBuffer.Length < frame.PixelDataLength)
-                {
-                    _frameBuffer = new byte[frame.PixelDataLength];
-                }
-                frameWidth = frame.Width;
-                frameHeight = frame.Height;
-                frameBpp = frame.BytesPerPixel;
-                e.ColorFrame.CopyFramePixelDataToArray(_frameBuffer);
+                return null;
             }
 
-            int lastImageHandle = _lastImage.ImageHandle;
-            FSDK.LoadImageFromBuffer(ref lastImageHandle, _frameBuffer, frameWidth, frameHeight, frameWidth * frameBpp,
+            return retVal;
+        }
+
+        public Image GetImage(ref IntPtr bmpIntPtr)
+        {
+            return new FSDK.CImage(_lastImageHandle).ToCLRImage();
+        }
+
+        public void FeedFrame(byte[] buffer)
+        {
+            if (buffer == null)
+            {
+                return;
+            }
+            _frameBuffer = buffer;
+            FSDK.FreeImage(_lastImageHandle);
+
+            FSDK.LoadImageFromBuffer(ref _lastImageHandle, _frameBuffer, FrameWidth, FrameHeight, FrameWidth * FrameBytesPerPixel,
                 FSDK.FSDK_IMAGEMODE.FSDK_IMAGE_COLOR_32BIT);
+        }
+
+        public void FeedFrame(Bitmap bmp)
+        {
+            var hBmp = bmp.GetHbitmap();
+            FSDK.LoadImageFromHBitmap(ref _lastImageHandle, hBmp);
+        }
+
+        public void FeedFacePositions(Rectangle[] facePositions)
+        {
+            _facePositions = facePositions.Select(x => new FSDK.TFacePosition(){angle = 0, w = x.Width, xc = x.X, yc = x.Y}).ToArray();
+        }
+
+        public void FeedFacePositions(Rectangle[] facePositions, double[] rotationAngle)
+        {
+            _facePositions = new FSDK.TFacePosition[facePositions.Length];
+            for (var i = 0; i < facePositions.Length; i++)
+            {
+                var f = facePositions[i];
+                _facePositions[i] = new FSDK.TFacePosition(){angle = rotationAngle[i], w = f.Width, xc = f.X + f.Width / 2, yc = f.Y + f.Height / 2};
+            }
+        }
+
+        public Rectangle[] GetFacePostions()
+        {
+            throw new NotImplementedException();
+        }
+
+        public int NumberOfFaces { get; }
+        public int FrameWidth { get; set; }
+        public int FrameHeight { get; set; }
+        public int FrameBytesPerPixel { get; set; }
+    }
+    public static class TPointExtensions
+    {
+        public static Point ToPoint(this FSDK.TPoint point)
+        {
+            return new Point(point.x, point.y);
         }
     }
 }
