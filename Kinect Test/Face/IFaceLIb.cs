@@ -14,7 +14,7 @@ namespace Face
     {
         void FeedFrame(byte[] buffer);
         void FeedFacePositions(Rectangle[] facePositions);
-        void FeedFacePositions(Rectangle[] facePositions, double[] rotationAngle);
+        void FeedFacePositions(Rectangle[] facePositions, double[] rotationAngles);
 
         Rectangle[] GetFacePostions();
         int NumberOfFaces { get; }

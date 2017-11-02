@@ -15,6 +15,7 @@ namespace LuxandFaceLib
         private IKinect _kinect;
         private IBody[] _bodies;
         private int _lastImageHandle;
+        private int[] _lastFaceImageHandles;
         private FSDK.CImage[] _lastFaceImages;
         private FSDK.TFacePosition[] _facePositions;
 
@@ -44,9 +45,12 @@ namespace LuxandFaceLib
             
             FSDK.InitializeLibrary();
         }
-       
 
-        
+
+        public Image GetFaceImage(int faceIndex)
+        {
+            return new FSDK.CImage(_lastFaceImageHandles[faceIndex]).ToCLRImage();
+        }
 
         public Point[] GetFacialFeatures(int faceIndex)
         {
@@ -95,18 +99,29 @@ namespace LuxandFaceLib
             FSDK.LoadImageFromHBitmap(ref _lastImageHandle, hBmp);
         }
 
+        public void GenerateFaceImages()
+        {
+            for (int i = 0; i < _facePositions.Length; i++)
+            {
+                FSDK.CreateEmptyImage(ref _lastFaceImageHandles[i]);
+                var x = _facePositions[i].xc - _facePositions[i].w;
+                var y = _facePositions[i].yc - _facePositions[i].w;
+                FSDK.CopyRect(_lastImageHandle, x, y, 0, 0, _lastFaceImageHandles[i]);
+            }
+        }
+
         public void FeedFacePositions(Rectangle[] facePositions)
         {
             _facePositions = facePositions.Select(x => new FSDK.TFacePosition(){angle = 0, w = x.Width, xc = x.X, yc = x.Y}).ToArray();
         }
 
-        public void FeedFacePositions(Rectangle[] facePositions, double[] rotationAngle)
+        public void FeedFacePositions(Rectangle[] facePositions, double[] rotationAngles)
         {
             _facePositions = new FSDK.TFacePosition[facePositions.Length];
             for (var i = 0; i < facePositions.Length; i++)
             {
                 var f = facePositions[i];
-                _facePositions[i] = new FSDK.TFacePosition(){angle = rotationAngle[i], w = f.Width, xc = f.X + f.Width / 2, yc = f.Y + f.Height / 2};
+                _facePositions[i] = new FSDK.TFacePosition(){angle = rotationAngles[i], w = f.Width, xc = f.X + f.Width / 2, yc = f.Y + f.Height / 2};
             }
         }
 
