@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using KinectUnifier;
 using Microsoft.Kinect;
 using JointType = KinectUnifier.JointType;
@@ -172,7 +168,15 @@ namespace KinectOne
                 // Left Leg
                 new ValueTuple<JointType, JointType>(JointType.HipLeft, JointType.KneeLeft),
                 new ValueTuple<JointType, JointType>(JointType.KneeLeft, JointType.AnkleLeft),
-                new ValueTuple<JointType, JointType>(JointType.AnkleLeft, JointType.FootLeft)
+                new ValueTuple<JointType, JointType>(JointType.AnkleLeft, JointType.FootLeft),
+
+                // Left hand
+                new ValueTuple<JointType, JointType>(JointType.HandLeft, JointType.HandTipLeft),
+                new ValueTuple<JointType, JointType>(JointType.HandLeft, JointType.ThumbLeft),
+
+                //Right hand
+                new ValueTuple<JointType, JointType>(JointType.HandRight, JointType.HandTipRight),
+                new ValueTuple<JointType, JointType>(JointType.HandRight, JointType.ThumbRight)
             };
 
             public IReadOnlyList<ValueTuple<JointType, JointType>> Bones => bones;
@@ -220,7 +224,7 @@ namespace KinectOne
 
         public int WidthPixels => _colorFrameSource.FrameDescription.Width;
         public int HeightPixels => _colorFrameSource.FrameDescription.Height;
-        public int BytesPerPixel => (int)_colorFrameSource.FrameDescription.BytesPerPixel;
+        public int BytesPerPixel => 4;
 
         public ColorManagerOne(KinectOne kinectOneOne)
         {
@@ -271,7 +275,7 @@ namespace KinectOne
 
             public void CopyFramePixelDataToArray(byte[] buffer)
             {
-                _colorFrame.CopyConvertedFrameDataToArray(buffer, ColorImageFormat.Bgra);
+                _colorFrame.CopyConvertedFrameDataToArray(buffer, ColorImageFormat.Rgba);
             }
 
             public void CopyFramePixelDataToIntPtr(IntPtr ptr, int pixelDataLength)

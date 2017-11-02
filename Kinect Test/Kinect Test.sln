@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectOne", "KinectOne\Kine
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Face", "Face\Face.csproj", "{C5C7B973-A73C-4F44-8DFC-3C741F4B28A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuxandFace", "LuxandFace\LuxandFace.csproj", "{8D843BC1-7761-4369-856B-F5631FECE665}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuxandFaceLib", "LuxandFace\LuxandFaceLib.csproj", "{8D843BC1-7761-4369-856B-F5631FECE665}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kinect360", "Kinect360\Kinect360.csproj", "{06501C40-B1C2-4F80-8FB3-C9CDB390649B}"
 EndProject
