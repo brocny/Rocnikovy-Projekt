@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
-using System.Windows.Media;
 using KinectUnifier;
-using Brush = System.Drawing.Brush;
-using Brushes = System.Drawing.Brushes;
-using Pen = System.Drawing.Pen;
+using LuxandFace = LuxandFaceLib.LuxandFace;
 
 namespace Kinect_Test
 {
@@ -15,7 +12,7 @@ namespace Kinect_Test
     {
         private Graphics _graphics;
 
-        private const float JointSize = 8;
+        private Renderer _renderer;
 
         private Bitmap _bmp;
 
@@ -28,6 +25,7 @@ namespace Kinect_Test
         private IBody[] _bodies;
 
         private IBodyManager _bodyManager;
+        private LuxandFaceLib.LuxandFace _face;
 
         private byte[] _colorFrameBuffer;
 
@@ -56,7 +54,7 @@ namespace Kinect_Test
             _bodyPens = new Pen[_bodyBrushes.Length];
             for (int i = 0; i < _bodyBrushes.Length; i++)
             {
-                _bodyPens[i] = new Pen(_bodyBrushes[i], 6f);
+                _bodyPens[i] = new Pen(_bodyBrushes[i], 3f);
             }
         }
 
@@ -64,30 +62,25 @@ namespace Kinect_Test
         public Form1()
         {
             InitializeComponent();
+
+           
+            
             
             _kinect = KinectFactory.KinectFactory.GetKinect();
             InitializeColorComponents();
-
-            InitializeDisplayComponents();
+            _face = new LuxandFaceLib.LuxandFace(_colorWidth, _colorHeight, _colorBytesPerPixel);
+            _face.InitializeLibrary();
+            _renderer = new Renderer(new FormComponents(statusLabel, pictureBox1), _colorWidth, _colorHeight);
 
             InitializeBodyComponents();
 
             InitBones();
-
-            _graphics.FillRectangle(Brushes.Black, pictureBox1.ClientRectangle);
-
-            pictureBox1.Image = _bmp;
+            
             _coordinateMapper = _kinect.CoordinateMapper;
             _kinect.Open();
         }
 
-        void InitializeDisplayComponents()
-        {
-            _displayHeight = Math.Min(_colorManager.HeightPixels, pictureBox1.Height);
-            _displayWidth = Math.Min(_colorManager.WidthPixels, pictureBox1.Width);
-            _bmp = new Bitmap(_displayWidth, _displayHeight);
-            _graphics = Graphics.FromImage(_bmp);
-        }
+      
 
         void InitializeColorComponents()
         {
@@ -96,25 +89,26 @@ namespace Kinect_Test
             _colorManager.ColorFrameReady += _colorManager_ColorFrameReady;
             _colorWidth = _colorManager.WidthPixels;
             _colorHeight = _colorManager.HeightPixels;
+            _colorBytesPerPixel = _colorManager.BytesPerPixel;
         }
 
         private void _colorManager_ColorFrameReady(object sender, ColorFrameReadyEventArgs e)
         {
+            using (var frame = e.ColorFrame)
             {
-                using (var frame = e.ColorFrame)
+                if (frame == null) return;
+
+                _colorBytesPerPixel = frame.BytesPerPixel;
+                if (_colorFrameBuffer == null)
                 {
-                    if (frame != null)
-                    {
-                        _colorBytesPerPixel = frame.BytesPerPixel;
-                        if (_colorFrameBuffer == null)
-                        {
-                            _colorFrameBuffer = new byte[frame.PixelDataLength];
-                        }
-                        frame.CopyFramePixelDataToArray(_colorFrameBuffer);
-                        _lastColorFrameTime = DateTime.Now;
-                    }
+                    _colorFrameBuffer = new byte[frame.PixelDataLength];
                 }
+                frame.CopyFramePixelDataToArray(_colorFrameBuffer);
+                _lastColorFrameTime = DateTime.Now;
             }
+
+            _lastColorFrameTime = DateTime.Now;
+            _face.FeedFrame(_colorFrameBuffer);
         }
 
         void InitializeBodyComponents()
@@ -140,121 +134,28 @@ namespace Kinect_Test
                 frame.CopyBodiesTo(_bodies);
             }
             
-            // clear screen
-            _graphics.FillRectangle(Brushes.DimGray, pictureBox1.ClientRectangle);
+            _renderer.ClearScreen();
+            _renderer.DrawBodiesWithFaceBoxes(_bodies, _colorFrameBuffer, _colorBytesPerPixel, _bodyBrushes, _bodyPens, _coordinateMapper);
 
-            for (int i = 0; i < _bodies.Length; i++)
+
+            List<Rectangle> faceRects = new List<Rectangle>();
+            List<double> faceRots = new List<double>();
+
+            foreach (var body in _bodies)
             {
-                var jointColorSpacePoints = Util.MapJointsToColorSpace(_bodies[i], _coordinateMapper);
-                foreach (var jointType in _bodies[i].Joints.Keys)
+                if (Util.TryGetHeadRectangleInColorSpace(body, _coordinateMapper, out var faceRect, out double rotAngle))
                 {
-                    DrawJoint(jointColorSpacePoints[jointType], _bodyBrushes[i]);
+                    faceRects.Add(faceRect);
+                    faceRots.Add(rotAngle);
                 }
-
-                var faceRect = Util.TryGetHeadRectangleInColorSpace(_bodies[i], _coordinateMapper);
-                if (faceRect.HasValue)
-                {
-                    DrawColorBox(faceRect.Value);
-                }
-
-                foreach (var bone in _bodies[i].Bones)
-                {
-                    DrawBone(_bodies[i].Joints, jointColorSpacePoints, bone.Item1, bone.Item2, i);
-                }  
             }
+            _face.FeedFacePositions(faceRects.ToArray(), faceRots.ToArray());
+            if(faceRects.Count > 0)
             
+            _renderer.DrawFacialFeatures(_face.GetFacialFeatures(0), Brushes.Aqua, 1.5f);
+
             pictureBox1.Invalidate();
         }
-
-        void DrawJoint(Point2F location, Brush brush)
-        {
-            var pointX = location.X * _displayWidth / _colorWidth - JointSize / 2;
-            var pointY = location.Y * _displayHeight / _colorHeight - JointSize / 2;
-            if (pointX >= 0 && pointX <= _displayWidth && pointY >= 0 && pointY < _displayHeight)
-            {
-                _graphics.FillEllipse(brush, pointX, pointY, JointSize, JointSize);
-            }
-        }
-
-    private void DrawColorBox(Rectangle rect)
-        {
-            if (rect.Width == 0 || rect.Height == 0 || _colorFrameBuffer == null)
-                return;
-            var x = rect.X;
-            if (x < 0) x = 0;
-            if (x > _colorWidth) x = _colorWidth;
-
-            var y = rect.Y;
-            if (y < 0) y = 0;
-            if (y > _colorWidth) y = _colorWidth;
-
-            var height = rect.Height;
-            var width = rect.Width;
-            if (x + width > _colorWidth) width = _colorWidth - x;
-            if (y + height > _colorHeight) height = _colorHeight - y;
-
-            var buffer = _colorFrameBuffer;
-
-            var bmpX = x * _displayWidth / _colorWidth;
-            var bmpY = y * _displayWidth / _colorWidth;
-            var bmpWidth = rect.Width * _displayWidth / _colorWidth;
-            var bmpHeight = rect.Height * _displayHeight / _colorHeight;
-
-            if (bmpWidth == 0 || bmpHeight == 0)
-                return;
-
-            var bmpData = _bmp.LockBits(new Rectangle(bmpX, bmpY, bmpWidth, bmpHeight),
-                ImageLockMode.WriteOnly,
-                _bmp.PixelFormat);
-            unsafe
-            {
-                byte* bmpPointer = (byte*)bmpData.Scan0;
-                for (int i = 0; i < height; ++i)
-                {
-                    int bufAddr = _colorBytesPerPixel * ((y + i) * _colorWidth + x);
-                    int bmpLineAddr = i * _displayHeight / _colorHeight * bmpData.Stride;
-                    for (int j = 0; j < width; ++j)
-                    {
-                        var bmpAddr = bmpLineAddr + j * _displayWidth / _colorWidth * 4;
-                        bmpPointer[bmpAddr] = buffer[bufAddr];
-                        bmpPointer[bmpAddr + 1] = buffer[bufAddr + 1];
-                        bmpPointer[bmpAddr + 2] = buffer[bufAddr + 2];
-
-                        bufAddr += _colorBytesPerPixel;
-                    }
-                }
-            }
-            _bmp.UnlockBits(bmpData);
-            statusLabel.Text = $"FPS: {1000f / (DateTime.Now - _lastColorFrameTime).Milliseconds:F2}";
-        }
-
-        private void DrawBone(IReadOnlyDictionary<JointType, IJoint> joints,
-            IDictionary<JointType, Point2F> jointColorSpacePoints, JointType jointType0, JointType jointType1,
-            int bodyIndex)
-        {
-            IJoint joint0;
-            IJoint joint1;
-            if (!joints.TryGetValue(jointType0, out joint0) || !joints.TryGetValue(jointType1, out joint1))
-            {
-                return;
-            }
-            
-            
-
-            // If we can't find either of these joints, exit
-            if (!joint1.IsTracked || !joint0.IsTracked)
-            {
-                return;
-            }
-
-            _graphics.DrawLine(_bodyPens[bodyIndex], 
-                jointColorSpacePoints[jointType0].X * _displayWidth / _colorWidth,
-                jointColorSpacePoints[jointType0].Y * _displayHeight / _colorHeight,
-                jointColorSpacePoints[jointType1].X * _displayWidth / _colorWidth,
-                jointColorSpacePoints[jointType1].Y * _displayHeight / _colorHeight
-                );
-        }
-
 
         private void button1_Click(object sender, EventArgs e)
         {
