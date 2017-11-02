@@ -125,9 +125,17 @@ namespace LuxandFaceLib
             }
         }
 
-        public Rectangle[] GetFacePostions()
+        public Rectangle[] GetFacePositions()
         {
-            throw new NotImplementedException();
+            
+        }
+
+        public (Rectangle rect, double rotAngle)[] GetFacePostions()
+        {
+            int faceCount = 0;
+            var facePositions = FSDK.DetectMultipleFaces(_lastImageHandle, ref faceCount, out var fPositions,
+                sizeof(long) * 16);
+            return (fPositions.Select(x => x.))
         }
 
         public int NumberOfFaces { get; }
