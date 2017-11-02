@@ -39,6 +39,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BodyManagerOne.cs" />
+    <Compile Include="ColorManagerOne.cs" />
+    <Compile Include="CoordinateMapperOne.cs" />
     <Compile Include="KinectOne.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
