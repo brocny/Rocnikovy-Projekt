@@ -16,7 +16,7 @@ namespace Face
         void FeedFacePositions(Rectangle[] facePositions);
         void FeedFacePositions(Rectangle[] facePositions, double[] rotationAngles);
 
-        Rectangle[] GetFacePostions();
+        Rectangle[] GetFacePositions();
         int NumberOfFaces { get; }
         Point[] GetFacialFeatures(int faceIndex);
         byte[] GetFaceTemplate(int faceIndex);
