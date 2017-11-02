@@ -10,11 +10,7 @@ namespace Kinect_Test
 {
     public partial class Form1 : Form
     {
-        private Graphics _graphics;
-
         private Renderer _renderer;
-
-        private Bitmap _bmp;
 
         private IKinect _kinect;
 
@@ -36,9 +32,6 @@ namespace Kinect_Test
         private int _colorBytesPerPixel;
 
         private DateTime _lastColorFrameTime;
-
-        private int _displayWidth;
-        private int _displayHeight;
 
         private readonly Brush[] _bodyBrushes =
         {
