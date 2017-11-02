@@ -191,9 +191,9 @@ namespace Kinect_Test
                     for (int j = 0; j < width; ++j)
                     {
                         var bmpAddr = bmpLineAddr + j * _displayWidth / _colorWidth * 4;
-                        bmpPointer[bmpAddr] = buffer[bufAddr];
+                        bmpPointer[bmpAddr + 2] = buffer[bufAddr];
                         bmpPointer[bmpAddr + 1] = buffer[bufAddr + 1];
-                        bmpPointer[bmpAddr + 2] = buffer[bufAddr + 2];
+                        bmpPointer[bmpAddr] = buffer[bufAddr + 2];
 
                         bufAddr += colorFrameBpp;
                     }
