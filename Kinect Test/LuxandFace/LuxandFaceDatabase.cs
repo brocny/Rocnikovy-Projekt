@@ -15,6 +15,12 @@ namespace LuxandFace
             _storedFaces = new Dictionary<string, FaceInfo>();
         }
 
+        /// <summary>
+        /// Will do nothing if a face the same <code>name</code> is already in the database
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="info"></param>
+        /// <returns><code>true</code> if successful</returns>
         public bool TryAddNewFace(string name, FaceInfo info)
         {
             if (_storedFaces.ContainsKey(name))
@@ -25,7 +31,12 @@ namespace LuxandFace
             return true;
         }
 
-        public (string name, float confidence) GetMostLikelyMatch(byte[] template)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="template"></param>
+        /// <returns><code>name</code> of the best matching face and <code>confidence</code> value [0, 1]</returns>
+        public (string name, float confidence) GetBestMatch(byte[] template)
         {
             string outName = string.Empty;
             float outConfidence = 0;
@@ -43,6 +54,13 @@ namespace LuxandFace
             return (outName, outConfidence);
         }
 
+        /// <summary>
+        /// Add another template to existing face -- for example a different angle, with/out glasses, ...
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="faceTemplate"></param>
+        /// <returns><code>true</code>if succesful</returns>
+        /// <exception cref="ArgumentException"> thrown if <code>faceTemplate</code> has incorrect length</exception>
         public bool TryAddFaceTemplateToExistingFace(string name, byte[] faceTemplate)
         {
             FaceInfo.ThrowIfTemplateLengthInvalid(faceTemplate);
@@ -54,6 +72,12 @@ namespace LuxandFace
             return false;
         }
 
+        /// <summary>
+        /// Merge face with the name <code>name2</code> into the face with the name <code>name1</code>
+        /// </summary>
+        /// <param name="name1"></param>
+        /// <param name="name2"></param>
+        /// <returns>True if succesful</returns>
         public bool Merge(string name1, string name2)
         {
             if (_storedFaces.TryGetValue(name1, out var info1) && _storedFaces.TryGetValue(name2, out var info2))
@@ -68,24 +92,25 @@ namespace LuxandFace
 
     }
 
-
+    
     public class FaceInfo
     {
-        public List<byte[]> FaceTemplates { get; }
+        public ICollection<byte[]> FaceTemplates => _faceTemplates;
+        private List<byte[]> _faceTemplates;
 
         public FaceInfo(byte[] faceTemplate)
         {
-            FaceTemplates = new List<byte[]>{faceTemplate};
+            _faceTemplates = new List<byte[]>{faceTemplate};
         }
 
         public void Merge(FaceInfo info)
         {
-            FaceTemplates.AddRange(info.FaceTemplates);
+            _faceTemplates.AddRange(info.FaceTemplates);
         }
 
         public void AddTemplate(byte[] faceTemplate)
         {
-            FaceTemplates.Add(faceTemplate);
+            _faceTemplates.Add(faceTemplate);
         }
 
         internal static void ThrowIfTemplateLengthInvalid(byte[] template)
@@ -101,10 +126,11 @@ namespace LuxandFace
             float maxSimilarity = 0;
             float avgSimilarity = 0;
             int matchedTemplates = 0;
-            foreach (var i in FaceTemplates)
+            foreach (var i in _faceTemplates)
             {
                 float sim = 0;
                 var ft = i;
+                
                 if(FSDK.FSDKE_OK == FSDK.MatchFaces(ref faceTemplate, ref ft, ref sim))
                 {
                     matchedTemplates++;
