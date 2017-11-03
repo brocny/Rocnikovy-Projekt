@@ -46,9 +46,14 @@ namespace Kinect_Test
         public float JointSize { get; set; } = 7;
         public float BoneThickness { get; set; } = 1;
 
+        private DateTime _lastFrameTime;
+
         public void ClearScreen()
         {
             _gr.FillRectangle(Brushes.Black, _components.PictureBox.ClientRectangle);
+            var currentTime = DateTime.Now;
+            _components.Label.Text = $"FPS: {1000f / (DateTime.Now - _lastFrameTime).Milliseconds:F2}";
+            _lastFrameTime = DateTime.Now;
         }
 
         public void DrawBody(IBody body, Brush brush, Pen pen, ICoordinateMapper mapper)
