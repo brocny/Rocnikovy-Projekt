@@ -136,6 +136,8 @@ namespace LuxandFace
             return fPositions.Select(LuxandUtil.TFacePositionToRectRotAngle).ToArray();
         }
 
+
+
         public int NumberOfFaces { get; }
         public int FrameWidth { get; set; }
         public int FrameHeight { get; set; }

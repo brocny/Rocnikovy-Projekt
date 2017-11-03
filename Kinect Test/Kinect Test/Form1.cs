@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 using KinectUnifier;
-using LuxandFace = LuxandFaceLib.LuxandFace;
 
 namespace Kinect_Test
 {
@@ -21,7 +20,7 @@ namespace Kinect_Test
         private IBody[] _bodies;
 
         private IBodyManager _bodyManager;
-        private LuxandFaceLib.LuxandFace _face;
+        private LuxandFace.LuxandFace _face;
 
         private byte[] _colorFrameBuffer;
 
@@ -61,7 +60,7 @@ namespace Kinect_Test
             
             _kinect = KinectFactory.KinectFactory.GetKinect();
             InitializeColorComponents();
-            _face = new LuxandFaceLib.LuxandFace(_colorWidth, _colorHeight, _colorBytesPerPixel);
+            _face = new LuxandFace.LuxandFace(_colorWidth, _colorHeight, _colorBytesPerPixel);
             _face.InitializeLibrary();
             _renderer = new Renderer(new FormComponents(statusLabel, pictureBox1), _colorWidth, _colorHeight);
 
@@ -99,8 +98,7 @@ namespace Kinect_Test
                 frame.CopyFramePixelDataToArray(_colorFrameBuffer);
                 _lastColorFrameTime = DateTime.Now;
             }
-
-            _lastColorFrameTime = DateTime.Now;
+            
             _face.FeedFrame(_colorFrameBuffer);
         }
 

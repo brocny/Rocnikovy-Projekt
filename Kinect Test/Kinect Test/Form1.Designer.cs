@@ -69,6 +69,7 @@
             this.Controls.Add(this.button1);
             this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.pictureBox1);
+            this.DoubleBuffered = true;
             this.Name = "Form1";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
