@@ -203,8 +203,4 @@ namespace Kinect_Test
         }
 
     }
-
-
-    
-    
 }
