@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using System.Windows.Forms;
 using KinectUnifier;
-using LuxandFace = LuxandFaceLib.LuxandFace;
 
 namespace Kinect_Test
 {
@@ -21,7 +21,7 @@ namespace Kinect_Test
         private IBody[] _bodies;
 
         private IBodyManager _bodyManager;
-        private LuxandFaceLib.LuxandFace _face;
+        private LuxandFace.LuxandFace _face;
 
         private byte[] _colorFrameBuffer;
 
@@ -31,8 +31,6 @@ namespace Kinect_Test
         private int _colorWidth;
         private int _colorBytesPerPixel;
 
-        private DateTime _lastColorFrameTime;
-
         private readonly Brush[] _bodyBrushes =
         {
             Brushes.LimeGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink,
@@ -40,34 +38,22 @@ namespace Kinect_Test
         };
 
         private Pen[] _bodyPens;
-
-
-        public void InitBones()
-        {
-            _bodyPens = new Pen[_bodyBrushes.Length];
-            for (int i = 0; i < _bodyBrushes.Length; i++)
-            {
-                _bodyPens[i] = new Pen(_bodyBrushes[i], 3f);
-            }
-        }
-
-
+        
+        
+        
         public Form1()
         {
             InitializeComponent();
-
-           
-            
             
             _kinect = KinectFactory.KinectFactory.GetKinect();
             InitializeColorComponents();
-            _face = new LuxandFaceLib.LuxandFace(_colorWidth, _colorHeight, _colorBytesPerPixel);
+
+            _face = new LuxandFace.LuxandFace(_colorWidth, _colorHeight, _colorBytesPerPixel);
             _face.InitializeLibrary();
             _renderer = new Renderer(new FormComponents(statusLabel, pictureBox1), _colorWidth, _colorHeight);
 
             InitializeBodyComponents();
-
-            InitBones();
+            _bodyPens = _bodyBrushes.Select(br => new Pen(br, 2.5f)).ToArray();
             
             _coordinateMapper = _kinect.CoordinateMapper;
             _kinect.Open();
@@ -97,10 +83,8 @@ namespace Kinect_Test
                     _colorFrameBuffer = new byte[frame.PixelDataLength];
                 }
                 frame.CopyFramePixelDataToArray(_colorFrameBuffer);
-                _lastColorFrameTime = DateTime.Now;
             }
-
-            _lastColorFrameTime = DateTime.Now;
+            
             _face.FeedFrame(_colorFrameBuffer);
         }
 
