@@ -8,7 +8,7 @@ using Face;
 using KinectUnifier;
 using Luxand;
 
-namespace LuxandFaceLib
+namespace LuxandFace
 {
     public class LuxandFace : IFaceLIb
     {
@@ -42,7 +42,7 @@ namespace LuxandFaceLib
             {
                 throw new ApplicationException("Invalid Luxand FSDK Key!");    
             }
-            
+
             FSDK.InitializeLibrary();
         }
 
@@ -112,30 +112,28 @@ namespace LuxandFaceLib
 
         public void FeedFacePositions(Rectangle[] facePositions)
         {
-            _facePositions = facePositions.Select(x => new FSDK.TFacePosition(){angle = 0, w = x.Width, xc = x.X, yc = x.Y}).ToArray();
+            _facePositions = facePositions.Select(x => LuxandUtil.RectRotAngleToTFacePosition(x, 0)).ToArray();
+
         }
 
         public void FeedFacePositions(Rectangle[] facePositions, double[] rotationAngles)
         {
-            _facePositions = new FSDK.TFacePosition[facePositions.Length];
-            for (var i = 0; i < facePositions.Length; i++)
-            {
-                var f = facePositions[i];
-                _facePositions[i] = new FSDK.TFacePosition(){angle = rotationAngles[i], w = f.Width, xc = f.X + f.Width / 2, yc = f.Y + f.Height / 2};
-            }
+            _facePositions = facePositions.Select((r, a) => LuxandUtil.RectRotAngleToTFacePosition(r, a)).ToArray();
         }
 
         public Rectangle[] GetFacePositions()
         {
-            
+            int faceCount = 0;
+            FSDK.DetectMultipleFaces(_lastImageHandle, ref faceCount, out var fPositions, sizeof(long) * 16);
+            return fPositions.Select(x => LuxandUtil.TFacePositionToRectRotAngle(x).Item1).ToArray();
         }
 
-        public (Rectangle rect, double rotAngle)[] GetFacePostions()
+        public (Rectangle rect, double rotAngle)[] GetFacePostionsAndRotationAngles()
         {
             int faceCount = 0;
-            var facePositions = FSDK.DetectMultipleFaces(_lastImageHandle, ref faceCount, out var fPositions,
+            FSDK.DetectMultipleFaces(_lastImageHandle, ref faceCount, out var fPositions,
                 sizeof(long) * 16);
-            return (fPositions.Select(x => x.))
+            return fPositions.Select(LuxandUtil.TFacePositionToRectRotAngle).ToArray();
         }
 
         public int NumberOfFaces { get; }
