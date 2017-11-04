@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Luxand;
 
-namespace LuxandFace
+namespace LuxandFaceLib
 {
     internal static class LuxandUtil
     {

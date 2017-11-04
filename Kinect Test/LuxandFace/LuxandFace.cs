@@ -8,7 +8,7 @@ using Face;
 using KinectUnifier;
 using Luxand;
 
-namespace LuxandFace
+namespace LuxandFaceLib
 {
     public class LuxandFace : IFaceLIb
     {

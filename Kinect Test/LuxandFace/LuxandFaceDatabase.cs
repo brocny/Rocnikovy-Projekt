@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Luxand;
 
-namespace LuxandFace
+namespace LuxandFaceLib
 {
     public class LuxandFaceDatabase
     {
@@ -89,7 +89,6 @@ namespace LuxandFace
 
             return false;
         }
-
     }
 
     
@@ -97,6 +96,9 @@ namespace LuxandFace
     {
         public ICollection<byte[]> FaceTemplates => _faceTemplates;
         private List<byte[]> _faceTemplates;
+
+        private const float WeightAvgMatch = 1;
+        private const float WeightMaxMatch = 3;
 
         public FaceInfo(byte[] faceTemplate)
         {
@@ -139,7 +141,7 @@ namespace LuxandFace
                 }
             }
 
-            return (maxSimilarity * 3 + avgSimilarity) / 2;
+            return (maxSimilarity * WeightMaxMatch + avgSimilarity * WeightAvgMatch) / (WeightMaxMatch + WeightAvgMatch);
         }
        
     }
