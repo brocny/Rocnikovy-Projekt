@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Windows.Forms;
 using KinectUnifier;
+using LuxandFaceLib;
 
 namespace Kinect_Test
 {
@@ -13,23 +14,22 @@ namespace Kinect_Test
         private Renderer _renderer;
 
         private IKinect _kinect;
-
-        private int _bodyCount;
-
         private ICoordinateMapper _coordinateMapper;
 
-        private IBody[] _bodies;
-
-        private IBodyManager _bodyManager;
-        private LuxandFace.LuxandFace _face;
-
-        private byte[] _colorFrameBuffer;
-
         private IColorManager _colorManager;
-
         private int _colorHeight;
         private int _colorWidth;
         private int _colorBytesPerPixel;
+        private byte[] _colorFrameBuffer;
+
+        private int _bodyCount;
+        private IBody[] _bodies;
+        private IBodyManager _bodyManager;
+
+        private List<Rectangle> _facePositions;
+        private List<double> _faceRotations;
+        private LuxandFace _face;
+        private LuxandFaceDatabase _faceDatabase = new LuxandFaceDatabase();
 
         private readonly Brush[] _bodyBrushes =
         {
@@ -48,7 +48,7 @@ namespace Kinect_Test
             _kinect = KinectFactory.KinectFactory.GetKinect();
             InitializeColorComponents();
 
-            _face = new LuxandFace.LuxandFace(_colorWidth, _colorHeight, _colorBytesPerPixel);
+            _face = new LuxandFace(_colorWidth, _colorHeight, _colorBytesPerPixel);
             _face.InitializeLibrary();
             _renderer = new Renderer(new FormComponents(statusLabel, pictureBox1), _colorWidth, _colorHeight);
 
@@ -113,23 +113,24 @@ namespace Kinect_Test
             
             _renderer.ClearScreen();
             _renderer.DrawBodiesWithFaceBoxes(_bodies, _colorFrameBuffer, _colorBytesPerPixel, _bodyBrushes, _bodyPens, _coordinateMapper);
-
-
-            List<Rectangle> faceRects = new List<Rectangle>();
-            List<double> faceRots = new List<double>();
+            _facePositions = new List<Rectangle>();
+            _faceRotations = new List<double>();
 
             foreach (var body in _bodies)
             {
                 if (Util.TryGetHeadRectangleInColorSpace(body, _coordinateMapper, out var faceRect, out double rotAngle))
                 {
-                    faceRects.Add(faceRect);
-                    faceRots.Add(rotAngle);
+                    _facePositions.Add(faceRect);
+                    _faceRotations.Add(rotAngle);
                 }
             }
-            _face.FeedFacePositions(faceRects.ToArray(), faceRots.ToArray());
-            if(faceRects.Count > 0)
-            
-            _renderer.DrawFacialFeatures(_face.GetFacialFeatures(0), Brushes.Aqua, 1.5f);
+            _face.FeedFacePositions(_facePositions.ToArray(), _faceRotations.ToArray());
+
+
+            for (int i = 0; i < _faceRotations.Count; i++)
+            {
+                _renderer.DrawFacialFeatures(_face.GetFacialFeatures(i), Brushes.Aqua, 1.5f);
+            }
 
             pictureBox1.Invalidate();
         }
@@ -145,6 +146,19 @@ namespace Kinect_Test
             {
                 _kinect.Open();
                 button1.Text = "Stop";
+            }
+        }
+
+        private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
+        {
+            var pointInColorCoordinates = Util.CoordinateSystemConversion(e.Location, pictureBox1.Width, pictureBox1.Height, _colorWidth, _colorHeight);
+            for (var i = 0; i < _facePositions.Count; i++)
+            {
+                if (_facePositions[i].Contains(pointInColorCoordinates))
+                {
+                    MessageBox.Show($"Clicked face {i}");
+                    break;
+                }
             }
         }
     }
