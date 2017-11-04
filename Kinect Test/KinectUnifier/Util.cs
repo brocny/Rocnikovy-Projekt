@@ -72,6 +72,21 @@ namespace KinectUnifier
             bmp.UnlockBits(bmpData);
             return bmp;
         }
+        
+        public static Rectangle CoordinateSystemConversion(Rectangle origRect, int origWidth, int origHeight, int newWidth, int newHeight)
+        {
+            float xRatio = newWidth / (float)origWidth;
+            float yRatio = newHeight / (float)origHeight;
+            return new Rectangle((int)(origRect.X * xRatio), (int)(origRect.Y * yRatio), (int)(origRect.Width * xRatio), (int)(origRect.Height * yRatio));
+
+        }
+
+        public static Point CoordinateSystemConversion(Point origPoint, int origWidth, int origHeight, int newWidth, int newHeight)
+        {
+            float xRatio = newWidth / (float)origWidth;
+            float yRatio = newHeight / (float)origHeight;
+            return new Point((int)(origPoint.X * xRatio), (int)(origPoint.Y * yRatio));
+        }
     }
 
 
