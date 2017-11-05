@@ -28,7 +28,7 @@ namespace Kinect_Test
 
         private List<Rectangle> _facePositions;
         private List<double> _faceRotations;
-        private LuxandFace _face;
+        private LuxandFace2 _face;
         private LuxandFaceDatabase _faceDatabase = new LuxandFaceDatabase();
 
         private readonly Brush[] _bodyBrushes =
@@ -48,7 +48,7 @@ namespace Kinect_Test
             _kinect = KinectFactory.KinectFactory.GetKinect();
             InitializeColorComponents();
 
-            _face = new LuxandFace(_colorWidth, _colorHeight, _colorBytesPerPixel);
+            _face = new LuxandFace2(_colorWidth, _colorHeight, _colorBytesPerPixel);
             _face.InitializeLibrary();
             _renderer = new Renderer(new FormComponents(statusLabel, pictureBox1), _colorWidth, _colorHeight);
 
@@ -124,15 +124,17 @@ namespace Kinect_Test
                     _faceRotations.Add(rotAngle);
                 }
             }
-            _face.FeedFacePositions(_facePositions.ToArray(), _faceRotations.ToArray());
+            _face.FeedFacePositions(_facePositions.ToArray());
 
 
-            for (int i = 0; i < _faceRotations.Count; i++)
+            for (int i = 0; i < _facePositions.Count; i++)
             {
                 _renderer.DrawFacialFeatures(_face.GetFacialFeatures(i), Brushes.Aqua, 1.5f);
+                var matchedFace = _faceDatabase.GetBestMatch(_face.GetFaceTemplate(i));
+                if(matchedFace.Item2 > 0.6f) { _renderer.DrawName($"{matchedFace.Item1} ({matchedFace.Item2:P})", _facePositions[i].Left, _facePositions[i].Bottom, _bodyBrushes[i]);}
             }
-
             pictureBox1.Invalidate();
+            Application.DoEvents();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -156,8 +158,12 @@ namespace Kinect_Test
             {
                 if (_facePositions[i].Contains(pointInColorCoordinates))
                 {
-                    MessageBox.Show($"Clicked face {i}");
-                    break;
+                    var faceInfo = _face.GetFaceTemplate(i);
+                    if (faceInfo == null) return;
+                    if (!_faceDatabase.TryAddNewFace("Michal", faceInfo))
+                    {
+                        _faceDatabase.TryAddFaceTemplateToExistingFace("Michal", faceInfo);
+                    }
                 }
             }
         }
