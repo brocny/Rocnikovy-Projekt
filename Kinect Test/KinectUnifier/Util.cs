@@ -87,6 +87,25 @@ namespace KinectUnifier
             float yRatio = newHeight / (float)origHeight;
             return new Point((int)(origPoint.X * xRatio), (int)(origPoint.Y * yRatio));
         }
+
+        public static byte[] GetBufferRect(this byte[] buffer, Rectangle rect, int bytesPerPixel)
+        {
+            var ret = new byte[rect.Width * rect.Height * bytesPerPixel];
+            int targetI = 0;
+            for (int y = rect.Top; y < rect.Bottom; y++)
+            {
+                for (int x = rect.Left; x < rect.Right; x++)
+                {
+                    var index = (y * rect.Width + x) * bytesPerPixel;
+                    for (int i = index; i < bytesPerPixel; i++)
+                    {
+                        ret[targetI++] = buffer[i];
+                    }
+                }
+            }
+
+            return ret;
+        }
     }
 
 
