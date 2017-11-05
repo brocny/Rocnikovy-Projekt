@@ -48,8 +48,8 @@ namespace KinectUnifier
             float headNeckDistance = headJointCameraPos.DistanceTo(neckJointCameraPos);
             bool isFaceVertical = Math.Abs(headJointCameraPos.Y - neckJointCameraPos.Y) >
                                   Math.Abs(headJointCameraPos.X - neckJointCameraPos.X);
-            var width =  isFaceVertical ? headNeckDistance * 1.6f : headNeckDistance * 1.9f;
-            var height = isFaceVertical ? headNeckDistance * 1.9f : headNeckDistance * 1.6f;
+            var width =  isFaceVertical ? headNeckDistance * 1.9f : headNeckDistance * 2.4f;
+            var height = isFaceVertical ? headNeckDistance * 2.4f : headNeckDistance * 1.9f;
 
             rotationAngle = Math.Asin( (headJointCameraPos.X - neckJointCameraPos.X) / headNeckDistance);
 
