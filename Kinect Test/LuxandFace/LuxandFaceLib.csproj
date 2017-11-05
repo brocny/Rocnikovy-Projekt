@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LuxandFace2.cs" />
     <Compile Include="LuxandFaceDatabase.cs" />
     <Compile Include="LuxandUtil.cs" />
     <Compile Include="LuxandFace.cs" />
