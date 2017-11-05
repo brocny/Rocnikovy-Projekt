@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using Luxand;
 
 namespace LuxandFaceLib
@@ -31,6 +34,12 @@ namespace LuxandFaceLib
             return true;
         }
 
+        public bool TryAddNewFace(string name, byte[] template)
+        {
+            FaceInfo.ThrowIfTemplateLengthInvalid(template);
+            return TryAddNewFace(name, new FaceInfo(template));
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -38,20 +47,17 @@ namespace LuxandFaceLib
         /// <returns><code>name</code> of the best matching face and <code>confidence</code> value [0, 1]</returns>
         public (string name, float confidence) GetBestMatch(byte[] template)
         {
-            string outName = string.Empty;
-            float outConfidence = 0;
+            (string, float) outValue = (string.Empty, 0);
 
-            foreach (var pair in _storedFaces)
+            var matches = _storedFaces.AsParallel().Select(x => (x.Key, x.Value.GetSimilarity(template))).AsEnumerable();
+            foreach (var match in matches)
             {
-                float similarity;
-                if ((similarity = pair.Value.GetSimilarity(template)) > outConfidence)
+                if (match.Item2 > outValue.Item2)
                 {
-                    outConfidence = similarity;
-                    outName = pair.Key;
+                    outValue = match;
                 }
             }
-
-            return (outName, outConfidence);
+            return outValue;
         }
 
         /// <summary>
@@ -98,7 +104,7 @@ namespace LuxandFaceLib
         private List<byte[]> _faceTemplates;
 
         private const float WeightAvgMatch = 1;
-        private const float WeightMaxMatch = 3;
+        private const float WeightMaxMatch = 5;
 
         public FaceInfo(byte[] faceTemplate)
         {
@@ -117,31 +123,26 @@ namespace LuxandFaceLib
 
         internal static void ThrowIfTemplateLengthInvalid(byte[] template)
         {
-            if (template.Length != FSDK.TemplateSize)
+            if (template == null || template.Length != FSDK.TemplateSize)
             {
-                throw new ArgumentException($"faceTemplate of length {FSDK.TemplateSize} expected, got length {template.Length}");
+                throw new ArgumentException($"faceTemplate of length {FSDK.TemplateSize} expected, got length {template?.Length}");
             }
         }
 
         public float GetSimilarity(byte[] faceTemplate)
         {
-            float maxSimilarity = 0;
-            float avgSimilarity = 0;
-            int matchedTemplates = 0;
-            foreach (var i in _faceTemplates)
+            int numMatchedFaces = 0;
+            float[] similarities = new float[_faceTemplates.Count];
+            Parallel.For(0, _faceTemplates.Count, (i) =>
             {
-                float sim = 0;
-                var ft = i;
-                
-                if(FSDK.FSDKE_OK == FSDK.MatchFaces(ref faceTemplate, ref ft, ref sim))
+                var ithTemplate = _faceTemplates[i];
+                if (FSDK.FSDKE_OK == FSDK.MatchFaces(ref faceTemplate, ref ithTemplate, ref similarities[i]))
                 {
-                    matchedTemplates++;
-                    maxSimilarity = Math.Max(sim, maxSimilarity);
-                    avgSimilarity += sim;
+                    Interlocked.Increment(ref numMatchedFaces);
                 }
-            }
+            });
 
-            return (maxSimilarity * WeightMaxMatch + avgSimilarity * WeightAvgMatch) / (WeightMaxMatch + WeightAvgMatch);
+            return similarities.Max();
         }
        
     }
