@@ -2,16 +2,14 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using KinectUnifier;
 
 namespace Kinect_Test
 {
     public class Renderer
     {
+        public Font NameFont { get; set; } = new Font(FontFamily.GenericSansSerif, 12);
+
         public Renderer(FormComponents components, int colorFrameWidth, int colorFrameHeight)
         {
             _components = components;
@@ -40,6 +38,7 @@ namespace Kinect_Test
         private readonly int _colorHeight;
         private readonly int _colorWidth;
 
+        // Ratio of the picture box height (width) and the height (width) of the actual frames
         private readonly float _heightRatio;
         private readonly float _widthRatio;
 
@@ -52,8 +51,8 @@ namespace Kinect_Test
         {
             _gr.FillRectangle(Brushes.Black, _components.PictureBox.ClientRectangle);
             var currentTime = DateTime.Now;
-            _components.Label.Text = $"FPS: {1000f / (DateTime.Now - _lastFrameTime).Milliseconds:F2}";
-            _lastFrameTime = DateTime.Now;
+            _components.Label.Text = $"FPS: {1000f / (currentTime - _lastFrameTime).Milliseconds:F2}";
+            _lastFrameTime = currentTime;
         }
 
         public void DrawBody(IBody body, Brush brush, Pen pen, ICoordinateMapper mapper)
@@ -154,6 +153,11 @@ namespace Kinect_Test
             }
         }
 
+        public void DrawName(string name, int xPos, int yPos, Brush brush)
+        {
+            _gr.DrawString(name, NameFont, brush, xPos * _widthRatio, yPos * _heightRatio);
+        }
+
         public void DrawColorBox(Rectangle rect, byte[] colorFrameBuffer, int colorFrameBpp)
         {
             if (rect.Width == 0 || rect.Height == 0 || colorFrameBuffer == null)
@@ -179,7 +183,7 @@ namespace Kinect_Test
             var bmpWidth = (int)(rect.Width * _widthRatio);
             var bmpHeight = (int)(rect.Height * _heightRatio);
 
-            if (bmpWidth == 0 || bmpHeight == 0)
+            if (bmpWidth == 0 || bmpHeight == 0 || bmpX + bmpWidth > _bmp.Width || bmpY + bmpHeight > _bmp.Height)
                 return;
 
             var bmpData = _bmp.LockBits(new Rectangle(bmpX, bmpY, bmpWidth, bmpHeight),
