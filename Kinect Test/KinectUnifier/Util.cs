@@ -31,7 +31,7 @@ namespace KinectUnifier
             return ret;
         }
 
-        public static bool TryGetHeadRectangleInColorSpace(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
+        public static bool TryGetHeadRectangleAndRotAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
         {
             IJoint headJoint;
             IJoint neckJoint;
@@ -43,20 +43,46 @@ namespace KinectUnifier
                 !body.Joints.TryGetValue(JointType.Neck, out neckJoint)) return false;
             if (!headJoint.IsTracked || !neckJoint.IsTracked) return false;
 
-            var headJointCameraPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
-            var neckJointCameraPos = mapper.MapCameraPointToColorSpace(neckJoint.Position);
-            float headNeckDistance = headJointCameraPos.DistanceTo(neckJointCameraPos);
-            bool isFaceVertical = Math.Abs(headJointCameraPos.Y - neckJointCameraPos.Y) >
-                                  Math.Abs(headJointCameraPos.X - neckJointCameraPos.X);
-            var width =  isFaceVertical ? headNeckDistance * 1.9f : headNeckDistance * 2.4f;
-            var height = isFaceVertical ? headNeckDistance * 2.4f : headNeckDistance * 1.9f;
-
-            rotationAngle = Math.Asin( (headJointCameraPos.X - neckJointCameraPos.X) / headNeckDistance);
-
+            var headJointColorPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
+            var neckJointColorPos = mapper.MapCameraPointToColorSpace(neckJoint.Position);
+            float headNeckDistance = headJointColorPos.DistanceTo(neckJointColorPos);
+            rotationAngle = Math.Asin((headJointColorPos.X - neckJointColorPos.X) / headNeckDistance) * 180 / Math.PI;
+            bool isFaceVertical = Math.Abs(rotationAngle) < 45;
+            var width =  isFaceVertical ? headNeckDistance * 1.4f : headNeckDistance * 1.8f;
+            var height = isFaceVertical ? headNeckDistance * 1.8f : headNeckDistance * 1.4f;
             faceRect =  new Rectangle(
-                (int)(headJointCameraPos.X - width / 2), 
-                (int)(headJointCameraPos.Y - height / 2.2f), 
+                (int)(headJointColorPos.X - width / 2), 
+                (int)(headJointColorPos.Y - height / 2), 
                 (int)width, 
+                (int)height);
+
+            return true;
+        }
+
+        public static bool TryGetHeadRectangle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect)
+        {
+            IJoint headJoint;
+            IJoint neckJoint;
+
+            faceRect = Rectangle.Empty;
+
+            if (!body.Joints.TryGetValue(JointType.Head, out headJoint) ||
+                !body.Joints.TryGetValue(JointType.Neck, out neckJoint)) return false;
+            if (!headJoint.IsTracked || !neckJoint.IsTracked) return false;
+
+            var headJointColorPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
+            var neckJointColorPos = mapper.MapCameraPointToColorSpace(neckJoint.Position);
+            float headNeckDistance = headJointColorPos.DistanceTo(neckJointColorPos);
+
+            bool isFaceVertical = Math.Abs(headJointColorPos.Y - neckJointColorPos.Y) >
+                                  Math.Abs(headJointColorPos.X - neckJointColorPos.X);
+
+            var width = isFaceVertical ? headNeckDistance * 1.4f : headNeckDistance * 1.8f;
+            var height = isFaceVertical ? headNeckDistance * 1.8f : headNeckDistance * 1.4f;
+            faceRect = new Rectangle(
+                (int)(headJointColorPos.X - width / 2),
+                (int)(headJointColorPos.Y - height / 2),
+                (int)width,
                 (int)height);
 
             return true;

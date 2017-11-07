@@ -71,7 +71,7 @@ namespace Kinect_Test
 
         public void DrawBodyWithFaceBox(IBody body, byte[] colorBuffer, int colorFrameBpp, Brush brush, Pen pen, ICoordinateMapper mapper)
         {
-            if (Util.TryGetHeadRectangleInColorSpace(body, mapper, out var faceRect, out var _))
+            if (Util.TryGetHeadRectangleAndRotAngle(body, mapper, out var faceRect, out var _))
             {
                 DrawColorBox(faceRect, colorBuffer, colorFrameBpp);
             }
