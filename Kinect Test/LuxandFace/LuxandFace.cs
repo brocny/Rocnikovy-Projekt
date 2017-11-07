@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Face;
 using KinectUnifier;
@@ -12,12 +13,10 @@ namespace LuxandFaceLib
 {
     public class LuxandFace : IFaceLIb
     {
-        private IKinect _kinect;
-        private IBody[] _bodies;
         private int _lastImageHandle;
         private int[] _lastFaceImageHandles;
-        private FSDK.CImage[] _lastFaceImages;
         private FSDK.TFacePosition[] _facePositions;
+        private FSDK.FSDK_IMAGEMODE _imageMode;
 
         private byte[] _frameBuffer;
         
@@ -31,8 +30,8 @@ namespace LuxandFaceLib
             FrameHeight = frameHeight;
             FrameWidth = frameWidth;
             FrameBytesPerPixel = frameBytesPerPixel;
-            if(frameBytesPerPixel != 4)
-                throw new Exception();
+            _imageMode = LuxandUtil.ImageModeFromBytersPerPixel(frameBytesPerPixel);
+
         }
 
         public void InitializeLibrary()
