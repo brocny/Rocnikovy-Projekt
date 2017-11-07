@@ -25,6 +25,21 @@ namespace LuxandFaceLib
                 yc = rect.Y + rect.Width / 2
             };
         }
+
+        internal static FSDK.FSDK_IMAGEMODE ImageModeFromBytersPerPixel(int bytesPerPixel)
+        {
+            switch (bytesPerPixel)
+            {
+                case 4:
+                    return FSDK.FSDK_IMAGEMODE.FSDK_IMAGE_COLOR_32BIT;
+                case 3:
+                    return FSDK.FSDK_IMAGEMODE.FSDK_IMAGE_COLOR_24BIT;
+                case 1:
+                    return FSDK.FSDK_IMAGEMODE.FSDK_IMAGE_GRAYSCALE_8BIT;
+                default:
+                    throw new ArgumentOutOfRangeException($"{nameof(bytesPerPixel)} invalid value {bytesPerPixel}: supported values are: 1; 3; 4");
+            }
+        }
     }
 
 
