@@ -7,22 +7,20 @@ using Luxand;
 
 namespace LuxandFaceLib
 {
-    public class LuxandFace2 : IFaceLIb
+    public class LuxandFace2
     {
-        private IKinect _kinect;
-        private IBody[] _bodies;
-        private int _lastImageHandle;
-        private int[] _lastFaceImageHandles;
-        private FSDK.CImage[] _lastFaceImages;
+        private int[] _faceImageHandles;
         private FSDK.TFacePosition[] _facePositions;
-        private Rectangle[] _faceRects;
+        private FSDK.TPoint[][] _facialFeatures;
 
-        private byte[] _frameBuffer;
+        public int DetectionThreshold
+        {
+            set { FSDK.SetFaceDetectionThreshold(value); }
+        }
 
         public LuxandFace2()
         {
-            FSDK.SetFaceDetectionParameters(false, true, 70);
-            FSDK.SetFaceDetectionThreshold(3);
+
         }
 
         public LuxandFace2(int frameWidth, int frameHeight, int frameBytesPerPixel)
@@ -30,6 +28,11 @@ namespace LuxandFaceLib
             FrameHeight = frameHeight;
             FrameWidth = frameWidth;
             FrameBytesPerPixel = frameBytesPerPixel;
+        }
+
+        public LuxandFace2(int frameWidth, int frameHeight, int frameBytesPerPixel, int detectionThreshould) : this(frameWidth, frameHeight, frameBytesPerPixel)
+        {
+            DetectionThreshold = detectionThreshould;
         }
 
         public void InitializeLibrary()
@@ -46,28 +49,37 @@ namespace LuxandFaceLib
 
         public Image GetFaceImage(int faceIndex)
         {
-            if (_lastFaceImageHandles == null) return null;
-            return new FSDK.CImage(_lastFaceImageHandles[faceIndex]).ToCLRImage();
+            if (_faceImageHandles == null) return null;
+            return new FSDK.CImage(_faceImageHandles[faceIndex]).ToCLRImage();
         }
 
         public Point[] GetFacialFeatures(int faceIndex)
         {
-            var facePosition = _facePositions?[faceIndex];
-            if (facePosition == null) return null;
-            FSDK.TPoint[] temp;
-
-            if (FSDK.FSDKE_OK != FSDK.DetectFacialFeaturesInRegion(_lastImageHandle, ref facePosition, out temp))
+            if (FSDK.FSDKE_OK !=
+                FSDK.DetectFacialFeaturesInRegion(_faceImageHandles[faceIndex], ref _facePositions[faceIndex],
+                    out var temp))
+            {
                 return null;
+            }
 
-            return temp.Select(x => x.ToPoint()).ToArray();
+            _facialFeatures[faceIndex] = temp;
+            return temp?.Select(x => x.ToPoint()).ToArray();
         }
 
         public byte[] GetFaceTemplate(int faceIndex)
         {
-            //if (_facePositions == null) return null;
-            var facePostion = _facePositions[faceIndex];
+            if (_facialFeatures[faceIndex] != null)
+            {
+                if(FSDK.FSDKE_OK == FSDK.GetFaceTemplateUsingFeatures(_faceImageHandles[faceIndex], ref _facialFeatures[faceIndex], out var ret))
+                {
+                    return ret;
+                }
+                return null;
+            }
+            
+            var facePostion = _facePositions?[faceIndex];
             if (facePostion == null) return null;
-            if (FSDK.FSDKE_OK != FSDK.GetFaceTemplateInRegion(_lastImageHandle, ref facePostion, out var retVal))
+            if (FSDK.FSDKE_OK != FSDK.GetFaceTemplateInRegion(_faceImageHandles[faceIndex], ref facePostion, out var retVal))
             {
                 return null;
             }
@@ -75,90 +87,82 @@ namespace LuxandFaceLib
             return retVal;
         }
 
-        public Image GetImage(ref IntPtr bmpIntPtr)
+        public void FeedFaces(byte[][] buffers, int[] widths, int[] heights, int bytesPerPixel = 4)
         {
-            return new FSDK.CImage(_lastImageHandle).ToCLRImage();
-        }
-
-        public void FeedFrame(byte[] buffer)
-        {
-            if (buffer == null)
+            if (_faceImageHandles != null)
             {
-                return;
-            }
-            _frameBuffer = buffer;
-            FSDK.FreeImage(_lastImageHandle);
-
-            FSDK.LoadImageFromBuffer(ref _lastImageHandle, _frameBuffer, FrameWidth, FrameHeight, FrameWidth * FrameBytesPerPixel,
-                FSDK.FSDK_IMAGEMODE.FSDK_IMAGE_COLOR_32BIT);
-        }
-
-        public void FeedFrame(Bitmap bmp)
-        {
-            var hBmp = bmp.GetHbitmap();
-            FSDK.LoadImageFromHBitmap(ref _lastImageHandle, hBmp);
-        }
-
-        public void GenerateFaceImages()
-        {
-            if (_faceRects == null || _faceRects.Length == 0) return;
-            if (_lastFaceImageHandles != null)
-            {
-                foreach (var handle in _lastFaceImageHandles)
+                foreach (var handle in _faceImageHandles)
                 {
                     FSDK.FreeImage(handle);
                 }
             }
 
-            _lastFaceImageHandles = new int[_faceRects.Length];
-            for (int i = 0; i < _faceRects.Length; i++)
+            _facialFeatures = null;
+            _faceImageHandles = new int[buffers.Length];
+            _facePositions = new FSDK.TFacePosition[buffers.Length];
+            FSDK.FSDK_IMAGEMODE imageMode = LuxandUtil.ImageModeFromBytersPerPixel(bytesPerPixel);
+            for (var i = 0; i < buffers.Length; i++)
             {
-                FSDK.CreateEmptyImage(ref _lastFaceImageHandles[i]);
-                var r = _faceRects[i];
-                FSDK.CopyRect(_lastImageHandle, r.Left, r.Top, r.Right, r.Bottom, _lastFaceImageHandles[i]);
-            }
-            for (int i = 0; i < _lastFaceImageHandles.Length; i++)
-            {
-                FSDK.DetectFace(_lastFaceImageHandles[i], ref _facePositions[i]);
-                if (_facePositions[i] == null) return;
-                _facePositions[i].xc += _faceRects[i].X;
-                _facePositions[i].yc += _faceRects[i].Y;
+                FSDK.LoadImageFromBuffer(ref _faceImageHandles[i],
+                    buffers[i],
+                    widths[i],
+                    heights[i],
+                    widths[i] * bytesPerPixel,
+                    imageMode);
+                FSDK.DetectFace(_faceImageHandles[i], ref _facePositions[i]);
             }
         }
 
+        public void FeedFaces(byte[] buffer, Rectangle[] facePositions, int bytesPerPixel)
+        {
+            if (_faceImageHandles != null)
+            {
+                foreach (var handle in _faceImageHandles)
+                {
+                    FSDK.FreeImage(handle);
+                }
+            }
+
+            _faceImageHandles = new int[facePositions.Length];
+            var imageMode = LuxandUtil.ImageModeFromBytersPerPixel(bytesPerPixel);
+
+            for (int i = 0; i < facePositions.Length; i++)
+            {
+                var locBuffer = buffer.GetBufferRect(facePositions[i], bytesPerPixel);
+                FSDK.LoadImageFromBuffer(ref _faceImageHandles[i],
+                    locBuffer, 
+                    facePositions[i].Width,
+                    facePositions[i].Height, 
+                    facePositions[i].Width * bytesPerPixel,
+                    imageMode);
+            }
+        }
+        
         public void FeedFacePositions(Rectangle[] facePositions)
         {
-            //_facePositions = facePositions.Select(x => LuxandUtil.RectRotAngleToTFacePosition(x, 0)).ToArray();
-            _faceRects = new Rectangle[facePositions.Length];
-            facePositions.CopyTo(_faceRects, 0);
-            if (_faceRects.Length == 0) return;
-            _facePositions = new FSDK.TFacePosition[facePositions.Length];
-            GenerateFaceImages();
+            _facePositions = facePositions.Select(r => LuxandUtil.RectRotAngleToTFacePosition(r, 0)).ToArray();
         }
 
         public void FeedFacePositions(Rectangle[] facePositions, double[] rotationAngles)
         {
-            //_facePositions = facePositions.Select((r, a) => LuxandUtil.RectRotAngleToTFacePosition(r, a)).ToArray();
+            _facePositions = facePositions.Select((r, a) => LuxandUtil.RectRotAngleToTFacePosition(r, a)).ToArray();
         }
 
         public Rectangle[] GetFacePositions()
         {
-            int faceCount = 0;
-            FSDK.DetectMultipleFaces(_lastImageHandle, ref faceCount, out var fPositions, sizeof(long) * 16);
-            return fPositions.Select(x => LuxandUtil.TFacePositionToRectRotAngle(x).Item1).ToArray();
+            return _facePositions?.Select(x => LuxandUtil.TFacePositionToRectRotAngle(x).Item1).ToArray();
         }
 
         public (Rectangle rect, double rotAngle)[] GetFacePostionsAndRotationAngles()
         {
-            int faceCount = 0;
-            FSDK.DetectMultipleFaces(_lastImageHandle, ref faceCount, out var fPositions,
-                sizeof(long) * 16);
-            return fPositions.Select(LuxandUtil.TFacePositionToRectRotAngle).ToArray();
+            return _facePositions?.Select(LuxandUtil.TFacePositionToRectRotAngle).ToArray();
         }
 
-        public int NumberOfFaces { get; }
+        public int FaceCount { get; }
         public int FrameWidth { get; set; }
         public int FrameHeight { get; set; }
         public int FrameBytesPerPixel { get; set; }
+
+        public static int FaceFeatureCount => FSDK.FSDK_FACIAL_FEATURE_COUNT;
     }
 }
