@@ -26,7 +26,7 @@ namespace LuxandFaceLib
             };
         }
 
-        internal static FSDK.FSDK_IMAGEMODE ImageModeFromBytersPerPixel(int bytesPerPixel)
+        internal static FSDK.FSDK_IMAGEMODE ImageModeFromBytesPerPixel(int bytesPerPixel)
         {
             switch (bytesPerPixel)
             {
