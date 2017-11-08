@@ -33,11 +33,16 @@ namespace KinectUnifier
 
         public static bool TryGetHeadRectangleAndRotAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
         {
+            const float FaceWidth = 1.5f;
+            const float FaceHeight = 2f;
+
             IJoint headJoint;
             IJoint neckJoint;
 
             faceRect = Rectangle.Empty;
             rotationAngle = 0;
+
+
 
             if (!body.Joints.TryGetValue(JointType.Head, out headJoint) ||
                 !body.Joints.TryGetValue(JointType.Neck, out neckJoint)) return false;
@@ -48,8 +53,8 @@ namespace KinectUnifier
             float headNeckDistance = headJointColorPos.DistanceTo(neckJointColorPos);
             rotationAngle = Math.Asin((headJointColorPos.X - neckJointColorPos.X) / headNeckDistance) * 180 / Math.PI;
             bool isFaceVertical = Math.Abs(rotationAngle) < 45;
-            var width =  isFaceVertical ? headNeckDistance * 1.4f : headNeckDistance * 1.8f;
-            var height = isFaceVertical ? headNeckDistance * 1.8f : headNeckDistance * 1.4f;
+            var width =  isFaceVertical ? headNeckDistance * FaceWidth : headNeckDistance * FaceHeight;
+            var height = isFaceVertical ? headNeckDistance * FaceHeight : headNeckDistance * FaceWidth;
             faceRect =  new Rectangle(
                 (int)(headJointColorPos.X - width / 2), 
                 (int)(headJointColorPos.Y - height / 2), 
@@ -114,16 +119,29 @@ namespace KinectUnifier
             return new Point((int)(origPoint.X * xRatio), (int)(origPoint.Y * yRatio));
         }
 
-        public static byte[] GetBufferRect(this byte[] buffer, Rectangle rect, int bytesPerPixel)
+        public static byte[] GetBufferRect(this byte[] buffer, int bufferWidth, Rectangle rect, int bytesPerPixel)
         {
-            var ret = new byte[rect.Width * rect.Height * bytesPerPixel];
+            int left = rect.Left;
+            if (left < 0) left = 0;
+
+            int right = rect.Right;
+            if (right > bufferWidth) right = bufferWidth;
+
+            int top = rect.Top;
+            if (top < 0) top = 0;
+
+            int bufferHeight = buffer.Length / bytesPerPixel / bufferWidth;
+            int bottom = rect.Bottom;
+            if (bottom > bufferHeight) bottom = bufferHeight;
+
+            var ret = new byte[(right - left) * (bottom - top) * bytesPerPixel];
             int targetI = 0;
-            for (int y = rect.Top; y < rect.Bottom; y++)
+            for (int y = top; y < bottom; y++)
             {
-                for (int x = rect.Left; x < rect.Right; x++)
+                for (int x = left; x < right; x++)
                 {
-                    var index = (y * rect.Width + x) * bytesPerPixel;
-                    for (int i = index; i < bytesPerPixel; i++)
+                    var index = (y * (right - left) + x) * bytesPerPixel;
+                    for (int i = index; i < index + bytesPerPixel; i++)
                     {
                         ret[targetI++] = buffer[i];
                     }
@@ -131,6 +149,23 @@ namespace KinectUnifier
             }
 
             return ret;
+        }
+
+        public static Rectangle TrimRectangle(this Rectangle rect, int width, int height)
+        {
+            int left = rect.Left;
+            if (left < 0) left = 0;
+
+            int right = rect.Right;
+            if (right > width) right = width;
+
+            int top = rect.Top;
+            if (top < 0) top = 0;
+
+            int bottom = rect.Bottom;
+            if (bottom > height) bottom = height;
+
+            return new Rectangle(left, top, right - left, bottom - top);
         }
     }
 
