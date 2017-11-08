@@ -12,6 +12,7 @@ namespace LuxandFaceLib
         private int[] _faceImageHandles;
         private FSDK.TFacePosition[] _facePositions;
         private FSDK.TPoint[][] _facialFeatures;
+        private Size[] _translations;
 
         public int DetectionThreshold
         {
@@ -55,20 +56,21 @@ namespace LuxandFaceLib
 
         public Point[] GetFacialFeatures(int faceIndex)
         {
+            if (_facePositions?[faceIndex] == null || _translations?[faceIndex] == null) return null;
             if (FSDK.FSDKE_OK !=
                 FSDK.DetectFacialFeaturesInRegion(_faceImageHandles[faceIndex], ref _facePositions[faceIndex],
                     out var temp))
             {
                 return null;
             }
-
+            if(_facialFeatures == null) _facialFeatures = new FSDK.TPoint[FaceCount][];
             _facialFeatures[faceIndex] = temp;
-            return temp?.Select(x => x.ToPoint()).ToArray();
+            return temp?.Select(x => x.ToPoint() + _translations[faceIndex]).ToArray();
         }
 
         public byte[] GetFaceTemplate(int faceIndex)
         {
-            if (_facialFeatures[faceIndex] != null)
+            if (_facialFeatures?[faceIndex] != null)
             {
                 if(FSDK.FSDKE_OK == FSDK.GetFaceTemplateUsingFeatures(_faceImageHandles[faceIndex], ref _facialFeatures[faceIndex], out var ret))
                 {
@@ -114,7 +116,7 @@ namespace LuxandFaceLib
         }
 
         public void FeedFaces(byte[] buffer, Rectangle[] facePositions, int bytesPerPixel)
-        {
+        { 
             if (_faceImageHandles != null)
             {
                 foreach (var handle in _faceImageHandles)
@@ -123,18 +125,25 @@ namespace LuxandFaceLib
                 }
             }
 
+            _translations = new Size[facePositions.Length];
             _faceImageHandles = new int[facePositions.Length];
+            _facePositions = new FSDK.TFacePosition[facePositions.Length];
             var imageMode = LuxandUtil.ImageModeFromBytersPerPixel(bytesPerPixel);
 
             for (int i = 0; i < facePositions.Length; i++)
             {
-                var locBuffer = buffer.GetBufferRect(facePositions[i], bytesPerPixel);
+                var fp = facePositions[i].TrimRectangle(FrameWidth, FrameHeight);
+                _translations[i] = new Size(fp.Location);
+                var locBuffer = buffer.GetBufferRect(FrameWidth, facePositions[i], bytesPerPixel);
                 FSDK.LoadImageFromBuffer(ref _faceImageHandles[i],
                     locBuffer, 
-                    facePositions[i].Width,
-                    facePositions[i].Height, 
-                    facePositions[i].Width * bytesPerPixel,
+                    fp.Width,
+                    fp.Height, 
+                    fp.Width * bytesPerPixel,
                     imageMode);
+                var faceDetected = new FSDK.TFacePosition();
+                FSDK.DetectFace(_faceImageHandles[i], ref faceDetected);
+                _facePositions[i] = faceDetected;
             }
         }
         
@@ -158,7 +167,7 @@ namespace LuxandFaceLib
             return _facePositions?.Select(LuxandUtil.TFacePositionToRectRotAngle).ToArray();
         }
 
-        public int FaceCount { get; }
+        public int FaceCount => _faceImageHandles?.Length ?? 0;
         public int FrameWidth { get; set; }
         public int FrameHeight { get; set; }
         public int FrameBytesPerPixel { get; set; }

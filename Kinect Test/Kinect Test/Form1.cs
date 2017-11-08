@@ -87,10 +87,9 @@ namespace Kinect_Test
                 if (frame == null) return;
 
                 _colorBytesPerPixel = frame.BytesPerPixel;
-                if (_colorFrameBuffer == null)
-                {
+                if(_colorFrameBuffer == null)
                     _colorFrameBuffer = new byte[frame.PixelDataLength];
-                }
+
                 frame.CopyFramePixelDataToArray(_colorFrameBuffer);
             }
         }
@@ -125,11 +124,13 @@ namespace Kinect_Test
                 frame.CopyBodiesTo(_bodies);
             }
 
+            if (_colorFrameBuffer == null) return;
+
+            _lastTask?.Wait();
+
             _renderer.ClearScreen();
             _renderer.DrawBodiesWithFaceBoxes(_bodies, _colorFrameBuffer, _colorBytesPerPixel, _bodyBrushes,
                 _bodyPens, _coordinateMapper);
-            
-            _lastTask.Wait();
             
             _facePositions = new List<Rectangle>();
 
@@ -141,11 +142,13 @@ namespace Kinect_Test
                 }
             }
 
+            
             SwapFaceLibs();
 
+            var locBuffer = _colorFrameBuffer;
             var feedTask = Task.Run(() =>
             {
-                _face1.FeedFaces(_colorFrameBuffer, _facePositions.ToArray(), _colorBytesPerPixel);
+                _face1.FeedFaces(locBuffer, _facePositions.ToArray(), _colorBytesPerPixel);
             });
 
             var featuresTask = Task.Run(() =>
@@ -163,7 +166,7 @@ namespace Kinect_Test
                 var features = t.Result;
                 for (int i = 0; i < features.Length; i++)
                 {
-                    _renderer.DrawFacialFeatures(features[i], _bodyBrushes[i], 1.5f);
+                    _renderer.DrawFacialFeatures(features[i], Brushes.Turquoise, 1.5f);
                 }
             }, TaskContinuationOptions.HideScheduler);
 
@@ -171,8 +174,8 @@ namespace Kinect_Test
             {
                 for (int i = 0; i < _face2.FaceCount; i++)
                 {
-                    var matchedFace = _faceDatabase.GetBestMatch(_face1.GetFaceTemplate(i));
-                    if (matchedFace.Item2 > FaceMatchConfidenceThreshold)
+                    var matchedFace = _faceDatabase.GetBestMatch(_face2.GetFaceTemplate(i));
+                    if (matchedFace.confidence > FaceMatchConfidenceThreshold)
                     {
                         _renderer.DrawName(
                         $"{matchedFace.name} ({matchedFace.confidence:P})",
@@ -184,10 +187,8 @@ namespace Kinect_Test
             }, TaskContinuationOptions.HideScheduler);
 
             _lastTask = Task.WhenAll(matchingTask, drawFeaturesTask);
-
-            pictureBox1.Invalidate();
             Application.DoEvents();
-
+            pictureBox1.Invalidate();
             feedTask.Wait();
         }
 
