@@ -31,18 +31,16 @@ namespace KinectUnifier
             return ret;
         }
 
+        const float FaceWidth = 1.65f;
+        const float FaceHeight = 2.3f;
+
         public static bool TryGetHeadRectangleAndRotAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
         {
-            const float FaceWidth = 1.5f;
-            const float FaceHeight = 2f;
-
             IJoint headJoint;
             IJoint neckJoint;
 
             faceRect = Rectangle.Empty;
             rotationAngle = 0;
-
-
 
             if (!body.Joints.TryGetValue(JointType.Head, out headJoint) ||
                 !body.Joints.TryGetValue(JointType.Neck, out neckJoint)) return false;
@@ -82,8 +80,8 @@ namespace KinectUnifier
             bool isFaceVertical = Math.Abs(headJointColorPos.Y - neckJointColorPos.Y) >
                                   Math.Abs(headJointColorPos.X - neckJointColorPos.X);
 
-            var width = isFaceVertical ? headNeckDistance * 1.4f : headNeckDistance * 1.8f;
-            var height = isFaceVertical ? headNeckDistance * 1.8f : headNeckDistance * 1.4f;
+            var width = isFaceVertical ? headNeckDistance * FaceHeight : headNeckDistance * FaceWidth;
+            var height = isFaceVertical ? headNeckDistance * FaceWidth : headNeckDistance * FaceHeight;
             faceRect = new Rectangle(
                 (int)(headJointColorPos.X - width / 2),
                 (int)(headJointColorPos.Y - height / 2),
@@ -134,13 +132,16 @@ namespace KinectUnifier
             int bottom = rect.Bottom;
             if (bottom > bufferHeight) bottom = bufferHeight;
 
-            var ret = new byte[(right - left) * (bottom - top) * bytesPerPixel];
+            int width = right - left;
+            int height = bottom - top;
+
+            var ret = new byte[width * height * bytesPerPixel];
             int targetI = 0;
             for (int y = top; y < bottom; y++)
             {
                 for (int x = left; x < right; x++)
                 {
-                    var index = (y * (right - left) + x) * bytesPerPixel;
+                    var index = (y * bufferWidth + x) * bytesPerPixel;
                     for (int i = index; i < index + bytesPerPixel; i++)
                     {
                         ret[targetI++] = buffer[i];
