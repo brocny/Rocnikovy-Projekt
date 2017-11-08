@@ -31,7 +31,6 @@ namespace LuxandFaceLib
             FrameWidth = frameWidth;
             FrameBytesPerPixel = frameBytesPerPixel;
             _imageMode = LuxandUtil.ImageModeFromBytersPerPixel(frameBytesPerPixel);
-
         }
 
         public void InitializeLibrary()
@@ -140,11 +139,5 @@ namespace LuxandFaceLib
         public int FrameHeight { get; set; }
         public int FrameBytesPerPixel { get; set; }
     }
-    public static class TPointExtensions
-    {
-        public static Point ToPoint(this FSDK.TPoint point)
-        {
-            return new Point(point.x, point.y);
-        }
-    }
+    
 }

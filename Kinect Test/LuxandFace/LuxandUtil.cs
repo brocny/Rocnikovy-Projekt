@@ -42,5 +42,11 @@ namespace LuxandFaceLib
         }
     }
 
-
+    public static class TPointExtensions
+    {
+        public static Point ToPoint(this FSDK.TPoint point)
+        {
+            return new Point(point.x, point.y);
+        }
+    }
 }
