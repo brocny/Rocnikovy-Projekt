@@ -1,21 +1,21 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
-using Luxand;
 
-namespace LuxandFaceLib
+namespace Face
 {
-    public class LuxandFaceDatabase
+    public class LuxandFaceDatabase<T>
     {
-        private Dictionary<string, FaceInfo> _storedFaces;
+        private Dictionary<string, IFaceInfo<T>> _storedFaces;
 
         public LuxandFaceDatabase()
         {
-            _storedFaces = new Dictionary<string, FaceInfo>();
+            _storedFaces = new Dictionary<string, IFaceInfo<T>>();
+        }
+
+        public IEnumerable<string> GetAllNames()
+        {
+            return _storedFaces.Keys;
         }
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace LuxandFaceLib
         /// <param name="name"></param>
         /// <param name="info"></param>
         /// <returns><code>true</code> if successful</returns>
-        public bool TryAddNewFace(string name, FaceInfo info)
+        public bool TryAddNewFace(string name, IFaceInfo<T> info)
         {
             if (_storedFaces.ContainsKey(name))
             {
@@ -34,10 +34,12 @@ namespace LuxandFaceLib
             return true;
         }
 
-        public bool TryAddNewFace(string name, byte[] template)
+        public bool TryAddNewFace(string name, T template)
         {
-            FaceInfo.ThrowIfTemplateLengthInvalid(template);
-            return TryAddNewFace(name, new FaceInfo(template));
+            var fInfo = Activator.CreateInstance<IFaceInfo<T>>();
+            fInfo.Templates.Add(template);
+       
+            return fInfo.IsValid(template) && TryAddNewFace(name, fInfo);
         }
 
         /// <summary>
@@ -45,7 +47,7 @@ namespace LuxandFaceLib
         /// </summary>
         /// <param name="template"></param>
         /// <returns><code>name</code> of the best matching face and <code>confidence</code> value [0, 1]</returns>
-        public (string name, float confidence) GetBestMatch(byte[] template)
+        public (string name, float confidence) GetBestMatch(T template)
         {
             (string, float) outValue = (string.Empty, 0);
 
@@ -67,9 +69,8 @@ namespace LuxandFaceLib
         /// <param name="faceTemplate"></param>
         /// <returns><code>true</code>if succesful</returns>
         /// <exception cref="ArgumentException"> thrown if <code>faceTemplate</code> has incorrect length</exception>
-        public bool TryAddFaceTemplateToExistingFace(string name, byte[] faceTemplate)
+        public bool TryAddFaceTemplateToExistingFace(string name, T faceTemplate)
         {
-            FaceInfo.ThrowIfTemplateLengthInvalid(faceTemplate);
             if (_storedFaces.TryGetValue(name, out var faceInfo))
             {
                 faceInfo.AddTemplate(faceTemplate);
@@ -95,55 +96,5 @@ namespace LuxandFaceLib
 
             return false;
         }
-    }
-
-    
-    public class FaceInfo
-    {
-        public ICollection<byte[]> FaceTemplates => _faceTemplates;
-        private List<byte[]> _faceTemplates;
-
-        private const float WeightAvgMatch = 1;
-        private const float WeightMaxMatch = 5;
-
-        public FaceInfo(byte[] faceTemplate)
-        {
-            _faceTemplates = new List<byte[]>{faceTemplate};
-        }
-
-        public void Merge(FaceInfo info)
-        {
-            _faceTemplates.AddRange(info.FaceTemplates);
-        }
-
-        public void AddTemplate(byte[] faceTemplate)
-        {
-            _faceTemplates.Add(faceTemplate);
-        }
-
-        internal static void ThrowIfTemplateLengthInvalid(byte[] template)
-        {
-            if (template == null || template.Length != FSDK.TemplateSize)
-            {
-                throw new ArgumentException($"faceTemplate of length {FSDK.TemplateSize} expected, got length {template?.Length}");
-            }
-        }
-
-        public float GetSimilarity(byte[] faceTemplate)
-        {
-            int numMatchedFaces = 0;
-            float[] similarities = new float[_faceTemplates.Count];
-            Parallel.For(0, _faceTemplates.Count, (i) =>
-            {
-                var ithTemplate = _faceTemplates[i];
-                if (FSDK.FSDKE_OK == FSDK.MatchFaces(ref faceTemplate, ref ithTemplate, ref similarities[i]))
-                {
-                    Interlocked.Increment(ref numMatchedFaces);
-                }
-            });
-
-            return similarities.Max();
-        }
-       
     }
 }
