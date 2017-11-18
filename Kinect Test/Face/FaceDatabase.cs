@@ -4,14 +4,10 @@ using System.Linq;
 
 namespace Face
 {
-    public class LuxandFaceDatabase<T>
+    public class FaceDatabase<T>
     {
-        private Dictionary<string, IFaceInfo<T>> _storedFaces;
-
-        public LuxandFaceDatabase()
-        {
-            _storedFaces = new Dictionary<string, IFaceInfo<T>>();
-        }
+        private Dictionary<string, IFaceInfo<T>> _storedFaces = new Dictionary<string, IFaceInfo<T>>();
+        private IFaceInfo<T> _baseInstance = Activator.CreateInstance<IFaceInfo<T>>();
 
         public IEnumerable<string> GetAllNames()
         {
@@ -36,7 +32,7 @@ namespace Face
 
         public bool TryAddNewFace(string name, T template)
         {
-            var fInfo = Activator.CreateInstance<IFaceInfo<T>>();
+            var fInfo = _baseInstance.NewInstance();
             fInfo.Templates.Add(template);
        
             return fInfo.IsValid(template) && TryAddNewFace(name, fInfo);

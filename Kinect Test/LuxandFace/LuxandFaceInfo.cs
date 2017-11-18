@@ -15,6 +15,11 @@ namespace LuxandFaceLib
         private const float WeightAvgMatch = 1;
         private const float WeightMaxMatch = 5;
 
+        public LuxandFaceInfo()
+        {
+            _faceTemplates = new List<byte[]>();
+        }
+
         public LuxandFaceInfo(byte[] faceTemplate)
         {
             _faceTemplates = new List<byte[]>{faceTemplate};
@@ -49,6 +54,11 @@ namespace LuxandFaceLib
             });
 
             return similarities.Max();
+        }
+
+        public IFaceInfo<byte[]> NewInstance()
+        {
+            return new LuxandFaceInfo();
         }
     }
 }

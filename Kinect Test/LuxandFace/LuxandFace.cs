@@ -30,7 +30,7 @@ namespace LuxandFaceLib
             FrameHeight = frameHeight;
             FrameWidth = frameWidth;
             FrameBytesPerPixel = frameBytesPerPixel;
-            _imageMode = LuxandUtil.ImageModeFromBytersPerPixel(frameBytesPerPixel);
+            _imageMode = LuxandUtil.ImageModeFromBytesPerPixel(frameBytesPerPixel);
         }
 
         public void InitializeLibrary()

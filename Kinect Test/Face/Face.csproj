@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IFaceDatabase.cs" />
+    <Compile Include="FaceDatabase.cs" />
     <Compile Include="IFaceInfo.cs" />
     <Compile Include="IFaceLIb.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

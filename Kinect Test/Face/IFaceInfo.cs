@@ -9,5 +9,6 @@ namespace Face
         ICollection<T> Templates { get; }
         void Merge(IFaceInfo<T> other);
         bool IsValid(T template);
+        IFaceInfo<T> NewInstance();
     }
 }
