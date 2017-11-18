@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define ONE
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,31 +8,43 @@ using System.Threading.Tasks;
 using KinectUnifier;
 
 
+
 namespace KinectFactory
 {
-    // using Kinect360;
+#if ONE
     using KinectOne;
+#else
+    using Kinect360;
+#endif
 
     public static class KinectFactory
     {
         public static IKinect GetKinect360()
         {
-            //return new Kinect360();
+#if ONE
             return null;
-
+#else
+            return new Kinect360();
+#endif
         }
 
 
         public static IKinect GetKinectOne()
         {
+#if ONE
             return new KinectOne();
+#else
             return null;
+#endif
         }
 
         public static IKinect GetKinect()
         {
-            //return GetKinect360();
-             return GetKinectOne();
+#if ONE
+            return GetKinectOne();
+#else
+            return GetKinect360();
+#endif
         }
     }
 }
