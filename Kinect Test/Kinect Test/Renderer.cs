@@ -9,6 +9,7 @@ namespace Kinect_Test
     public class Renderer
     {
         public Font NameFont { get; set; } = new Font(FontFamily.GenericSansSerif, 12);
+        public Image Image => _bmp;
 
         public Renderer(FormComponents components, int colorFrameWidth, int colorFrameHeight)
         {
@@ -25,7 +26,6 @@ namespace Kinect_Test
 
             _bmp = new Bitmap(_displayWidth, _displayHeight);
             _gr = Graphics.FromImage(_bmp);
-            _components.PictureBox.Image = _bmp;
         }
 
         private FormComponents _components;
@@ -49,9 +49,9 @@ namespace Kinect_Test
 
         public void ClearScreen()
         {
-            _gr.FillRectangle(Brushes.Black, _components.PictureBox.ClientRectangle);
+            _gr.FillRectangle(Brushes.Black, new Rectangle(0, 0, _bmp.Width, _bmp.Height));
             var currentTime = DateTime.Now;
-            _components.Label.Text = $"FPS: {1000f / (currentTime - _lastFrameTime).Milliseconds:F2}";
+            _components.Label.Invoke((Action)(() => _components.Label.Text = $"FPS: {1000f / (currentTime - _lastFrameTime).Milliseconds:F2}"));
             _lastFrameTime = currentTime;
         }
 
@@ -155,7 +155,8 @@ namespace Kinect_Test
 
         public void DrawName(string name, int xPos, int yPos, Brush brush)
         {
-            _gr.DrawString(name, NameFont, brush, xPos * _widthRatio, yPos * _heightRatio);
+            if(name != null)
+                _gr.DrawString(name, NameFont, brush, xPos * _widthRatio, yPos * _heightRatio);
         }
 
         public void DrawColorBox(Rectangle rect, byte[] colorFrameBuffer, int colorFrameBpp)
