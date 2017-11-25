@@ -42,14 +42,13 @@ namespace LuxandFaceLib
 
         public float GetSimilarity(byte[] faceTemplate)
         {
-            int numMatchedFaces = 0;
+            if (faceTemplate == null || _faceTemplates.Count == 0) return 0;
             float[] similarities = new float[_faceTemplates.Count];
-            Parallel.For(0, _faceTemplates.Count, (i) =>
+            Parallel.For(0, _faceTemplates.Count, i =>
             {
                 var ithTemplate = _faceTemplates[i];
                 if (FSDK.FSDKE_OK == FSDK.MatchFaces(ref faceTemplate, ref ithTemplate, ref similarities[i]))
                 {
-                    Interlocked.Increment(ref numMatchedFaces);
                 }
             });
 

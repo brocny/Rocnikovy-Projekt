@@ -7,11 +7,21 @@ namespace Face
     public class FaceDatabase<T>
     {
         private Dictionary<string, IFaceInfo<T>> _storedFaces = new Dictionary<string, IFaceInfo<T>>();
-        private IFaceInfo<T> _baseInstance = Activator.CreateInstance<IFaceInfo<T>>();
+        private IFaceInfo<T> _baseInstance;
 
         public IEnumerable<string> GetAllNames()
         {
             return _storedFaces.Keys;
+        }
+
+        public FaceDatabase(IFaceInfo<T> baseInstance)
+        {
+            _baseInstance = baseInstance;
+        }
+
+        public FaceDatabase()
+        {
+            _baseInstance = Activator.CreateInstance<IFaceInfo<T>>();
         }
 
         /// <summary>
@@ -32,10 +42,9 @@ namespace Face
 
         public bool TryAddNewFace(string name, T template)
         {
-            var fInfo = _baseInstance.NewInstance();
-            fInfo.Templates.Add(template);
+            var faceInfo = _baseInstance.NewInstance();
        
-            return fInfo.IsValid(template) && TryAddNewFace(name, fInfo);
+            return faceInfo.IsValid(template) && TryAddNewFace(name, faceInfo);
         }
 
         /// <summary>
@@ -45,17 +54,17 @@ namespace Face
         /// <returns><code>name</code> of the best matching face and <code>confidence</code> value [0, 1]</returns>
         public (string name, float confidence) GetBestMatch(T template)
         {
-            (string, float) outValue = (string.Empty, 0);
+            (string, float) retValue = (string.Empty, 0);
 
             var matches = _storedFaces.AsParallel().Select(x => (x.Key, x.Value.GetSimilarity(template))).AsEnumerable();
             foreach (var match in matches)
             {
-                if (match.Item2 > outValue.Item2)
+                if (match.Item2 > retValue.Item2)
                 {
-                    outValue = match;
+                    retValue = match;
                 }
             }
-            return outValue;
+            return retValue;
         }
 
         /// <summary>
