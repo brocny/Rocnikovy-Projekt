@@ -120,6 +120,13 @@ namespace Kinect360
                 {
                     _joints.Add(_jointNumbers[i], new Joint360(_body.Joints[(Microsoft.Kinect.JointType)i]));
                 }
+                
+                var headPos = _joints[JointType.Head].Position;
+                var shoulderCenterPos = _joints[JointType.ShoulderCenter].Position;
+                var neckPos = headPos + shoulderCenterPos / 2;
+                _joints.Add(
+                    KinectUnifier.JointType.Neck, 
+                    new FakeJoint(neckPos, _joints[KinectUnifier.JointType.Head].IsTracked && _joints[KinectUnifier.JointType.ShoulderCenter].IsTracked));
             }
             
             private Dictionary<KinectUnifier.JointType, IJoint> _joints;
@@ -140,7 +147,7 @@ namespace Kinect360
                 JointType.HipRight, JointType.KneeRight, JointType.AnkleRight, JointType.FootRight,
             };
 
-            private static List<ValueTuple<JointType, JointType>> _bones = new List<ValueTuple<JointType, JointType>>
+            private static readonly List<ValueTuple<JointType, JointType>> _bones = new List<ValueTuple<JointType, JointType>>
             {
                 // Torso
                 new ValueTuple<JointType, JointType>(JointType.Head, JointType.Neck),
@@ -181,6 +188,18 @@ namespace Kinect360
                 new ValueTuple<JointType, JointType>(JointType.HandRight, JointType.ThumbRight)
         };
 
+        }
+
+        public class FakeJoint : IJoint
+        {
+            public FakeJoint(Point3F position, bool isTracked)
+            {
+                Position = position;
+                IsTracked = isTracked;
+            }
+
+            public Point3F Position { get; }
+            public bool IsTracked { get; }
         }
 
         public class Joint360 : IJoint
