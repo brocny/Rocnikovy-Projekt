@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using KinectUnifier;
 using LuxandFaceLib;
 using System.Threading.Tasks;
+using Face;
 
 namespace Kinect_Test
 {
@@ -25,20 +26,21 @@ namespace Kinect_Test
         private int _colorWidth;
         private int _colorBytesPerPixel;
         private byte[] _colorFrameBuffer;
+        private byte[] _previousFrameBuffer;
 
         private int _bodyCount;
         private IBody[] _bodies;
+        private IBody[] _previousBodies;
         private IBodyManager _bodyManager;
 
         private List<Rectangle> _faceRectangles;
         private List<double> _faceRotations;
-        private LuxandFace2 _face1;
+        private LuxandFace2 _face;
         private LuxandFace2 _face2;
-        private LuxandFaceDatabase _faceDatabase = new LuxandFaceDatabase();
+        private FaceDatabase<byte[]> _faceDatabase;
 
         private Task _lastTask;
-
-        private TaskScheduler _context;
+        //private TaskScheduler _synchContext = TaskScheduler.FromCurrentSynchronizationContext();
 
         private readonly Brush[] _bodyBrushes =
         {
@@ -52,15 +54,16 @@ namespace Kinect_Test
         {
             InitializeComponent();
             
-            _context = TaskScheduler.FromCurrentSynchronizationContext();
             _kinect = KinectFactory.KinectFactory.GetKinect();
             InitializeColorComponents();
 
-            _face1 = new LuxandFace2(_colorWidth, _colorHeight, _colorBytesPerPixel);
-            _face1.InitializeLibrary();
+            _face = new LuxandFace2(_colorWidth, _colorHeight, _colorBytesPerPixel);
+            _face.InitializeLibrary();
+
+            _faceDatabase = new FaceDatabase<byte[]>(new LuxandFaceInfo());
 
             _face2 = new LuxandFace2(_colorWidth, _colorHeight, _colorBytesPerPixel);
-            _face2.InitializeLibrary();
+            //_face2.InitializeLibrary();
 
             _renderer = new Renderer(new FormComponents(statusLabel, pictureBox1), _colorWidth, _colorHeight);
 
@@ -90,7 +93,7 @@ namespace Kinect_Test
                 if (frame == null) return;
 
                 _colorBytesPerPixel = frame.BytesPerPixel;
-                if(_colorFrameBuffer == null)
+                if(_colorFrameBuffer == null || _colorFrameBuffer.Length != frame.PixelDataLength)
                     _colorFrameBuffer = new byte[frame.PixelDataLength];
 
                 frame.CopyFramePixelDataToArray(_colorFrameBuffer);
@@ -110,13 +113,16 @@ namespace Kinect_Test
 
         private void SwapFaceLibs()
         {
-            var temp = _face1;
-            _face1 = _face2;
+            var temp = _face;
+            _face = _face2;
             _face2 = temp;
         }
 
-        private void _bodyManager_BodyFrameReady(object sender, BodyFrameReadyEventArgs e)
+        private async void _bodyManager_BodyFrameReady(object sender, BodyFrameReadyEventArgs e)
         {
+            if(_lastTask != null)
+                await _lastTask;
+
             using (var frame = e.BodyFrame)
             {
                 if (frame == null) return;
@@ -128,52 +134,53 @@ namespace Kinect_Test
             }
 
             if (_colorFrameBuffer == null) return;
-            //_lastTask?.Wait();
 
-            _renderer.ClearScreen();
-            _renderer.DrawBodiesWithFaceBoxes(_bodies, _colorFrameBuffer, _colorBytesPerPixel, _bodyBrushes,
-                _bodyPens, _coordinateMapper);
-            
-            _faceRectangles = new List<Rectangle>();
-
-            foreach (var body in _bodies)
+            var renderTask = Task.Run(() =>
             {
-                if (Util.TryGetHeadRectangle(body, _coordinateMapper, out var faceRect))
-                {
-                    _faceRectangles.Add(faceRect);
-                }
-            }
+                _renderer.ClearScreen();
+                _renderer.DrawBodiesWithFaceBoxes(_previousBodies, _previousFrameBuffer, _colorBytesPerPixel, _bodyBrushes,
+                    _bodyPens, _coordinateMapper);
+            });
 
-            
             SwapFaceLibs();
 
-            var locPositions = _faceRectangles.ToArray();
-            var locBuffer = _colorFrameBuffer;
             var feedTask = Task.Run(() =>
             {
-                _face1.FeedFaces(locBuffer, locPositions, _colorBytesPerPixel);
+                _faceRectangles = new List<Rectangle>();
+                foreach (var body in _bodies)
+                {
+                    if (Util.TryGetHeadRectangle(body, _coordinateMapper, out var faceRect))
+                    {
+                        _faceRectangles.Add(faceRect);
+                    }
+                }
+                _face.FeedFaces(_colorFrameBuffer, _faceRectangles.ToArray(), _colorBytesPerPixel);
             });
 
-            var featuresTask = Task.Factory.StartNew(() =>
+            Point[][] features = new Point[_face2.FaceCount][];
+
+            var featureTask = Task.Run(() =>
             {
-                var result = new Point[_face2.FaceCount][];
-                for (int i = 0; i < _face2.FaceCount; i++)
+                Parallel.For(0, _face2.FaceCount, i =>
                 {
-                    result[i] = _face2.GetFacialFeatures(i);
-                }
-                return result;
+                    features[i] = _face2.GetFacialFeatures(i);
+                });
             });
 
-            var drawFeaturesTask = featuresTask.ContinueWith(t =>
+            var copyBufferTask = renderTask.ContinueWith(t =>
             {
-                var features = t.Result;
-                foreach (Point[] f in features)
-                {
-                    _renderer.DrawFacialFeatures(f, Brushes.Turquoise, 1.5f);
-                }
-            }, _context);
+                _previousFrameBuffer = _previousFrameBuffer ?? new byte[_colorFrameBuffer.Length];
+                _colorFrameBuffer.CopyTo(_previousFrameBuffer, 0);
 
-            var matchingTask = featuresTask.ContinueWith(t =>
+                _previousBodies = _previousBodies ?? new IBody[_bodies.Length];
+                _bodies.CopyTo(_previousBodies, 0);
+            });
+            
+            var renderFeaturesTask = Task.WhenAll(featureTask, renderTask).ContinueWith(t =>
+            {
+            });
+
+            var matchingTask = renderFeaturesTask.ContinueWith(t =>
             {
                 for (int i = 0; i < _face2.FaceCount; i++)
                 {
@@ -181,18 +188,24 @@ namespace Kinect_Test
                     if (matchedFace.confidence > FaceMatchConfidenceThreshold)
                     {
                         _renderer.DrawName(
-                        $"{matchedFace.name} ({matchedFace.confidence:P})",
-                        _face2.FaceRectangles[i].Left,
-                        _face2.FaceRectangles[i].Bottom,
-                        _bodyBrushes[i]);
+                            $"{matchedFace.name} ({matchedFace.confidence:P})",
+                            _face.FaceRectangles[i].Left,
+                            _face.FaceRectangles[i].Bottom,
+                            _bodyBrushes[i]);
                     }
                 }
-            }, _context);
+            });
 
-            _lastTask = matchingTask;
+            _lastTask = Task.WhenAll(matchingTask, copyBufferTask);
+            await _lastTask;
+            Invoke((Action)(() =>
+            {
+                pictureBox1.Image = _renderer.Image;
+                pictureBox1.Refresh();
+            }));
+            
+            await feedTask;
             Application.DoEvents();
-            pictureBox1.Invalidate();
-            feedTask.Wait();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -213,13 +226,14 @@ namespace Kinect_Test
         {
             _lastTask.ContinueWith(t =>
             {
-                var pointInColorCoordinates = Util.CoordinateSystemConversion(e.Location, pictureBox1.Width, pictureBox1.Height, _colorWidth, _colorHeight);
-                for (var i = 0; i < _faceRectangles.Count; i++)
+                var pointInColorCoordinates = Util.CoordinateSystemConversion(e.Location, pictureBox1.Width,
+                    pictureBox1.Height, _colorWidth, _colorHeight);
+                for (var i = 0; i < _face2.FaceCount; i++)
                 {
                     if (_faceRectangles[i].Contains(pointInColorCoordinates))
                     {
                         var index = i;
-                        var faceInfo = _face1.GetFaceTemplate(index);
+                        var faceInfo = _face2.GetFaceTemplate(index);
                         if (faceInfo == null) return;
                         if (!_faceDatabase.TryAddNewFace("Michal", faceInfo))
                         {
@@ -227,8 +241,7 @@ namespace Kinect_Test
                         }
                     }
                 }
-            }, TaskContinuationOptions.AttachedToParent | TaskContinuationOptions.HideScheduler);
-            
+            }, TaskContinuationOptions.AttachedToParent);
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)

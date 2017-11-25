@@ -3,7 +3,6 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Face;
 using KinectUnifier;
 using Luxand;
 
@@ -16,7 +15,7 @@ namespace LuxandFaceLib
         private FSDK.TPoint[][] _facialFeatures;
         private Rectangle[] _faceRectangles;
         private Size[] _translations;
-        private object _fimLock = new object();
+        static object fihLock = new object();
 
         public int DetectionThreshold
         {
@@ -43,9 +42,9 @@ namespace LuxandFaceLib
         public void InitializeLibrary()
         {
             if (FSDK.FSDKE_OK != FSDK.ActivateLibrary(
-                @"i7+h0CMkmL01bh7u5pwc55VtkWdGfAP8xr9YV+mSKMCLrjzHCS7Izg1gaD2OM9kJlAJj3gaXwdrDwKRP8RJNhKxO/HsmoBb+LYwUXfUmSg+h9zTrgKCY/85w89YxkR4x9uOYgxK8ah9am2ZaVJtPgEs+I1GZAXmFjSBbtUkelZU="))
+                @"qkCo6wATHvarVxeIrN1PI/b1aBxCe1GYdqhGmWEQ3VQqEmjgBtGUDBn5oyu9DqUSxsI4YABRzKDYQ/7Y0MCARdMJs7bgxBt7npmXidPq/4qPgC6bzQZ/bzk9VJBtMBQ08c8T6855C5NDnw8L3QybU+Ou0tnmMN3CtM8mhjQCtvQ="))
             {
-                //throw new ApplicationException("Invalid Luxand FSDK Key!");
+                throw new ApplicationException("Invalid Luxand FSDK Key!");
             }
 
             FSDK.InitializeLibrary();
@@ -126,10 +125,11 @@ namespace LuxandFaceLib
         { 
             if (_faceImageHandles != null)
             {
-                foreach (var handle in _faceImageHandles)
-                {
+                lock (fihLock)
+                    foreach (var handle in _faceImageHandles)
+                    {
                     FSDK.FreeImage(handle);
-                }
+                    }
             }
 
             _faceRectangles = faceRectangles;
@@ -144,6 +144,7 @@ namespace LuxandFaceLib
                 var fp = faceRectangles[i].TrimRectangle(FrameWidth, FrameHeight);
                 _translations[i] = new Size(fp.Location);
                 var locBuffer = buffer.GetBufferRect(FrameWidth, fp, bytesPerPixel);
+                lock(fihLock)
                 FSDK.LoadImageFromBuffer(ref _faceImageHandles[i],
                     locBuffer, 
                     fp.Width,
@@ -159,9 +160,15 @@ namespace LuxandFaceLib
         public void DetectFaces()
         {
             Parallel.For(0, _faceRectangles.Length, i =>
-            {
-                FSDK.TFacePosition detectedFace = null;
-                FSDK.DetectFace(_faceImageHandles[i], ref detectedFace);
+            { 
+                FSDK.TFacePosition detectedFace = new FSDK.TFacePosition();
+                lock (fihLock)
+                    if (FSDK.FSDKE_OK != FSDK.DetectFace(_faceImageHandles[i], ref detectedFace))
+                    {
+                    //nothing
+                    }                   
+                   
+                
                 _facePositions[i] = detectedFace;
             });
 
