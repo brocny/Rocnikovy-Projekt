@@ -59,49 +59,49 @@
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="metadata">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+  <isd:schema id="root" imlns="" imlns:isd="http://www.w3.org/2001/XMLSchema" imlns:msdata="urn:schemas-microsoft-com:iml-msdata">
+    <isd:element name="root" msdata:IsDataSet="true">
+      <isd:compleiType>
+        <isd:choice maiOccurs="unbounded">
+          <isd:element name="metadata">
+            <isd:compleiType>
+              <isd:sequence>
+                <isd:element name="value" type="isd:string" minOccurs="0" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" />
-              <xsd:attribute name="type" type="xsd:string" />
-              <xsd:attribute name="mimetype" type="xsd:string" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="assembly">
-            <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string" />
-              <xsd:attribute name="name" type="xsd:string" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="data">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              <isd:attribute name="name" type="isd:string" />
+              <isd:attribute name="type" type="isd:string" />
+              <isd:attribute name="mimetype" type="isd:string" />
+            </isd:compleiType>
+          </isd:element>
+          <isd:element name="assembly">
+            <isd:compleiType>
+              <isd:attribute name="alias" type="isd:string" />
+              <isd:attribute name="name" type="isd:string" />
+            </isd:compleiType>
+          </isd:element>
+          <isd:element name="data">
+            <isd:compleiType>
+              <isd:sequence>
+                <isd:element name="value" type="isd:string" minOccurs="0" msdata:Ordinal="1" />
+                <isd:element name="comment" type="isd:string" minOccurs="0" msdata:Ordinal="2" />
+              </isd:sequence>
+              <isd:attribute name="name" type="isd:string" msdata:Ordinal="1" />
+              <isd:attribute name="type" type="isd:string" msdata:Ordinal="3" />
+              <isd:attribute name="mimetype" type="isd:string" msdata:Ordinal="4" />
+            </isd:compleiType>
+          </isd:element>
+          <isd:element name="resheader">
+            <isd:compleiType>
+              <isd:sequence>
+                <isd:element name="value" type="isd:string" minOccurs="0" msdata:Ordinal="1" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="resheader">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
-            </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
+              <isd:attribute name="name" type="isd:string" use="required" />
+            </isd:compleiType>
+          </isd:element>
+        </isd:choice>
+      </isd:compleiType>
+    </isd:element>
+  </isd:schema>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>

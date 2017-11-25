@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
 using System.Runtime.InteropServices;
 
 
@@ -31,8 +30,8 @@ namespace KinectUnifier
             return ret;
         }
 
-        const float FaceWidth = 1.65f;
-        const float FaceHeight = 2.3f;
+        const float FaceWidth = 1.5f;
+        const float FaceHeight = 1.9f;
 
         public static bool TryGetHeadRectangleAndRotAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
         {
@@ -198,6 +197,16 @@ namespace KinectUnifier
             X = x;
             Y = y;
             Z = z;
+        }
+
+        public static Point3F operator +(Point3F p1, Point3F p2)
+        {
+            return new Point3F(p1.X + p2.X, p1.Y + p2.Y, p1.Z + p1.Z);
+        }
+
+        public static Point3F operator /(Point3F p, int i)
+        {
+            return new Point3F(p.X  / i, p.Y / i, p.Z / i);
         }
     }
 
