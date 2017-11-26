@@ -84,6 +84,39 @@ namespace Face
             return false;
         }
 
+        public void Add(string name, T faceTemlate)
+        {
+            if (_storedFaces.TryGetValue(name, out var faceInfo))
+            {
+                faceInfo.AddTemplate(faceTemlate);
+            }
+            else
+            {
+                var newInfo = _baseInstance.NewInstance();
+                newInfo.AddTemplate(faceTemlate);
+                if (newInfo.IsValid(faceTemlate))
+                {
+                    _storedFaces.Add(name, newInfo);
+                }
+                else
+                {
+                    throw new ArgumentException($"{nameof(faceTemlate)} invalid!");
+                }
+            }
+        }
+
+        public void Add(string name, IFaceInfo<T> template)
+        {
+            if (_storedFaces.TryGetValue(name, out var faceInfo))
+            {
+                faceInfo.Merge(template);
+            }
+            else
+            {
+                _storedFaces.Add(name, template);
+            }
+        }
+
         /// <summary>
         /// Merge face with the name <code>name2</code> into the face with the name <code>name1</code>
         /// </summary>
