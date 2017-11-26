@@ -31,6 +31,7 @@
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.statusLabel = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
+            this.faceNameTextBox = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -62,11 +63,22 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // faceNameTextBox
+            // 
+            this.faceNameTextBox.ForeColor = System.Drawing.SystemColors.InactiveCaption;
+            this.faceNameTextBox.Location = new System.Drawing.Point(164, 558);
+            this.faceNameTextBox.Name = "faceNameTextBox";
+            this.faceNameTextBox.Size = new System.Drawing.Size(184, 22);
+            this.faceNameTextBox.TabIndex = 3;
+            this.faceNameTextBox.Text = "Enter name here...";
+            this.faceNameTextBox.Enter += new System.EventHandler(this.faceNameTextBox_Enter);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(986, 613);
+            this.Controls.Add(this.faceNameTextBox);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.pictureBox1);
@@ -85,6 +97,7 @@
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Label statusLabel;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TextBox faceNameTextBox;
     }
 }
 

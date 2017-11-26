@@ -189,8 +189,8 @@ namespace Kinect_Test
                     {
                         _renderer.DrawName(
                             $"{matchedFace.name} ({matchedFace.confidence:P})",
-                            _face.FaceRectangles[i].Left,
-                            _face.FaceRectangles[i].Bottom,
+                            _face2.FaceRectangles[i].Left,
+                            _face2.FaceRectangles[i].Bottom,
                             _bodyBrushes[i]);
                     }
                 }
@@ -233,12 +233,9 @@ namespace Kinect_Test
                     if (_faceRectangles[i].Contains(pointInColorCoordinates))
                     {
                         var index = i;
-                        var faceInfo = _face2.GetFaceTemplate(index);
-                        if (faceInfo == null) return;
-                        if (!_faceDatabase.TryAddNewFace("Michal", faceInfo))
-                        {
-                            _faceDatabase.TryAddFaceTemplateToExistingFace("Michal", faceInfo);
-                        }
+                        var faceTemplate = _face2.GetFaceTemplate(index);
+                        if (faceTemplate == null) return;
+                        _faceDatabase.Add(faceNameTextBox.Text, faceTemplate);
                     }
                 }
             }, TaskContinuationOptions.AttachedToParent);
@@ -247,6 +244,12 @@ namespace Kinect_Test
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             _kinect.Close();
+        }
+
+        private void faceNameTextBox_Enter(object sender, EventArgs e)
+        {
+            faceNameTextBox.Text = "";
+            faceNameTextBox.ForeColor = Color.Black;
         }
     }
 }
