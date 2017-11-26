@@ -43,8 +43,12 @@ namespace Face
         public bool TryAddNewFace(string name, T template)
         {
             var faceInfo = _baseInstance.NewInstance();
-       
-            return faceInfo.IsValid(template) && TryAddNewFace(name, faceInfo);
+            faceInfo.AddTemplate(template);
+            if (!faceInfo.IsValid(template))
+            {
+                throw new ArgumentException($"{nameof(template)} invalid!");
+            }
+            return TryAddNewFace(name, faceInfo);
         }
 
         /// <summary>
