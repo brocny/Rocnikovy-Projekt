@@ -30,8 +30,8 @@ namespace KinectUnifier
             return ret;
         }
 
-        const float FaceWidth = 1.5f;
-        const float FaceHeight = 1.9f;
+        const float FaceWidth = 1.55f;
+        const float FaceHeight = 2.05f;
 
         public static bool TryGetHeadRectangleAndRotAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
         {
