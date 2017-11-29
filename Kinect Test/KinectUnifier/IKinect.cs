@@ -17,7 +17,7 @@ namespace KinectUnifier
         IBodyManager BodyManager { get; }
         IColorManager ColorManager { get; }
         ICoordinateMapper CoordinateMapper { get; }
-        IMultiManager OpenMultiManager(MultiFrameTypes frameTypes);
+        IMultiManager OpenMultiManager(MultiFrameTypes frameTypes, bool preferResolutionOverFps = false);
 
 
         bool IsRunning { get; }

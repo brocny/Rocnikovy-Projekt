@@ -43,6 +43,7 @@
     <Compile Include="ColorManagerOne.cs" />
     <Compile Include="CoordinateMapperOne.cs" />
     <Compile Include="KinectOne.cs" />
+    <Compile Include="MultiFrameManagerOne.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
