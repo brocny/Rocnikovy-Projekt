@@ -9,9 +9,14 @@ namespace KinectOne
 
         public bool IsKinectOne => true;
 
-        public IBodyManager BodyManager => _bodyManager;
-        public IColorManager ColorManager => _colorManager;
+        public IBodyManager BodyManager => _bodyManager ?? (_bodyManager = new BodyManagerOne(this));
+        public IColorManager ColorManager => _colorManager ?? (_colorManager = new ColorManagerOne(this));
         public ICoordinateMapper CoordinateMapper => _coordinateMapper ?? (_coordinateMapper = new CoordinateMapperOne(KinectSensor.CoordinateMapper));
+        
+        public IMultiManager OpenMultiManager(MultiFrameTypes frameTypes, bool preferResolutionOverFps = false)
+        {
+            return new MultiFrameManagerOne(frameTypes, this);
+        }
 
         private BodyManagerOne _bodyManager;
         private ColorManagerOne _colorManager;
@@ -22,8 +27,6 @@ namespace KinectOne
         public KinectOne()
         {
             KinectSensor = KinectSensor.GetDefault();
-            _bodyManager = new BodyManagerOne(this);
-            _colorManager = new ColorManagerOne(this);
         }
 
         public void Open()
@@ -35,5 +38,6 @@ namespace KinectOne
         {
             KinectSensor.Close();
         }
+
     }
 }

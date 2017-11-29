@@ -11,14 +11,18 @@ namespace Kinect360
         public KinectSensor KinectSensor { get; private set; }
         public bool IsKinectOne => false;
 
-        public IBodyManager BodyManager => _bodyManager;
-        public IColorManager ColorManager => _colorManager;
+        public IBodyManager BodyManager =>  _bodyManager ?? (_bodyManager = new BodyManager360(this));
+        public IColorManager ColorManager => _colorManager ?? (_colorManager = new ColorManager360(this));
         public ICoordinateMapper CoordinateMapper => _coordinateMapper ?? (_coordinateMapper = new CoordinateMapper360(this));
+        public IMultiManager OpenMultiManager(MultiFrameTypes frameTypes, bool preferResolutionOverFps = true)
+        {
+            return new MultiManager360(this, frameTypes, preferResolutionOverFps);
+        }
 
         public bool IsRunning => KinectSensor.IsRunning;
         
         private BodyManager360 _bodyManager;
-        internal ColorManager360 _colorManager;
+        private ColorManager360 _colorManager;
         private CoordinateMapper360 _coordinateMapper;
 
         private ColorImageFormat _colorImageFormat;
@@ -35,9 +39,6 @@ namespace Kinect360
             }
             if (KinectSensor == null)
                 throw new Exception("No Kinect device found!");
-            
-            _bodyManager = new BodyManager360(this);
-            _colorManager = new ColorManager360(this);
         }
 
         public void Open()
@@ -49,6 +50,8 @@ namespace Kinect360
         {
             KinectSensor.Stop();
         }
+
+        
     }
 
 
