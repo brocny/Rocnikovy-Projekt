@@ -163,6 +163,7 @@ namespace KinectOne
             private Dictionary<KinectUnifier.JointType, IJoint> _joints;
 
             public bool IsTracked => _body.IsTracked;
+            public long TrackingId => (long)_body.TrackingId;
         }
 
         public class JointOne : IJoint

@@ -18,7 +18,7 @@ namespace KinectUnifier
 
     public class BodyFrameReadyEventArgs
     {
-        public IBodyFrame BodyFrame;
+        public IBodyFrame BodyFrame { get; }
 
         public BodyFrameReadyEventArgs(IBodyFrame bodyFrame)
         {
@@ -59,6 +59,7 @@ namespace KinectUnifier
         IReadOnlyDictionary<JointType, IJoint> Joints { get; }
         IReadOnlyList<ValueTuple<JointType, JointType>> Bones { get; }
         bool IsTracked { get; }
+        long TrackingId { get; }
     }
 
 }

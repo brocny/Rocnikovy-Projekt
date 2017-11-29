@@ -17,9 +17,7 @@ namespace Kinect360
         public BodyManager360(Kinect360 kinect360)
         {
             _kinect360 = kinect360;
-            
             _skeletonStream = _kinect360.KinectSensor.SkeletonStream;
-            
         }
 
         public event EventHandler<BodyFrameReadyEventArgs> BodyFrameReady;
@@ -108,7 +106,7 @@ namespace Kinect360
             public IReadOnlyDictionary<KinectUnifier.JointType, IJoint> Joints => _joints;
             public IReadOnlyList<ValueTuple<JointType, JointType>> Bones => _bones;
             public bool IsTracked => _body.TrackingState == SkeletonTrackingState.Tracked;
-
+            public long TrackingId => _body.TrackingId;
 
             public Body360(Skeleton body)
             {
@@ -188,6 +186,7 @@ namespace Kinect360
                 new ValueTuple<JointType, JointType>(JointType.HandRight, JointType.ThumbRight)
         };
 
+            
         }
 
         public class FakeJoint : IJoint
