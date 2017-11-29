@@ -78,7 +78,7 @@ namespace KinectOne
 
         public void Dispose()
         {
-    
+
         }
     }
 }

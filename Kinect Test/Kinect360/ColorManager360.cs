@@ -11,9 +11,6 @@ namespace Kinect360
         private ColorImageStream _colorStream;
 
         internal ColorImageFormat ColorImageFormat;
-        
-
-
 
         public ColorManager360(Kinect360 kinect360)
         {
@@ -34,7 +31,6 @@ namespace Kinect360
             {
                 ColorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrame360(colorImageFrame)));
             }
-            
         }
 
         public event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady;

@@ -29,7 +29,6 @@ namespace KinectOne
             {
                 ColorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrameOne(colorFrame)));
             }
-            
         }
 
         public void Open(bool preferResolutionOverFps)

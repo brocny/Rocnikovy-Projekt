@@ -24,7 +24,7 @@ namespace LuxandFaceLib
 
         public LuxandFace2()
         {
-            FSDK.SetFaceDetectionParameters(false, false, 50);
+            FSDK.SetFaceDetectionParameters(false, false, 75);
         }
 
         public LuxandFace2(int frameWidth, int frameHeight, int frameBytesPerPixel)
@@ -151,7 +151,6 @@ namespace LuxandFaceLib
                     fp.Height, 
                     fp.Width * bytesPerPixel,
                     imageMode);
-                //Thread.MemoryBarrier();
             }
 
             DetectFaces();

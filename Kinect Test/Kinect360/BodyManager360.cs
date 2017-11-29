@@ -13,7 +13,6 @@ namespace Kinect360
         private SkeletonStream _skeletonStream;
         public int BodyCount => _skeletonStream.FrameSkeletonArrayLength;
 
-        
         public BodyManager360(Kinect360 kinect360)
         {
             _kinect360 = kinect360;
