@@ -75,5 +75,10 @@ namespace KinectOne
         }
 
         private MultiSourceFrame _multiSourceFrame;
+
+        public void Dispose()
+        {
+    
+        }
     }
 }

@@ -102,5 +102,11 @@ namespace Kinect360
 
         public IColorFrame ColorFrame { get; }
         public IBodyFrame BodyFrame { get; }
+
+        public void Dispose()
+        {
+            ColorFrame?.Dispose();
+            BodyFrame?.Dispose();
+        }
     }
 }

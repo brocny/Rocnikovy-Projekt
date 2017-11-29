@@ -23,7 +23,7 @@ namespace KinectUnifier
         public IMultiFrame MultiFrame { get; }
     }
 
-    public interface IMultiFrame
+    public interface IMultiFrame : IDisposable
     {
         IColorFrame ColorFrame { get; }
         IBodyFrame BodyFrame { get; }

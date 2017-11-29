@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ICoordinateMapper.cs" />
+    <Compile Include="IMultiManager.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="IBodyManager.cs" />
     <Compile Include="IColorManager.cs" />
