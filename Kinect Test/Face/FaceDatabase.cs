@@ -6,41 +6,56 @@ namespace Face
 {
     public class FaceDatabase<T>
     {
-        private Dictionary<string, IFaceInfo<T>> _storedFaces = new Dictionary<string, IFaceInfo<T>>();
+        private Dictionary<int, IFaceInfo<T>> _storedFaces;
         private IFaceInfo<T> _baseInstance;
 
-        public IEnumerable<string> GetAllNames()
+        public int NextId { get; private set; }
+
+        public FaceDatabase(IFaceInfo<T> baseInstance, IDictionary<int, IFaceInfo<T>> initialDb = null)
+        {
+            _baseInstance = baseInstance;
+            _storedFaces = initialDb == null
+                ? new Dictionary<int, IFaceInfo<T>>()
+                : new Dictionary<int, IFaceInfo<T>>(initialDb);
+        }
+
+        public FaceDatabase(IDictionary<int, IFaceInfo<T>> initialDb = null)
+        {
+            _baseInstance = Activator.CreateInstance<IFaceInfo<T>>();
+            _storedFaces = initialDb == null
+                ? new Dictionary<int, IFaceInfo<T>>()
+                : new Dictionary<int, IFaceInfo<T>>(initialDb);
+        }
+
+        public IFaceInfo<T> GetFaceInfo(int id) => _storedFaces[id];
+
+        public IEnumerable<int> GetAllIDs()
         {
             return _storedFaces.Keys;
         }
 
-        public FaceDatabase(IFaceInfo<T> baseInstance)
+        public string GetName(int id)
         {
-            _baseInstance = baseInstance;
+            return _storedFaces[id].Name;
         }
-
-        public FaceDatabase()
-        {
-            _baseInstance = Activator.CreateInstance<IFaceInfo<T>>();
-        }
-
         /// <summary>
         /// Will do nothing if a face the same <code>name</code> is already in the database
         /// </summary>
         /// <param name="name"></param>
         /// <param name="info"></param>
         /// <returns><code>true</code> if successful</returns>
-        public bool TryAddNewFace(string name, IFaceInfo<T> info)
+        public bool TryAddNewFace(int id, IFaceInfo<T> info, string name = "")
         {
-            if (_storedFaces.ContainsKey(name))
+            if (_storedFaces.ContainsKey(id))
             {
                 return false;
             }
-            _storedFaces.Add(name, info);
+            _storedFaces.Add(id, info);
+            UpdateNextId(id);
             return true;
         }
 
-        public bool TryAddNewFace(string name, T template)
+        public bool TryAddNewFace(int id, T template, string name = "")
         {
             var faceInfo = _baseInstance.NewInstance();
             faceInfo.AddTemplate(template);
@@ -48,7 +63,15 @@ namespace Face
             {
                 throw new ArgumentException($"{nameof(template)} invalid!");
             }
-            return TryAddNewFace(name, faceInfo);
+            return TryAddNewFace(id, faceInfo);
+        }
+
+        private void UpdateNextId(int id)
+        {
+            if (id >= NextId)
+            {
+                NextId = id + 1;
+            }
         }
 
         /// <summary>
@@ -56,9 +79,9 @@ namespace Face
         /// </summary>
         /// <param name="template"></param>
         /// <returns><code>name</code> of the best matching face and <code>confidence</code> value [0, 1]</returns>
-        public (string name, float confidence) GetBestMatch(T template)
+        public (int id, float confidence) GetBestMatch(T template)
         {
-            (string, float) retValue = (string.Empty, 0);
+            (int, float) retValue = (0, 0);
 
             var matches = _storedFaces.AsParallel().Select(x => (x.Key, x.Value.GetSimilarity(template))).AsEnumerable();
             foreach (var match in matches)
@@ -74,13 +97,13 @@ namespace Face
         /// <summary>
         /// Add another template to existing face -- for example a different angle, with/out glasses, ...
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="id"></param>
         /// <param name="faceTemplate"></param>
         /// <returns><code>true</code>if succesful</returns>
         /// <exception cref="ArgumentException"> thrown if <code>faceTemplate</code> has incorrect length</exception>
-        public bool TryAddFaceTemplateToExistingFace(string name, T faceTemplate)
+        public bool TryAddFaceTemplateToExistingFace(int id, T faceTemplate)
         {
-            if (_storedFaces.TryGetValue(name, out var faceInfo))
+            if (_storedFaces.TryGetValue(id, out var faceInfo))
             {
                 faceInfo.AddTemplate(faceTemplate);
                 return true;
@@ -88,9 +111,9 @@ namespace Face
             return false;
         }
 
-        public void Add(string name, T faceTemlate)
+        public void Add(int id, T faceTemlate)
         {
-            if (_storedFaces.TryGetValue(name, out var faceInfo))
+            if (_storedFaces.TryGetValue(id, out var faceInfo))
             {
                 faceInfo.AddTemplate(faceTemlate);
             }
@@ -100,7 +123,8 @@ namespace Face
                 newInfo.AddTemplate(faceTemlate);
                 if (newInfo.IsValid(faceTemlate))
                 {
-                    _storedFaces.Add(name, newInfo);
+                    _storedFaces.Add(id, newInfo);
+                    UpdateNextId(id);
                 }
                 else
                 {
@@ -109,30 +133,31 @@ namespace Face
             }
         }
 
-        public void Add(string name, IFaceInfo<T> template)
+        public void Add(int id, IFaceInfo<T> template)
         {
-            if (_storedFaces.TryGetValue(name, out var faceInfo))
+            if (_storedFaces.TryGetValue(id, out var faceInfo))
             {
                 faceInfo.Merge(template);
             }
             else
             {
-                _storedFaces.Add(name, template);
+                _storedFaces.Add(id, template);
+                UpdateNextId(id);
             }
         }
 
         /// <summary>
-        /// Merge face with the name <code>name2</code> into the face with the name <code>name1</code>
+        /// Face with <code>id1</code> gets all the face template <code>id2</code> has, face with <code>id2</code> is removed
         /// </summary>
-        /// <param name="name1"></param>
-        /// <param name="name2"></param>
-        /// <returns>True if succesful</returns>
-        public bool Merge(string name1, string name2)
+        /// <param name="id1">Face to be merged into</param>
+        /// <param name="id2">Face to be consumed</param>
+        /// <returns><code>true</code> if succesful</returns>
+        public bool Merge(int id1, int id2)
         {
-            if (_storedFaces.TryGetValue(name1, out var info1) && _storedFaces.TryGetValue(name2, out var info2))
+            if (_storedFaces.TryGetValue(id1, out var info1) && _storedFaces.TryGetValue(id1, out var info2))
             {
-                info2.Merge(info1);
-                _storedFaces.Remove(name1);
+                info1.Merge(info2);
+                _storedFaces.Remove(id2);
                 return true;
             }
 
