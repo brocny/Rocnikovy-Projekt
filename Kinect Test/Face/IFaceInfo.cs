@@ -6,9 +6,11 @@ namespace Face
     {
         float GetSimilarity(T template);
         void AddTemplate(T template);
-        ICollection<T> Templates { get; }
         void Merge(IFaceInfo<T> other);
         bool IsValid(T template);
+        string Name { get; set; }
+        ICollection<T> Templates { get; }
+
         IFaceInfo<T> NewInstance();
     }
 }
