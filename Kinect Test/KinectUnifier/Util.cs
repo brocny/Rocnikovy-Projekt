@@ -90,7 +90,7 @@ namespace KinectUnifier
             return true;
         }
 
-        public static Bitmap BytesToBitmap(byte[] buffer, int width, int height, int bytesPerPixel)
+        public static Bitmap BytesToBitmap(this byte[] buffer, int width, int height, int bytesPerPixel)
         {
             if (buffer == null) return null;
             var bmp = new Bitmap(width, height);
