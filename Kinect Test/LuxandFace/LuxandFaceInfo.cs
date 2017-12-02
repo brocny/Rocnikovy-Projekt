@@ -10,10 +10,7 @@ namespace LuxandFaceLib
     public class LuxandFaceInfo : IFaceInfo<byte[]>
     {
         public ICollection<byte[]> Templates => _faceTemplates;
-        private List<byte[]> _faceTemplates;
-
-        private const float WeightAvgMatch = 1;
-        private const float WeightMaxMatch = 5;
+        public string Name { get; set; }
 
         public LuxandFaceInfo()
         {
@@ -33,6 +30,11 @@ namespace LuxandFaceLib
         public void AddTemplate(byte[] faceTemplate)
         {
             _faceTemplates.Add(faceTemplate);
+        }
+
+        public void AddTemplates(IEnumerable<byte[]> faceTemplates)
+        {
+            _faceTemplates.AddRange(faceTemplates);
         }
 
         public bool IsValid(byte[] template)
@@ -59,5 +61,10 @@ namespace LuxandFaceLib
         {
             return new LuxandFaceInfo();
         }
+        
+        private List<byte[]> _faceTemplates;
+
+        private const float WeightAvgMatch = 1;
+        private const float WeightMaxMatch = 5;
     }
 }
