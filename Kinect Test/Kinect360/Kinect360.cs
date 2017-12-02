@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using KinectUnifier;
 using Microsoft.Kinect;
 
