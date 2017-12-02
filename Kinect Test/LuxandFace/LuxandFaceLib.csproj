@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="LuxandFace2.cs" />
     <Compile Include="LuxandFaceInfo.cs" />
+    <Compile Include="LuxandFacePipeline.cs" />
     <Compile Include="LuxandUtil.cs" />
     <Compile Include="LuxandFace.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
