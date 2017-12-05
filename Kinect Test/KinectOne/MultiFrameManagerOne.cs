@@ -14,7 +14,7 @@ namespace KinectOne
         {
             FrameTypes = frameTypes;
             _kinectOne = kinect;
-            _multiReader = _kinectOne.KinectSensor.OpenMultiSourceFrameReader((FrameSourceTypes) frameTypes);
+            _multiReader = _kinectOne.KinectSensor.OpenMultiSourceFrameReader(FrameSourceTypes.Body | FrameSourceTypes.Color | FrameSourceTypes.BodyIndex);
             _multiReader.MultiSourceFrameArrived += MultiReaderOnMultiSourceFrameArrived;
         }
 
@@ -23,10 +23,14 @@ namespace KinectOne
 
         private void MultiReaderOnMultiSourceFrameArrived(object sender, MultiSourceFrameArrivedEventArgs e)
         {
-            var frame = e.FrameReference.AcquireFrame();
-            if (frame != null)
+            var multiFrame = e.FrameReference.AcquireFrame();
+            if (multiFrame != null)
             {
-                MultiFrameArrived?.Invoke(this, new MultiFrameReadyEventArgs(new MultiFrameOne(frame)));
+                var colorFrame = multiFrame.ColorFrameReference.AcquireFrame();
+                var bodyFrame = multiFrame.BodyFrameReference.AcquireFrame();
+                var colorFrameOne = colorFrame == null ? null : new ColorManagerOne.ColorFrameOne(colorFrame);
+                var bodyFrameOne = bodyFrame == null ? null : new BodyManagerOne.BodyFrameOne(bodyFrame);
+                MultiFrameArrived?.Invoke(this, new MultiFrameReadyEventArgs(new MultiFrameOne(colorFrameOne, bodyFrameOne)));
             }
         }
 
@@ -42,43 +46,23 @@ namespace KinectOne
 
     public class MultiFrameOne : IMultiFrame
     {
-        public MultiFrameOne(MultiSourceFrame frame)
+        public MultiFrameOne(ColorManagerOne.ColorFrameOne colorFrame, BodyManagerOne.BodyFrameOne bodyFrame)
         {
-            _multiSourceFrame = frame;
+            _bodyFrame = bodyFrame;
+            _colorFrame = colorFrame;
         }
 
-        public IColorFrame ColorFrame
-        {
-            get
-            {
-                var cFrame = _multiSourceFrame.ColorFrameReference.AcquireFrame();
-                if (cFrame != null)
-                {
-                    return new ColorManagerOne.ColorFrameOne(cFrame);
-                }
+        private ColorManagerOne.ColorFrameOne _colorFrame;
+        private BodyManagerOne.BodyFrameOne _bodyFrame;
 
-                return null;
-            }
-        }
+        public IColorFrame ColorFrame => _colorFrame;
 
-        public IBodyFrame BodyFrame
-        {
-            get
-            {
-                var bFrame = _multiSourceFrame.BodyFrameReference.AcquireFrame();
-                if (bFrame != null)
-                {
-                    return new BodyManagerOne.BodyFrameOne(bFrame);
-                }
-                return null;
-            }
-        }
-
-        private MultiSourceFrame _multiSourceFrame;
+        public IBodyFrame BodyFrame => _bodyFrame;
 
         public void Dispose()
         {
-
+            _colorFrame?.Dispose();
+            _bodyFrame?.Dispose();
         }
     }
 }
