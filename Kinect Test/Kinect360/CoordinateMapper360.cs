@@ -21,7 +21,7 @@ namespace Kinect360
             for (int i = 0; i < cameraPoints.Length && i < colorPoints.Length; i++)
             {
                 var colorSpacePoint =
-                    _coordinateMapper.MapSkeletonPointToColorPoint(new SkeletonPoint()
+                    _coordinateMapper.MapSkeletonPointToColorPoint(new SkeletonPoint
                     {
                         X = cameraPoints[i].X,
                         Y = cameraPoints[i].Y,
@@ -56,7 +56,7 @@ namespace Kinect360
                    X = cameraPoint.X,
                    Y = cameraPoint.Y,
                    Z = cameraPoint.Z
-               }, _kinect360._colorManager == null ? ColorImageFormat.RgbResolution640x480Fps30 : _kinect360._colorManager.ColorImageFormat);
+               }, _kinect360.ColorManager == null ? ColorImageFormat.RgbResolution640x480Fps30 : _kinect360._colorManager.ColorImageFormat);
             return new Point2F(colorSpacePoint.X, colorSpacePoint.Y);
         }
 

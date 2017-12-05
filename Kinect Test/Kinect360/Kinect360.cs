@@ -21,7 +21,7 @@ namespace Kinect360
         public bool IsRunning => KinectSensor.IsRunning;
         
         private BodyManager360 _bodyManager;
-        private ColorManager360 _colorManager;
+        internal ColorManager360 _colorManager;
         private CoordinateMapper360 _coordinateMapper;
 
         private ColorImageFormat _colorImageFormat;
