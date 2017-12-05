@@ -12,9 +12,6 @@ namespace Kinect_Test
 {
     public partial class Form1 : Form
     {
-        // Confidence of face match has to be above this value do display a name
-        private const float FaceMatchConfidenceThreshold = 0.75f;
-
         private readonly Renderer _renderer;
 
         private readonly IKinect _kinect;
@@ -34,8 +31,7 @@ namespace Kinect_Test
 
         private IMultiManager _multiManager;
 
-        private Task _lastTask;
-        private TaskScheduler _synchContext = TaskScheduler.FromCurrentSynchronizationContext();
+        private TaskScheduler _synchContext;
 
         private readonly Brush[] _bodyBrushes =
         {
@@ -50,10 +46,12 @@ namespace Kinect_Test
             InitializeComponent();
             
             _kinect = KinectFactory.KinectFactory.GetKinect();
-            
+            _synchContext = TaskScheduler.FromCurrentSynchronizationContext();
+
             InitializeColorComponents();
 
             _faceDatabase = new FaceDatabase<byte[]>(new LuxandFaceInfo());
+            _facePipeline = new LuxandFacePipeline(_faceDatabase);
             _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
             _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
 
@@ -66,12 +64,25 @@ namespace Kinect_Test
 
         private void MultiManagerOnMultiFrameArrived(object sender, MultiFrameReadyEventArgs e)
         {
-            using (var colorFrame = e.MultiFrame.ColorFrame)
-            using (var bodyFrame = e.MultiFrame.BodyFrame)
-            {
-                
-            }
+            var multiFrame = e.MultiFrame;
+            if (multiFrame == null) return;
 
+            using (var colorFrame = multiFrame.ColorFrame)
+            using (var bodyFrame = multiFrame.BodyFrame)
+            {
+                if (colorFrame == null || bodyFrame == null) return;
+                var locTask =
+                    _facePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
+                var createBitMapTask = locTask.ContinueWith(t => t.Result.ColorBuffer.BytesToBitmap(t.Result.Width, t.Result.Height, t.Result.BytesPerPixel));
+                var renderTask = createBitMapTask.ContinueWith(t =>
+                {
+                    _renderer.Image = t.Result;
+                    _renderer.DrawBodies(locTask.Result.Bodies, _bodyBrushes, _bodyPens, _coordinateMapper);
+                    return _renderer.Image;
+                });
+
+                pictureBox1.Image = renderTask.Result;
+            }
         }
 
         void InitializeColorComponents()
@@ -98,6 +109,7 @@ namespace Kinect_Test
 
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
+            /*
             _lastTask?.ContinueWith(t =>
             {
                 var pointInColorCoordinates = Util.CoordinateSystemConversion(e.Location, pictureBox1.Width,
@@ -113,6 +125,7 @@ namespace Kinect_Test
                     }
                 }
             }, TaskContinuationOptions.AttachedToParent);
+            */
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
