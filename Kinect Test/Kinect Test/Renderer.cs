@@ -9,49 +9,39 @@ namespace Kinect_Test
     public class Renderer
     {
         public Font NameFont { get; set; } = new Font(FontFamily.GenericSansSerif, 12);
-        public Image Image => _bmp;
+
+        public Bitmap Image
+        {
+            get { return _bmp; }
+            set
+            {
+                _bmp = value;
+            }
+        }
 
         public Renderer(FormComponents components, int colorFrameWidth, int colorFrameHeight)
         {
-            _components = components;
-
-            _displayWidth = _components.PictureBox.Width;
-            _displayHeight = _components.PictureBox.Height;
-
             _colorWidth = colorFrameWidth;
             _colorHeight = colorFrameHeight;
 
-            _widthRatio = (float)_displayWidth / _colorWidth;
-            _heightRatio = (float)_displayHeight / _colorHeight;
-
-            _bmp = new Bitmap(_displayWidth, _displayHeight);
-            _gr = Graphics.FromImage(_bmp);
+            _bmp = new Bitmap(_colorWidth, _colorHeight);
         }
-
-        private FormComponents _components;
-        private Graphics _gr;
+        
         private Bitmap _bmp;
-
-        private readonly int _displayHeight;
-        private readonly int _displayWidth;
+        
 
         private readonly int _colorHeight;
         private readonly int _colorWidth;
-
-        // Ratio of the picture box height (width) and the height (width) of the actual frames
-        private readonly float _heightRatio;
-        private readonly float _widthRatio;
+        
 
         public float JointSize { get; set; } = 7;
         public float BoneThickness { get; set; } = 1;
 
         private DateTime _lastFrameTime;
 
-        public void ClearScreen()
+        public void Clear()
         {
-            _gr.FillRectangle(Brushes.Black, new Rectangle(0, 0, _bmp.Width, _bmp.Height));
             var currentTime = DateTime.Now;
-            _components.Label.Invoke((Action)(() => _components.Label.Text = $"FPS: {1000f / (currentTime - _lastFrameTime).Milliseconds:F2}"));
             _lastFrameTime = currentTime;
         }
 
@@ -97,21 +87,28 @@ namespace Kinect_Test
 
         public void DrawJoint(Point2F pos, Brush brush)
         {
-            var bmpX = pos.X * _widthRatio;
-            var bmpY = pos.Y * _heightRatio;
-            _gr.FillEllipse(brush, bmpX - JointSize / 2, bmpY - JointSize / 2, JointSize, JointSize);
+            using (var gr = Graphics.FromImage(_bmp))
+            {
+                var bmpX = Math.Min(pos.X, _bmp.Width);
+                var bmpY = Math.Min(pos.Y, _bmp.Height);
+                gr.FillEllipse(brush, bmpX - JointSize / 2, bmpY - JointSize / 2, JointSize, JointSize);
+            }
         }
 
         public void DrawJoint(Point2F pos, Brush brush, float size)
         {
-            var bmpX = pos.X * _widthRatio;
-            var bmpY = pos.Y * _heightRatio;
-            _gr.FillEllipse(brush, bmpX - size / 2, bmpY - size / 2, size, size);
+            using (var gr = Graphics.FromImage(_bmp))
+            {
+                var bmpX = Math.Min(pos.X, _bmp.Width);
+                var bmpY = Math.Min(pos.Y, _bmp.Height);
+                gr.FillEllipse(brush, bmpX - size / 2, bmpY - size / 2, size, size);
+            }
         }
 
         public void DrawBone(PointF p1, PointF p2, Pen pen)
         {
-            _gr.DrawLine(pen, p1, p2);
+            using(var gr = Graphics.FromImage(_bmp))
+            gr.DrawLine(pen, p1, p2);
         }
 
         public void DrawBone(IReadOnlyDictionary<JointType, IJoint> joints,
@@ -130,12 +127,12 @@ namespace Kinect_Test
             {
                 //return;
             }
-
-            _gr.DrawLine(pen,
-                jointColorSpacePoints[jointType0].X * _widthRatio,
-                jointColorSpacePoints[jointType0].Y * _heightRatio,
-                jointColorSpacePoints[jointType1].X * _widthRatio,
-                jointColorSpacePoints[jointType1].Y * _heightRatio
+            using(var gr = Graphics.FromImage(_bmp))
+            gr.DrawLine(pen,
+                jointColorSpacePoints[jointType0].X,
+                jointColorSpacePoints[jointType0].Y,
+                jointColorSpacePoints[jointType1].X,
+                jointColorSpacePoints[jointType1].Y
                 );
         }
 
@@ -143,20 +140,34 @@ namespace Kinect_Test
         {
             if (features == null)
                 return;
-
+            using(var gr = Graphics.FromImage(_bmp))
             foreach (var f in features)
             {
-                var bmpX = f.X * _widthRatio;
-                var bmpY = f.Y * _heightRatio;
+                var bmpX = f.X;
+                var bmpY = f.Y;
 
-                _gr.FillEllipse(brush, bmpX, bmpY, size, size);
+                gr.FillEllipse(brush, bmpX, bmpY, size, size);
             }
         }
 
         public void DrawName(string name, int xPos, int yPos, Brush brush)
         {
-            if(name != null)
-                _gr.DrawString(name, NameFont, brush, xPos * _widthRatio, yPos * _heightRatio);
+            using (var gr = Graphics.FromImage(_bmp))
+            {
+                if (name != null)
+                    gr.DrawString(name, NameFont, brush, xPos, yPos);
+            }
+        }
+
+        public void DrawNames(string[] names, Point[] positions, Brush[] brushes)
+        {
+            using (var gr = Graphics.FromImage(_bmp))
+            {
+                for (int i = 0; i < names.Length; i++)
+                {
+                    gr.DrawString(names[i], NameFont, brushes[i], positions[i]);
+                }
+            }
         }
 
         public void DrawColorBox(Rectangle rect, byte[] colorFrameBuffer, int colorFrameBpp)
@@ -179,10 +190,10 @@ namespace Kinect_Test
 
             var buffer = colorFrameBuffer;
 
-            var bmpX = (int)(x * _widthRatio);
-            var bmpY = (int)(y * _heightRatio);
-            var bmpWidth = (int)(rect.Width * _widthRatio);
-            var bmpHeight = (int)(rect.Height * _heightRatio);
+            var bmpX = x;
+            var bmpY = y;
+            var bmpWidth = rect.Width;
+            var bmpHeight = rect.Height;
 
             if (bmpWidth == 0 || bmpHeight == 0 || bmpX + bmpWidth > _bmp.Width || bmpY + bmpHeight > _bmp.Height)
                 return;
@@ -197,10 +208,10 @@ namespace Kinect_Test
                 for (int i = 0; i < height; ++i)
                 {
                     int bufAddr = colorFrameBpp * ((y + i) * _colorWidth + x);
-                    int bmpLineAddr = i * _displayHeight / _colorHeight * bmpData.Stride;
+                    int bmpLineAddr = i * bmpData.Stride;
                     for (int j = 0; j < width; ++j)
                     {
-                        var bmpAddr = bmpLineAddr + j * _displayWidth / _colorWidth * 4;
+                        var bmpAddr = bmpLineAddr + j * 4;
                         bmpPointer[bmpAddr + 2] = buffer[bufAddr];
                         bmpPointer[bmpAddr + 1] = buffer[bufAddr + 1];
                         bmpPointer[bmpAddr] = buffer[bufAddr + 2];
