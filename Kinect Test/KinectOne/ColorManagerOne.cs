@@ -6,29 +6,14 @@ namespace KinectOne
 {
     public class ColorManagerOne : IColorManager
     {
-        private KinectOne _kinectOne;
-
-        private ColorFrameReader _colorFrameReader;
-        private ColorFrameSource _colorFrameSource;
 
         public int WidthPixels => _colorFrameSource.FrameDescription.Width;
         public int HeightPixels => _colorFrameSource.FrameDescription.Height;
-        public int BytesPerPixel => 4;
+        public int BytesPerPixel => (int) _colorFrameSource.FrameDescription.BytesPerPixel;
 
-        public ColorManagerOne(KinectOne kinectOneOne)
+        public ColorManagerOne(KinectOne kinectOne)
         {
-            _kinectOne = kinectOneOne;
-            _colorFrameSource = _kinectOne.KinectSensor.ColorFrameSource;
-            
-        }
-
-        private void ColorFrameReader_FrameArrived(object sender, ColorFrameArrivedEventArgs e)
-        {
-            var colorFrame = e.FrameReference.AcquireFrame();
-            if (colorFrame != null)
-            {
-                ColorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrameOne(colorFrame)));
-            }
+            _colorFrameSource = kinectOne.KinectSensor.ColorFrameSource;
         }
 
         public void Open(bool preferResolutionOverFps)
@@ -42,6 +27,18 @@ namespace KinectOne
             _colorFrameReader.Dispose();
         }
 
+        private ColorFrameReader _colorFrameReader;
+        private readonly ColorFrameSource _colorFrameSource;
+
+        private void ColorFrameReader_FrameArrived(object sender, ColorFrameArrivedEventArgs e)
+        {
+            var colorFrame = e.FrameReference.AcquireFrame();
+            if (colorFrame != null)
+            {
+                ColorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrameOne(colorFrame)));
+            }
+        }
+
         public event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady;
 
         public class ColorFrameOne : IColorFrame
@@ -51,11 +48,11 @@ namespace KinectOne
                 _colorFrame = colorFrame;
             }
 
-            private ColorFrame _colorFrame;
+            private readonly ColorFrame _colorFrame;
 
-            public int BytesPerPixel => 4;
+            public int BytesPerPixel => 4; // Change when changing the ColorImageFormat!
 
-            public int PixelDataLength => 4 * _colorFrame.FrameDescription.Height * _colorFrame.FrameDescription.Width;
+            public int PixelDataLength => _colorFrame.FrameDescription.Width * _colorFrame.FrameDescription.Height * BytesPerPixel; 
 
             public int Height => _colorFrame.FrameDescription.Height;
 
@@ -71,26 +68,10 @@ namespace KinectOne
                 _colorFrame.CopyConvertedFrameDataToIntPtr(ptr, (uint)pixelDataLength, ColorImageFormat.Bgra);
             }
 
-            #region IDisposable Support
-            private bool disposedValue = false; // To detect redundant calls
-
-            protected virtual void Dispose(bool disposing)
-            {
-                if (!disposedValue)
-                {
-                    if (disposing)
-                    {
-                        _colorFrame.Dispose();
-                    }
-
-                    disposedValue = true;
-                }
-            }
             public void Dispose()
             {
-                Dispose(true);
+                _colorFrame?.Dispose();
             }
-            #endregion
         }
     }
 }
