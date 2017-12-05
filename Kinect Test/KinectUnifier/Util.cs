@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 
 
 namespace KinectUnifier
@@ -90,13 +91,20 @@ namespace KinectUnifier
             return true;
         }
 
-        public static Bitmap BytesToBitmap(this byte[] buffer, int width, int height, int bytesPerPixel)
+        public static unsafe Bitmap BytesToBitmap(this byte[] buffer, int width, int height, int bytesPerPixel)
         {
             if (buffer == null) return null;
-            var bmp = new Bitmap(width, height);
-            var bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite,
-                PixelFormat.Format32bppRgb);
-            Marshal.Copy(buffer, 0, bmpData.Scan0, width * height * bytesPerPixel);
+            var bmp = new Bitmap(width, height, PixelFormat.Format32bppRgb);
+            var bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly,
+                PixelFormat.Format32bppArgb);
+
+            byte* bmpPointer = (byte*)bmpData.Scan0.ToPointer();
+            for (int i = 0; i < buffer.Length; i+= 4)
+            {
+                bmpPointer[i] = buffer[i + 2];
+                bmpPointer[i + 1] = buffer[i + 1];
+                bmpPointer[i + 2] = buffer[i];
+            }
             bmp.UnlockBits(bmpData);
             return bmp;
         }
