@@ -75,30 +75,10 @@ namespace KinectOne
 
             }
 
-            #region IDisposable Support
-            private bool disposedValue = false; // To detect redundant calls
-
-            
-
-            protected virtual void Dispose(bool disposing)
-            {
-                if (!disposedValue)
-                {
-                    if (disposing)
-                    {
-                        _bodyFrame.Dispose();
-                    }
-                    
-                    disposedValue = true;
-                }
-            }
-
             public void Dispose()
             {
-                Dispose(true);
+                _bodyFrame?.Dispose();
             }
-            #endregion
-
         }
 
         public class BodyOne : IBody
