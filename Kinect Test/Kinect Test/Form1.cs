@@ -52,6 +52,8 @@ namespace Kinect_Test
 
             _faceDatabase = new FaceDatabase<byte[]>(new LuxandFaceInfo());
             _facePipeline = new LuxandFacePipeline(_faceDatabase);
+
+            LuxandFacePipeline.InitializeLibrary();
             _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
             _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
 
@@ -78,6 +80,7 @@ namespace Kinect_Test
                 {
                     _renderer.Image = t.Result;
                     _renderer.DrawBodies(locTask.Result.Bodies, _bodyBrushes, _bodyPens, _coordinateMapper);
+                    _renderer.DrawRectangles(locTask.Result.FaceRectangles, _bodyPens);
                     return _renderer.Image;
                 });
 
