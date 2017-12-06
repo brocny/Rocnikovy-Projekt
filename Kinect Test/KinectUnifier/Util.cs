@@ -80,8 +80,8 @@ namespace KinectUnifier
             bool isFaceVertical = Math.Abs(headJointColorPos.Y - neckJointColorPos.Y) >
                                   Math.Abs(headJointColorPos.X - neckJointColorPos.X);
 
-            var width = isFaceVertical ? headNeckDistance * FaceHeight : headNeckDistance * FaceWidth;
-            var height = isFaceVertical ? headNeckDistance * FaceWidth : headNeckDistance * FaceHeight;
+            var width = isFaceVertical ? headNeckDistance * FaceWidth : headNeckDistance * FaceHeight;
+            var height = isFaceVertical ? headNeckDistance * FaceHeight : headNeckDistance * FaceWidth;
             faceRect = new Rectangle(
                 (int)(headJointColorPos.X - width / 2),
                 (int)(headJointColorPos.Y - height / 2),
