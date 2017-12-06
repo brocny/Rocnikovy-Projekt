@@ -31,8 +31,14 @@ namespace KinectUnifier
             return ret;
         }
 
-        const float FaceWidth = 1.55f;
-        const float FaceHeight = 2.05f;
+        /// <summary>
+        /// The factor by which the distance from a body's neck to its head is multiplied to obtain the width of its face
+        /// </summary>
+        const float FaceWidth = 1.6f;
+        /// <summary>
+        /// The factor by which the distance from a body's neck to its neck is multiplied to obtain the height of its face
+        /// </summary>
+        const float FaceHeight = 2.1f;
 
         public static bool TryGetHeadRectangleAndRotAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
         {
@@ -62,6 +68,13 @@ namespace KinectUnifier
             return true;
         }
 
+        /// <summary>
+        /// Get a rectangle containing a body's face based on the position of its neck and head
+        /// </summary>
+        /// <param name="body">The body of which we want the face rectangle</param>
+        /// <param name="mapper">Coordinate mapper <see cref="IKinect.CoordinateMapper"/></param>
+        /// <param name="faceRect">A <code>Rectangle</code> containing <code>body</code>'s face</param>
+        /// <returns>True if succesful</returns>
         public static bool TryGetHeadRectangle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect)
         {
             IJoint headJoint;
@@ -124,6 +137,14 @@ namespace KinectUnifier
             return new Point((int)(origPoint.X * xRatio), (int)(origPoint.Y * yRatio));
         }
 
+        /// <summary>
+        /// Get a rectangular cutout from a pixel buffer
+        /// </summary>
+        /// <param name="buffer">The original pixel buffer</param>
+        /// <param name="bufferWidth">Width of the image stored in <code>buffer</code></param>
+        /// <param name="rect">The desired rectangle</param>
+        /// <param name="bytesPerPixel">Bytes per pixel of the original (as well as returned) image</param>
+        /// <returns>A buffer containing image data in the region defined by <code>rect</code></returns>
         public static byte[] GetBufferRect(this byte[] buffer, int bufferWidth, Rectangle rect, int bytesPerPixel)
         {
             int left = rect.Left;
