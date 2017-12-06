@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
-using System.Net.Configuration;
 using System.Threading;
 using System.Threading.Tasks;
 using Face;
 using KinectUnifier;
 using Luxand;
-using LuxandFaceLib;
 using System.Threading.Tasks.Dataflow;
 
 namespace LuxandFaceLib
@@ -108,8 +106,8 @@ namespace LuxandFaceLib
             _templateExtractionBlock = new TransformBlock<FSDKFaceImage[], FaceTemplate[]>(_templateExtractionFunc, options);
             _templateProcessingBlock = new ActionBlock<FaceTemplate[]>(_templateProcessingAction, options);
 
-            var nullBlock = new ActionBlock<object>(o => Debug.WriteLine(o));
-
+            var nullBlock = new ActionBlock<object>(o => {});
+            
             _faceCuttingBlock.LinkTo(_fsdkImageCreatingBlock);
             _faceCuttingBlock.LinkTo(nullBlock, obj => obj == null);
             _fsdkImageCreatingBlock.LinkTo(_faceDetectionBlock);
@@ -120,6 +118,8 @@ namespace LuxandFaceLib
             _facialFeaturesBlock.LinkTo(nullBlock, obj => obj == null);
             _templateExtractionBlock.LinkTo(_templateProcessingBlock);
             _templateExtractionBlock.LinkTo(nullBlock, obj => obj == null);
+
+            SetFSDKParams();
         }
 
         private FaceDatabase<byte[]> _faceDb;
@@ -334,22 +334,14 @@ namespace LuxandFaceLib
             }
         };
 
-        public Task ProccesTemplateAsync(Task<FaceTemplate> fTask)
-        {
-            return fTask.ContinueWith(t =>
-            {
-                
-            }, CancellationToken);
-        }
-
         private void SetFSDKParams()
         {
             FSDK.SetFaceDetectionParameters(_handleArbitrayRot, _determineRotAngle, _internalResizeWidth);
         }
 
-        private int _internalResizeWidth;
-        private bool _handleArbitrayRot;
-        private bool _determineRotAngle;
+        private int _internalResizeWidth = 100;
+        private bool _handleArbitrayRot = false;
+        private bool _determineRotAngle = false;
     }
 
 
