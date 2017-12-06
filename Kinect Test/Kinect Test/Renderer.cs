@@ -59,6 +59,17 @@ namespace Kinect_Test
             }
         }
 
+        public void DrawRectangles(Rectangle[] rects, Pen[] pens)
+        {
+            using (var gr = Graphics.FromImage(_bmp))
+            {
+                for (int i = 0; i < rects.Length; i++)
+                {
+                    gr.DrawRectangle(pens[i], rects[i]);
+                }
+            }
+        }
+
         public void DrawBodyWithFaceBox(IBody body, byte[] colorBuffer, int colorFrameBpp, Brush brush, Pen pen, ICoordinateMapper mapper)
         {
             if (Util.TryGetHeadRectangleAndRotAngle(body, mapper, out var faceRect, out var _))
