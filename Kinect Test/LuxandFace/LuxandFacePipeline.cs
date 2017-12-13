@@ -14,23 +14,9 @@ namespace LuxandFaceLib
 {
     public class LuxandFacePipeline
     {
-        public IReadOnlyDictionary<int, int> TrackedFaces => _trackedFaces;
-
-        public void Feed(IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper coordinateMapper)
-        {
-            _faceLocationBlock.Post((colorFrame, bodyFrame, coordinateMapper));
-        }
-
-        private TransformBlock<(IColorFrame, IBodyFrame, ICoordinateMapper), FaceLocationResult> _faceLocationBlock;
-        private TransformBlock<FaceLocationResult, FaceImage[]> _faceCuttingBlock;
-        private TransformBlock<FaceImage[], FSDKFaceImage[]> _fsdkImageCreatingBlock;
-        private TransformBlock<FSDKFaceImage[], FSDKFaceImage[]> _faceDetectionBlock;
-        private TransformBlock<FSDKFaceImage[], FSDKFaceImage[]> _facialFeaturesBlock;
-        private TransformBlock<FSDKFaceImage[], FaceTemplate[]> _templateExtractionBlock;
-        private ActionBlock<FaceTemplate[]> _templateProcessingBlock;
+        public IReadOnlyDictionary<long, int> TrackedFaces => _trackedFaces;
 
         public Action<Task> FaceLocationContinuation { get; set; }
-
         public Action<Task> FaceCuttingContinuation { get; set; }
         public Action<Task> ImageCreationContinuation { get; set; }
         public Action<Task> FSDKImageCreationContinuation { get; set; }
@@ -71,8 +57,9 @@ namespace LuxandFaceLib
             }
         }
 
-        public float SameFaceConfidenceThreshold { get; set; } = 0.95f;
-        public float SameFaceNewTemplateThreshold { get; set; } = 0.55f;
+        public float SameFaceConfidenceThreshold { get; set; } = 0.92f;
+        public float UntrackedFaceNewTemplateThreshold { get; set; } = 0.75f;
+        public float TrackedFaceNewTemplateThreshold = 0.55f;
 
         public static string ActivationKey { get; set; } =
             @"qkCo6wATHvarVxeIrN1PI/b1aBxCe1GYdqhGmWEQ3VQqEmjgBtGUDBn5oyu9DqUSxsI4YABRzKDYQ/7Y0MCARdMJs7bgxBt7npmXidPq/4qPgC6bzQZ/bzk9VJBtMBQ08c8T6855C5NDnw8L3QybU+Ou0tnmMN3CtM8mhjQCtvQ=";
@@ -90,15 +77,12 @@ namespace LuxandFaceLib
             _isLibraryActivated = true;
         }
 
-        public LuxandFacePipeline(FaceDatabase<byte[]> db = null, TaskScheduler taskScheduler = null, IDictionary<int, int> trackedFaces = null)
+        public LuxandFacePipeline(FaceDatabase<byte[]> db = null, TaskScheduler taskScheduler = null, IDictionary<long, int> trackedFaces = null)
         {
             _faceDb = db ?? new FaceDatabase<byte[]>();
-            _trackedFaces = trackedFaces == null ? new Dictionary<int, int>() : new Dictionary<int, int>(trackedFaces);
+            _trackedFaces = trackedFaces == null ? new Dictionary<long, int>() : new Dictionary<long, int>(trackedFaces);
 
             var options = new ExecutionDataflowBlockOptions { BoundedCapacity = 2, TaskScheduler = taskScheduler ?? TaskScheduler.Default, MaxDegreeOfParallelism = 2};
-            _faceLocationBlock =
-                new TransformBlock<ValueTuple<IColorFrame, IBodyFrame, ICoordinateMapper>, FaceLocationResult>(
-                    _faceLocationFunc);
             _faceCuttingBlock = new TransformBlock<FaceLocationResult, FaceImage[]>(_faceCuttingFunc, options);
             _fsdkImageCreatingBlock = new TransformBlock<FaceImage[], FSDKFaceImage[]>(_FSDKFaceImageCreationFunc, options);
             _faceDetectionBlock = new TransformBlock<FSDKFaceImage[], FSDKFaceImage[]>(_faceDetectionFunc, options);
@@ -108,22 +92,22 @@ namespace LuxandFaceLib
 
             var nullBlock = new ActionBlock<object>(o => {});
             
-            _faceCuttingBlock.LinkTo(_fsdkImageCreatingBlock);
+            _faceCuttingBlock.LinkTo(_fsdkImageCreatingBlock, obj => obj != null);
             _faceCuttingBlock.LinkTo(nullBlock, obj => obj == null);
-            _fsdkImageCreatingBlock.LinkTo(_faceDetectionBlock);
+            _fsdkImageCreatingBlock.LinkTo(_faceDetectionBlock, obj => obj != null);
             _fsdkImageCreatingBlock.LinkTo(nullBlock, obj => obj == null);
-            _faceDetectionBlock.LinkTo(_facialFeaturesBlock);
+            _faceDetectionBlock.LinkTo(_facialFeaturesBlock, obj => obj != null);
             _faceCuttingBlock.LinkTo(nullBlock, obj => obj == null);
-            _facialFeaturesBlock.LinkTo(_templateExtractionBlock);
+            _facialFeaturesBlock.LinkTo(_templateExtractionBlock, obj => obj != null);
             _facialFeaturesBlock.LinkTo(nullBlock, obj => obj == null);
-            _templateExtractionBlock.LinkTo(_templateProcessingBlock);
+            _templateExtractionBlock.LinkTo(_templateProcessingBlock, obj => obj != null);
             _templateExtractionBlock.LinkTo(nullBlock, obj => obj == null);
 
             SetFSDKParams();
         }
 
         private FaceDatabase<byte[]> _faceDb;
-        private Dictionary<int, int> _trackedFaces;
+        private Dictionary<long, int> _trackedFaces;
 
         public Task<FaceLocationResult> LocateFacesAsync(IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper)
         {
@@ -202,7 +186,7 @@ namespace LuxandFaceLib
             {
                 PixelBuffer = f.ColorBuffer.GetBufferRect(f.Width, f.FaceRectangles[i], f.BytesPerPixel),
                 OrigLocation = f.FaceRectangles[i].Location,
-                TrackingId = (int) f.TrackingIds[i],
+                TrackingId = f.TrackingIds[i],
                 Height = f.FaceRectangles[i].Height,
                 Width = f.FaceRectangles[i].Width,
                 BytesPerPixel = f.BytesPerPixel
@@ -215,10 +199,8 @@ namespace LuxandFaceLib
         private Func<FaceImage[], FSDKFaceImage[]> _FSDKFaceImageCreationFunc =>
         f =>
         {
-            Debug.Assert(f != null);
             var results = new FSDKFaceImage[f.Length];
-
-            for (var i = 0; i < f.Length; i++)
+            Parallel.For (0, f.Length, i=>
             {
                 var fImage = f[i];
                 
@@ -236,7 +218,7 @@ namespace LuxandFaceLib
                     fImage.Height,
                     fImage.Width * fImage.BytesPerPixel,
                     LuxandUtil.ImageModeFromBytesPerPixel(fImage.BytesPerPixel));
-            }
+            });
 
             return results;
         };
@@ -297,7 +279,7 @@ namespace LuxandFaceLib
                     {
 
                     }
-                    else if (similarity >= SameFaceNewTemplateThreshold)
+                    else if (similarity >= TrackedFaceNewTemplateThreshold)
                     {
                         faceInfo.AddTemplate(t.Template);
                     }
@@ -318,7 +300,7 @@ namespace LuxandFaceLib
                     {
                         _trackedFaces[t.TrackingId] = match.id;
                     }
-                    else if (match.confidence >= SameFaceNewTemplateThreshold)
+                    else if (match.confidence >= UntrackedFaceNewTemplateThreshold)
                     {
                         _faceDb.TryAddFaceTemplateToExistingFace(match.id, t.Template);
                         _trackedFaces[t.TrackingId] = match.id;
@@ -342,6 +324,13 @@ namespace LuxandFaceLib
         private int _internalResizeWidth = 100;
         private bool _handleArbitrayRot = false;
         private bool _determineRotAngle = false;
+
+        private TransformBlock<FaceLocationResult, FaceImage[]> _faceCuttingBlock;
+        private TransformBlock<FaceImage[], FSDKFaceImage[]> _fsdkImageCreatingBlock;
+        private TransformBlock<FSDKFaceImage[], FSDKFaceImage[]> _faceDetectionBlock;
+        private TransformBlock<FSDKFaceImage[], FSDKFaceImage[]> _facialFeaturesBlock;
+        private TransformBlock<FSDKFaceImage[], FaceTemplate[]> _templateExtractionBlock;
+        private ActionBlock<FaceTemplate[]> _templateProcessingBlock;
     }
 
 
@@ -366,7 +355,7 @@ namespace LuxandFaceLib
         public FSDK.TFacePosition FacePosition;
         public FSDK.TPoint[] Features;
         public Point[] GetFacialFeatures() => Features.Select(x => x.ToPoint() + new Size(OrigLocation)).ToArray();
-        public int TrackingId;
+        public long TrackingId;
     }
 
     public class FaceImage
@@ -374,7 +363,7 @@ namespace LuxandFaceLib
         public byte[] PixelBuffer;
         public int BytesPerPixel;
         public Point OrigLocation;
-        public int TrackingId;
+        public long TrackingId;
         public int Height;
         public int Width;
     }
@@ -382,6 +371,6 @@ namespace LuxandFaceLib
     public class FaceTemplate
     {
         public byte[] Template;
-        public int TrackingId;
+        public long TrackingId;
     }
 }
