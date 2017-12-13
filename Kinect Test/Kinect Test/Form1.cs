@@ -81,8 +81,18 @@ namespace Kinect_Test
                 var renderTask = createBitMapTask.ContinueWith(t =>
                 {
                     _renderer.Image = t.Result;
-                    _renderer.DrawBodies(locTask.Result.Bodies, _bodyBrushes, _bodyPens, _coordinateMapper);
-                    _renderer.DrawRectangles(locTask.Result.FaceRectangles, _bodyPens);
+                    var res = locTask.Result;
+                    _renderer.DrawBodies(res.Bodies, _bodyBrushes, _bodyPens, _coordinateMapper);
+                    _renderer.DrawRectangles(res.FaceRectangles, _bodyPens);
+                    for (int i = 0; i < res.FaceRectangles.Length; i++)
+                    {   
+                        if(_facePipeline.TrackedFaces.TryGetValue(res.TrackingIds[i], out var faceId))
+                        {
+                            var rect = res.FaceRectangles[i];
+                            _renderer.DrawName(faceId.ToString(), rect.Left, rect.Bottom, _bodyBrushes[i]);
+                        }
+                    }
+
                     return _renderer.Image;
                 });
 
