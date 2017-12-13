@@ -25,6 +25,8 @@ namespace Kinect_Test
         private int _bodyCount;
         private IBody[] _bodies;
 
+        private DateTime _lastFrameTime;
+
         private List<Rectangle> _faceRectangles;
         private LuxandFacePipeline _facePipeline;
         private readonly FaceDatabase<byte[]> _faceDatabase;
@@ -84,6 +86,9 @@ namespace Kinect_Test
                     return _renderer.Image;
                 });
 
+                var now = DateTime.Now;
+                statusLabel.Text = $"{1000f / (now - _lastFrameTime).Milliseconds:F1} FPS";
+                _lastFrameTime = now;
                 pictureBox1.Image = renderTask.Result;
             }
         }
