@@ -197,7 +197,7 @@ namespace LuxandFaceLib
 
             FaceCuttingComplete?.Invoke(this, result);
             return result;
-        };
+        }
         
 
         private  FSDKFaceImage[] CreateFSDKImages(FaceImage[] faceImages)

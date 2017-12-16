@@ -97,7 +97,7 @@ namespace Kinect_Test
                 });
 
                 _fpsCounter.NewFrame();
-                statusLabel.Text = $"FPS: {_fpsCounter.Fps : F1}";
+                statusLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
                 pictureBox1.Image = renderTask.Result;
             }
         }
