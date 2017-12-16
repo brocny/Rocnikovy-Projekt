@@ -1,12 +1,20 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Face
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <remarks>
+    /// Thread-safe 
+    /// </remarks>
+    /// <typeparam name="T">Type of face templates</typeparam>
     public class FaceDatabase<T>
     {
-        private Dictionary<int, IFaceInfo<T>> _storedFaces;
+        private ConcurrentDictionary<int, IFaceInfo<T>> _storedFaces;
         private IFaceInfo<T> _baseInstance;
 
         public int NextId { get; private set; }
@@ -15,16 +23,16 @@ namespace Face
         {
             _baseInstance = baseInstance;
             _storedFaces = initialDb == null
-                ? new Dictionary<int, IFaceInfo<T>>()
-                : new Dictionary<int, IFaceInfo<T>>(initialDb);
+                ? new ConcurrentDictionary<int, IFaceInfo<T>>()
+                : new ConcurrentDictionary<int, IFaceInfo<T>>(initialDb);
         }
 
         public FaceDatabase(IDictionary<int, IFaceInfo<T>> initialDb = null)
         {
             _baseInstance = Activator.CreateInstance<IFaceInfo<T>>();
             _storedFaces = initialDb == null
-                ? new Dictionary<int, IFaceInfo<T>>()
-                : new Dictionary<int, IFaceInfo<T>>(initialDb);
+                ? new ConcurrentDictionary<int, IFaceInfo<T>>()
+                : new ConcurrentDictionary<int, IFaceInfo<T>>(initialDb);
         }
 
         public IFaceInfo<T> GetFaceInfo(int id) => _storedFaces[id];
@@ -46,13 +54,8 @@ namespace Face
         /// <returns><code>true</code> if successful</returns>
         public bool TryAddNewFace(int id, IFaceInfo<T> info, string name = "")
         {
-            if (_storedFaces.ContainsKey(id))
-            {
-                return false;
-            }
-            _storedFaces.Add(id, info);
             UpdateNextId(id);
-            return true;
+            return _storedFaces.TryAdd(id, info);
         }
 
         public bool TryAddNewFace(int id, T template, string name = "")
@@ -111,7 +114,7 @@ namespace Face
             return false;
         }
 
-        public void Add(int id, T faceTemlate)
+        public void AddOrUpdate(int id, T faceTemlate)
         {
             if (_storedFaces.TryGetValue(id, out var faceInfo))
             {
@@ -123,7 +126,7 @@ namespace Face
                 newInfo.AddTemplate(faceTemlate);
                 if (newInfo.IsValid(faceTemlate))
                 {
-                    _storedFaces.Add(id, newInfo);
+                    _storedFaces[id] = newInfo;
                     UpdateNextId(id);
                 }
                 else
@@ -141,7 +144,7 @@ namespace Face
             }
             else
             {
-                _storedFaces.Add(id, template);
+                _storedFaces[id] = template;
                 UpdateNextId(id);
             }
         }
@@ -157,8 +160,7 @@ namespace Face
             if (_storedFaces.TryGetValue(id1, out var info1) && _storedFaces.TryGetValue(id1, out var info2))
             {
                 info1.Merge(info2);
-                _storedFaces.Remove(id2);
-                return true;
+                return _storedFaces.TryRemove(id2, out var _);
             }
 
             return false;

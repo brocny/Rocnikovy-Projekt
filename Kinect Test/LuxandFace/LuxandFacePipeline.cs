@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -14,6 +15,9 @@ namespace LuxandFaceLib
 {
     public class LuxandFacePipeline
     {
+        /// <summary>
+        /// Guaranteed thread-safety
+        /// </summary>
         public IReadOnlyDictionary<long, int> TrackedFaces => _trackedFaces;
 
         public event EventHandler<FaceImage[]> FaceCuttingComplete;
@@ -79,7 +83,7 @@ namespace LuxandFaceLib
         public LuxandFacePipeline(FaceDatabase<byte[]> db = null, TaskScheduler taskScheduler = null, IDictionary<long, int> trackedFaces = null)
         {
             _faceDb = db ?? new FaceDatabase<byte[]>();
-            _trackedFaces = trackedFaces == null ? new Dictionary<long, int>() : new Dictionary<long, int>(trackedFaces);
+            _trackedFaces = trackedFaces == null ? new ConcurrentDictionary<long, int>() : new ConcurrentDictionary<long, int>(trackedFaces);
 
             var options = new ExecutionDataflowBlockOptions { BoundedCapacity = 1, TaskScheduler = taskScheduler ?? TaskScheduler.Default, MaxDegreeOfParallelism = 2};
 
@@ -107,7 +111,7 @@ namespace LuxandFaceLib
         }
 
         private FaceDatabase<byte[]> _faceDb;
-        private Dictionary<long, int> _trackedFaces;
+        private ConcurrentDictionary<long, int> _trackedFaces;
 
         public Task<FaceLocationResult> LocateFacesAsync(IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper)
         {
