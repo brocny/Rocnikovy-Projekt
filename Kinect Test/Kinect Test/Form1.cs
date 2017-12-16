@@ -25,7 +25,7 @@ namespace Kinect_Test
         private int _bodyCount;
         private IBody[] _bodies;
 
-        private DateTime _lastFrameTime;
+        private FpsCounter _fpsCounter = new FpsCounter();
 
         private List<Rectangle> _faceRectangles;
         private LuxandFacePipeline _facePipeline;
@@ -96,9 +96,8 @@ namespace Kinect_Test
                     return _renderer.Image;
                 });
 
-                var now = DateTime.Now;
-                statusLabel.Text = $"{1000f / (now - _lastFrameTime).Milliseconds:F1} FPS";
-                _lastFrameTime = now;
+                _fpsCounter.NewFrame();
+                statusLabel.Text = $"FPS: {_fpsCounter.Fps : F1}";
                 pictureBox1.Image = renderTask.Result;
             }
         }
