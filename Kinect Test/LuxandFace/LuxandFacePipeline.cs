@@ -242,7 +242,7 @@ namespace LuxandFaceLib
         {
             Parallel.For(0, fsdkFaceImages.Length, i =>
             {
-                FSDK.DetectFacialFeaturesInRegion(fsdkFaceImages[i].ImageHandle, ref fsdkFaceImages[i].FacePosition, out fsdkFaceImages[i].Features);
+                fsdkFaceImages[i].DetectFeatures();
             });
 
             FacialFeatureRecognitionComplete?.Invoke(this, fsdkFaceImages);
@@ -250,22 +250,10 @@ namespace LuxandFaceLib
         }
         
         private FaceTemplate[] ExtractTemplates(FSDKFaceImage[] f) 
-        { 
-            var results = new FaceTemplate[f.Length];
-            Parallel.For(0, f.Length, i =>
-            {
-                var fResult = f[i];
-                results[i] = new FaceTemplate {TrackingId = fResult.TrackingId};
-                if (fResult.Features.Length == FSDK.FSDK_FACIAL_FEATURE_COUNT)
-                {
-                    FSDK.GetFaceTemplateUsingFeatures(fResult.ImageHandle, ref fResult.Features, out results[i].Template);
-                }
-                else
-                {
-                    FSDK.GetFaceTemplateInRegion(fResult.ImageHandle, ref fResult.FacePosition, out results[i].Template);
-                }
-            });
-
+        {
+            var results = f.AsParallel()
+                   .Select(x => new FaceTemplate { TrackingId = x.TrackingId, Template = x.GetFaceTemplate() })
+                   .ToArray();
             FaceTemplateExtractionComplete?.Invoke(this, results);
             return results;
         }
@@ -364,6 +352,27 @@ namespace LuxandFaceLib
         public FSDK.TPoint[] Features;
         public Point[] GetFacialFeatures() => Features.Select(x => x.ToPoint() + new Size(OrigLocation)).ToArray();
         public long TrackingId;
+
+        public byte[] GetFaceTemplate()
+        {
+            byte[] retValue;
+            if (Features?.Length == FSDK.FSDK_FACIAL_FEATURE_COUNT)
+            {
+                FSDK.GetFaceTemplateUsingFeatures(ImageHandle, ref Features, out retValue);
+            }
+            else
+            {
+                FSDK.GetFaceTemplateInRegion(ImageHandle, ref FacePosition, out retValue);
+            }
+
+            return retValue;
+        }
+
+        public void DetectFeatures()
+        {
+            FSDK.DetectFacialFeaturesInRegion(ImageHandle, ref FacePosition, out Features);
+        }
+
         /// <summary>
         /// Get the approximate age of the person this face belongs to
         /// </summary>
