@@ -24,14 +24,14 @@ namespace LuxandFaceLib
         public event EventHandler<FSDKFaceImage[]> FaceDetectionComplete;
         public event EventHandler<FSDKFaceImage[]> FacialFeatureRecognitionComplete;
         public event EventHandler<FaceTemplate[]> FaceTemplateExtractionComplete;
-        public event EventHandler<(long trackingId, (int faceId, float confidence) match)> TemplateProcessingComplete; 
+        public event EventHandler<(long trackingId, (int faceId, float confidence) match)[]> TemplateProcessingComplete; 
 
         public TaskScheduler SynchContext { get; set; }
         public CancellationToken CancellationToken { get; set; }
 
         public int FSDKInternalResizeWidth
         {
-            get{ return _internalResizeWidth; }
+            get { return _internalResizeWidth; }
             set
             {
                 _internalResizeWidth = value;
@@ -60,8 +60,8 @@ namespace LuxandFaceLib
         }
 
         public float SameFaceConfidenceThreshold { get; set; } = 0.92f;
-        public float UntrackedFaceNewTemplateThreshold { get; set; } = 0.75f;
-        public float TrackedFaceNewTemplateThreshold = 0.55f;
+        public float UntrackedFaceNewTemplateThreshold { get; set; } = 0.7f;
+        public float TrackedFaceNewTemplateThreshold = 0.35f;
 
         public static string ActivationKey { get; set; } =
             @"qkCo6wATHvarVxeIrN1PI/b1aBxCe1GYdqhGmWEQ3VQqEmjgBtGUDBn5oyu9DqUSxsI4YABRzKDYQ/7Y0MCARdMJs7bgxBt7npmXidPq/4qPgC6bzQZ/bzk9VJBtMBQ08c8T6855C5NDnw8L3QybU+Ou0tnmMN3CtM8mhjQCtvQ=";
@@ -260,7 +260,7 @@ namespace LuxandFaceLib
 
         private void  ProcessTemplates(FaceTemplate[] templates)
         {
-            var matchList = new ValueTuple<long, (int faceId, float similarity)>[templates.Length];
+            var matchList = new (long trackingId, (int faceId, float confidence) match)[templates.Length];
             for (var i = 0; i < templates.Length; i++)
             {
                 FaceTemplate t = templates[i];
