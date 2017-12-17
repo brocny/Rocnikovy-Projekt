@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
@@ -365,6 +364,87 @@ namespace LuxandFaceLib
         public FSDK.TPoint[] Features;
         public Point[] GetFacialFeatures() => Features.Select(x => x.ToPoint() + new Size(OrigLocation)).ToArray();
         public long TrackingId;
+        /// <summary>
+        /// Get the approximate age of the person this face belongs to
+        /// </summary>
+        /// <returns>The age of the person, null if failed</returns>
+        /// <remarks>The face's Features need to have been detected beforehand</remarks>
+        public int? GetAge()
+        {
+            if (Features == null) return null;
+
+            if (FSDK.FSDKE_OK !=
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Age", out var response, 256))
+            {
+                return null;
+            }
+
+            return int.Parse(response.Split('=')[1]);
+        }
+
+        /// <summary>
+        /// Get how confident we are that the face belongs to a male
+        /// </summary>
+        /// <returns>A number between 0 and 1 indicating our confidence that the face is male, null if failed</returns>
+        /// <remarks>The face's Features need to have been detected beforehand</remarks>
+        public float? GetConfidenceMale()
+        {
+            if (Features == null) return null;
+
+            if (FSDK.FSDKE_OK !=
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Gender", out var response, 256))
+            {
+                return null;
+            }
+
+            return float.Parse(response.Split('=', ';')[1]);
+        }
+
+        /// <summary>
+        /// Get how confident we are that the face belongs to a female
+        /// </summary>
+        /// <returns>A number between 0 and 1 indicating our confidence that the face is female, null if failed</returns>
+        /// <remarks>The face's Features need to have been detected beforehand</remarks>
+        public float? GetConfidenceFemale()
+        {
+            return 1f - GetConfidenceMale();
+        }
+
+        /// <summary>
+        /// Get how much the face is smiling
+        /// </summary>
+        /// <returns>A number between 0 and 1 indicating how much the person is smiling, null if failed</returns>
+        /// <remarks>The face's Features need to have been detected beforehand</remarks>
+        public float? GetSmile()
+        {
+            if (Features == null) return null;
+
+            if (FSDK.FSDKE_OK !=
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out var response, 256))
+            {
+                return null;
+            }
+
+            return float.Parse(response.Split('=', ';')[1]);
+        }
+
+        /// <summary>
+        /// Get how much the face's eyes are open
+        /// </summary>
+        /// <returns>A number between 0 and 1 indicating how much the face's eyes are open, null if failed</returns>
+        /// <remarks>The face's Features need to have been detected beforehand using DetectFeatures()</remarks>
+        public float? GetEyesOpen()
+        {
+            if (Features == null) return null;
+
+            if (FSDK.FSDKE_OK !=
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out var response, 256))
+            {
+                return null;
+            }
+
+            return float.Parse(response.Split('=', ';')[3]);
+        }
     }
 
     public class FaceImage
