@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +11,7 @@ namespace LuxandFaceLib
 {
     public class LuxandFaceInfo : IFaceInfo<byte[]>
     {
-        public ICollection<byte[]> Templates => _faceTemplates;
+        public IReadOnlyCollection<byte[]> Templates => _faceTemplates;
         public string Name { get; set; }
 
         public LuxandFaceInfo()
@@ -61,10 +63,39 @@ namespace LuxandFaceLib
         {
             return new LuxandFaceInfo();
         }
-        
+
+        public void Serialize(Stream stream)
+        {
+            var writer = new StreamWriter(stream);
+            writer.WriteLine(Name);
+            foreach (var template in _faceTemplates)
+            {
+                stream.Write(template, 0, template.Length);
+            }
+        }
+
+        public IFaceInfo<byte[]> Deserialize(Stream stream)
+        {
+            var ret = NewInstance();
+            using (var reader = new StreamReader(stream))
+            {
+                ret.Name = reader.ReadLine();
+            }
+                
+            while (stream.CanRead)
+            {
+                var buffer = new byte[FSDK.TemplateSize];
+                stream.Read(buffer, 0, FSDK.TemplateSize);
+                ret.AddTemplate(buffer);
+            }
+            return ret;
+        }
+
         private List<byte[]> _faceTemplates;
 
         private const float WeightAvgMatch = 1;
         private const float WeightMaxMatch = 5;
+
+       
     }
 }

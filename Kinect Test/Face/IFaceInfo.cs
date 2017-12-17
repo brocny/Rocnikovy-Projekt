@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 
 namespace Face
 {
@@ -9,8 +10,9 @@ namespace Face
         void Merge(IFaceInfo<T> other);
         bool IsValid(T template);
         string Name { get; set; }
-        ICollection<T> Templates { get; }
-
+        IReadOnlyCollection<T> Templates { get; }
+        void Serialize(Stream stream);
+        IFaceInfo<T> Deserialize(Stream stream); 
         IFaceInfo<T> NewInstance();
     }
 }

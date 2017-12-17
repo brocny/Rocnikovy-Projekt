@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
+using Face;
 
 namespace Face
 {
     /// <summary>
-    /// 
+    /// A database for storing information about faces
     /// </summary>
     /// <remarks>
     /// Thread-safe 
@@ -165,5 +168,77 @@ namespace Face
 
             return false;
         }
+
+        public class FaceDatabaseSerializer
+        {
+            public FaceDatabaseSerializer(FaceDatabase<T> faceDatabase)
+            {
+                _faceDatabase = faceDatabase;
+            }
+
+            public void Serialize(string outputDir = "faces")
+            {
+                foreach (var face in _faceDatabase._storedFaces)
+                {
+                    using (var file = File.OpenWrite($"{outputDir}/{face.Key}.bin"))
+                    using (var stream = new FileStream(file.SafeFileHandle, FileAccess.Write))
+                        face.Value.Serialize(stream);
+                }
+            }
+
+            private readonly FaceDatabase<T> _faceDatabase;
+        }
+
+        public class FaceDatabaseDeserializer
+        {
+            private IFaceInfo<T> _faceInfoBaseInstance;
+
+            public FaceDatabaseDeserializer(IFaceInfo<T> faceInfoBaseInstance)
+            {
+                _faceInfoBaseInstance = faceInfoBaseInstance;
+            }
+
+            bool TryDeserialize(string dir, out FaceDatabase<T> faceDatabase)
+            {
+                faceDatabase = null;
+                try
+                {
+                    faceDatabase = Deserialize(dir);
+                }
+                catch
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            FaceDatabase<T> Deserialize(string dir = "faces")
+            {
+                if (!Directory.Exists(dir))
+                {
+                    throw new ArgumentException($"{dir} is not a valid directory path!");
+                }
+
+                var db = new FaceDatabase<T>();
+
+                var filePaths = Directory.EnumerateFiles(dir).Where(f => Path.GetExtension(f) == ".bin");
+
+                foreach (var filePath in filePaths)
+                {
+                    var id = int.Parse(Path.GetFileNameWithoutExtension(filePath));
+                    using (var file = File.OpenRead(filePath))
+                    using (var stream = new FileStream(file.SafeFileHandle, FileAccess.Read))
+                    {
+                        var fInfo = _faceInfoBaseInstance.Deserialize(stream);
+                        db.Add(id, fInfo);
+                    }
+                    
+                }
+
+                return db;
+            }
+        }
     }
 }
+
