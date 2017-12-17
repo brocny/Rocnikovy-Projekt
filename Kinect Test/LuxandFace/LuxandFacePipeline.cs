@@ -24,7 +24,7 @@ namespace LuxandFaceLib
         public event EventHandler<FSDKFaceImage[]> FaceDetectionComplete;
         public event EventHandler<FSDKFaceImage[]> FacialFeatureRecognitionComplete;
         public event EventHandler<FaceTemplate[]> FaceTemplateExtractionComplete;
-        public event EventHandler<ValueTuple<long,int>[]> TemplateProcessingComplete; 
+        public event EventHandler<(long trackingId, (int faceId, float confidence) match)> TemplateProcessingComplete; 
 
         public TaskScheduler SynchContext { get; set; }
         public CancellationToken CancellationToken { get; set; }
@@ -260,7 +260,7 @@ namespace LuxandFaceLib
 
         private void  ProcessTemplates(FaceTemplate[] templates)
         {
-            var matchList = new ValueTuple<long, int>[templates.Length];
+            var matchList = new ValueTuple<long, (int faceId, float similarity)>[templates.Length];
             for (var i = 0; i < templates.Length; i++)
             {
                 FaceTemplate t = templates[i];
@@ -270,12 +270,12 @@ namespace LuxandFaceLib
                     var similarity = faceInfo.GetSimilarity(t.Template);
                     if (similarity > SameFaceConfidenceThreshold)
                     {
-                        matchList[i] = (t.TrackingId, faceId);
+                        matchList[i] = (t.TrackingId, (faceId, similarity));
                     }
                     else if (similarity >= TrackedFaceNewTemplateThreshold)
                     {
                         faceInfo.AddTemplate(t.Template);
-                        matchList[i] = (t.TrackingId, faceId);
+                        matchList[i] = (t.TrackingId, (faceId, similarity));
                     }
                     else
                     {
@@ -305,7 +305,7 @@ namespace LuxandFaceLib
                         _faceDb.TryAddNewFace(id, t.Template);
                         _trackedFaces[t.TrackingId] = id;
                     }
-                    matchList[i] = (t.TrackingId, bestMatch.id);
+                    matchList[i] = (t.TrackingId, bestMatch);
                 }
             }
 
