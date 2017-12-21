@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using KinectUnifier;
@@ -126,34 +127,60 @@ namespace Kinect_Test
 
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
-            /*
-            _lastTask?.ContinueWith(t =>
-            {
-                var pointInColorCoordinates = Util.CoordinateSystemConversion(e.Location, pictureBox1.Width,
-                    pictureBox1.Height, _colorWidth, _colorHeight);
-                for (var i = 0; i < _face2.FaceCount; i++)
-                {
-                    if (_faceRectangles[i].Contains(pointInColorCoordinates))
-                    {
-                        var index = i;
-                        var faceTemplate = _face2.GetFaceTemplate(index);
-                        if (faceTemplate == null) return;
-                        _faceDatabase.Add(10, faceTemplate);
-                    }
-                }
-            }, TaskContinuationOptions.AttachedToParent);
-            */
+
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             _kinect.Close();
         }
-
-        private void faceNameTextBox_Enter(object sender, EventArgs e)
+        private void loadButton_Click(object sender, EventArgs e)
         {
-            faceNameTextBox.Text = "";
-            faceNameTextBox.ForeColor = Color.Black;
+            var dialog = new FolderBrowserDialog
+            {
+                Description = "Select folder containing face database data",
+                ShowNewFolderButton = false,
+                SelectedPath = Environment.CurrentDirectory
+            };
+
+            var result = dialog.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                try
+                {
+                    _faceDatabase.Deserialize(dialog.SelectedPath);
+                }
+                catch (Exception exc)
+                {
+                    MessageBox.Show(
+                        $"Error: An error occured while loading the database from {dialog.SelectedPath}: {Environment.NewLine} {exc}");
+                }
+            }
+
+        }
+
+        private void saveButton_Click(object sender, EventArgs e)
+        {
+            var dialog = new FolderBrowserDialog()
+            {
+                Description = "Select folder to save Face data to",
+                ShowNewFolderButton = true,
+                SelectedPath = Environment.CurrentDirectory
+            };
+
+            var result = dialog.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                try
+                {
+                    _faceDatabase.Serialize(dialog.SelectedPath);
+                }
+                catch (Exception exc)
+                {
+                    MessageBox.Show(
+                        $"Error: An error occured while the database to {dialog.SelectedPath}: {Environment.NewLine} {exc}");
+                }
+            }
         }
     }
 }
