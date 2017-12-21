@@ -169,6 +169,18 @@ namespace Face
             return false;
         }
 
+        public void Serialize(string dir)
+        {
+            var serializer = new FaceDatabaseSerializer(this);
+            serializer.Serialize(dir);
+        }
+
+        public void Deserialize(string dir)
+        {
+            var deserializer = new FaceDatabaseDeserializer(_baseInstance, this);
+            deserializer.Deserialize(dir);
+        }
+
         public class FaceDatabaseSerializer
         {
             public FaceDatabaseSerializer(FaceDatabase<T> faceDatabase)
@@ -180,9 +192,8 @@ namespace Face
             {
                 foreach (var face in _faceDatabase._storedFaces)
                 {
-                    using (var file = File.OpenWrite($"{outputDir}/{face.Key}.bin"))
-                    using (var stream = new FileStream(file.SafeFileHandle, FileAccess.Write))
-                        face.Value.Serialize(stream);
+                    using (var file = File.Open($"{outputDir}/{face.Key}.bin", FileMode.Create, FileAccess.Write))
+                        face.Value.Serialize(file);
                 }
             }
 
@@ -192,35 +203,21 @@ namespace Face
         public class FaceDatabaseDeserializer
         {
             private IFaceInfo<T> _faceInfoBaseInstance;
+            private FaceDatabase<T> _db;
 
-            public FaceDatabaseDeserializer(IFaceInfo<T> faceInfoBaseInstance)
+            public FaceDatabaseDeserializer(IFaceInfo<T> faceInfoBaseInstance, FaceDatabase<T> db)
             {
                 _faceInfoBaseInstance = faceInfoBaseInstance;
+                _db = db;
+
             }
 
-            bool TryDeserialize(string dir, out FaceDatabase<T> faceDatabase)
-            {
-                faceDatabase = null;
-                try
-                {
-                    faceDatabase = Deserialize(dir);
-                }
-                catch
-                {
-                    return false;
-                }
-
-                return true;
-            }
-
-            FaceDatabase<T> Deserialize(string dir = "faces")
+            public void Deserialize(string dir = "faces")
             {
                 if (!Directory.Exists(dir))
                 {
                     throw new ArgumentException($"{dir} is not a valid directory path!");
                 }
-
-                var db = new FaceDatabase<T>();
 
                 var filePaths = Directory.EnumerateFiles(dir).Where(f => Path.GetExtension(f) == ".bin");
 
@@ -231,12 +228,10 @@ namespace Face
                     using (var stream = new FileStream(file.SafeFileHandle, FileAccess.Read))
                     {
                         var fInfo = _faceInfoBaseInstance.Deserialize(stream);
-                        db.Add(id, fInfo);
+                        _db.Add(id, fInfo);
                     }
                     
                 }
-
-                return db;
             }
         }
     }

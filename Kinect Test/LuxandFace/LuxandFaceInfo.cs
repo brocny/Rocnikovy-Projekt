@@ -66,28 +66,28 @@ namespace LuxandFaceLib
 
         public void Serialize(Stream stream)
         {
-            var writer = new StreamWriter(stream);
-            writer.WriteLine(Name);
+            var writer = new BinaryWriter(stream);
+            writer.Write(Name);
             foreach (var template in _faceTemplates)
             {
-                stream.Write(template, 0, template.Length);
+                writer.Write(template, 0, template.Length);
             }
         }
 
         public IFaceInfo<byte[]> Deserialize(Stream stream)
         {
             var ret = NewInstance();
-            using (var reader = new StreamReader(stream))
+            using (var reader = new BinaryReader(stream))
             {
-                ret.Name = reader.ReadLine();
+                ret.Name = reader.ReadString();
+                while (reader.PeekChar() >= 0)
+                {
+                    var buffer = new byte[FSDK.TemplateSize];
+                    stream.Read(buffer, 0, FSDK.TemplateSize);
+                    ret.AddTemplate(buffer);
+                }
             }
                 
-            while (stream.CanRead)
-            {
-                var buffer = new byte[FSDK.TemplateSize];
-                stream.Read(buffer, 0, FSDK.TemplateSize);
-                ret.AddTemplate(buffer);
-            }
             return ret;
         }
 
