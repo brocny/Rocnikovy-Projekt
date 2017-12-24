@@ -119,7 +119,7 @@ namespace Kinect_Test
         public void DrawBone(PointF p1, PointF p2, Pen pen)
         {
             using(var gr = Graphics.FromImage(_bmp))
-            gr.DrawLine(pen, p1, p2);
+                gr.DrawLine(pen, p1, p2);
         }
 
         public void DrawBone(IReadOnlyDictionary<JointType, IJoint> joints,
@@ -131,13 +131,7 @@ namespace Kinect_Test
             {
                 return;
             }
-            
 
-            // If we can't find either of these joints, exit
-            if (!joint1.IsTracked || !joint0.IsTracked)
-            {
-                //return;
-            }
             using(var gr = Graphics.FromImage(_bmp))
             gr.DrawLine(pen,
                 jointColorSpacePoints[jointType0].X,
