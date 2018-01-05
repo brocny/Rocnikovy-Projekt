@@ -61,9 +61,9 @@ namespace Kinect_Test
             _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
             _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
 
-            _renderer = new Renderer(new FormComponents(statusLabel, pictureBox1), _colorWidth, _colorHeight);
+            _renderer = new Renderer(_colorWidth, _colorHeight);
             _bodyPens = _bodyBrushes.Select(br => new Pen(br, 2.5f)).ToArray();
-            
+
             _coordinateMapper = _kinect.CoordinateMapper;
             _kinect.Open();
         }

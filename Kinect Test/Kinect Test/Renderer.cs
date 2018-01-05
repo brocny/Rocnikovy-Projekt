@@ -8,7 +8,7 @@ namespace Kinect_Test
 {
     public class Renderer
     {
-        public Font NameFont { get; set; } = new Font(FontFamily.GenericSansSerif, 30);
+        public Font NameFont { get; set; } = new Font(FontFamily.GenericSansSerif, 36);
 
         public Bitmap Image
         {
@@ -19,7 +19,7 @@ namespace Kinect_Test
             }
         }
 
-        public Renderer(FormComponents components, int colorFrameWidth, int colorFrameHeight)
+        public Renderer(int colorFrameWidth, int colorFrameHeight)
         {
             _colorWidth = colorFrameWidth;
             _colorHeight = colorFrameHeight;
@@ -28,21 +28,28 @@ namespace Kinect_Test
         }
         
         private Bitmap _bmp;
-        
 
         private readonly int _colorHeight;
         private readonly int _colorWidth;
-        
 
         public float JointSize { get; set; } = 7;
         public float BoneThickness { get; set; } = 1;
 
-        private DateTime _lastFrameTime;
 
         public void Clear()
         {
-            var currentTime = DateTime.Now;
-            _lastFrameTime = currentTime;
+            if (_bmp == null)
+            {
+                _bmp = new Bitmap(_colorWidth, _colorHeight);
+            }
+            else
+            {
+                using (var gr = Graphics.FromImage(_bmp))
+                {
+                    gr.FillRectangle(Brushes.Black, 0, 0, _bmp.Width, _bmp.Height);
+                }
+            }
+            
         }
 
         public void DrawBody(IBody body, Brush brush, Pen pen, ICoordinateMapper mapper)
