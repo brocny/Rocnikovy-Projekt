@@ -51,7 +51,7 @@
             // statusLabel
             // 
             this.statusLabel.AutoSize = true;
-            this.statusLabel.Location = new System.Drawing.Point(9, 9);
+            this.statusLabel.Location = new System.Drawing.Point(12, 584);
             this.statusLabel.Name = "statusLabel";
             this.statusLabel.Size = new System.Drawing.Size(37, 17);
             this.statusLabel.TabIndex = 1;
@@ -72,6 +72,7 @@
             this.facePictureBox.Location = new System.Drawing.Point(978, 12);
             this.facePictureBox.Name = "facePictureBox";
             this.facePictureBox.Size = new System.Drawing.Size(217, 213);
+            this.facePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.facePictureBox.TabIndex = 4;
             this.facePictureBox.TabStop = false;
             // 
