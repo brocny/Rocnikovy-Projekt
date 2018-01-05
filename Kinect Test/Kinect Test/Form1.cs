@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using KinectUnifier;
@@ -56,6 +55,8 @@ namespace Kinect_Test
             _faceDatabase = new FaceDatabase<byte[]>(new LuxandFaceInfo());
             _facePipeline = new LuxandFacePipeline(_faceDatabase);
 
+            _facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
+
             LuxandFacePipeline.InitializeLibrary();
             _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
             _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
@@ -65,6 +66,15 @@ namespace Kinect_Test
             
             _coordinateMapper = _kinect.CoordinateMapper;
             _kinect.Open();
+        }
+
+        private void FacePipelineOnFaceCuttingComplete(object sender, FaceImage[] faceImages)
+        {
+            if (faceImages?.Length != 0)
+            {
+                var image = faceImages[0];
+                facePictureBox.Image = image.PixelBuffer.BytesToBitmap(image.Width, image.Height, image.BytesPerPixel);
+            }
         }
 
         private void MultiManagerOnMultiFrameArrived(object sender, MultiFrameReadyEventArgs e)
@@ -115,13 +125,31 @@ namespace Kinect_Test
         {
             if (_kinect.IsRunning)
             {
-                _kinect.Close();
-                button1.Text = "Start";
+                Pause();
             }
             else
             {
+                UnPause();                
+            }
+        }
+
+        private void Pause()
+        {
+            if (_kinect.IsRunning)
+            {
+                _kinect.Close();
+                button1.Text = "Start";
+                statusLabel.Text = "STOPPED";
+            }
+        }
+
+        private void UnPause()
+        {
+            if (!_kinect.IsRunning)
+            {
                 _kinect.Open();
                 button1.Text = "Stop";
+                statusLabel.Text = "";
             }
         }
 
@@ -132,10 +160,12 @@ namespace Kinect_Test
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            _kinect.Close();
+            Pause();
         }
+
         private void loadButton_Click(object sender, EventArgs e)
         {
+            Pause();
             var dialog = new FolderBrowserDialog
             {
                 Description = "Select folder containing face database data",
@@ -156,11 +186,12 @@ namespace Kinect_Test
                         $"Error: An error occured while loading the database from {dialog.SelectedPath}: {Environment.NewLine} {exc}");
                 }
             }
-
+            UnPause();
         }
 
         private void saveButton_Click(object sender, EventArgs e)
         {
+            Pause();
             var dialog = new FolderBrowserDialog()
             {
                 Description = "Select folder to save Face data to",
@@ -181,6 +212,7 @@ namespace Kinect_Test
                         $"Error: An error occured while the database to {dialog.SelectedPath}: {Environment.NewLine} {exc}");
                 }
             }
+            UnPause();
         }
     }
 }
