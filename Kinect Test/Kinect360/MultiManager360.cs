@@ -27,7 +27,7 @@ namespace Kinect360
             var cFrame = e.ColorFrame;
             if (cFrame != null)
             {
-                _colorFrame.Dispose();
+                _colorFrame?.Dispose();
                 _colorFrame = cFrame;
             }
 
@@ -47,7 +47,7 @@ namespace Kinect360
             var bFrame = e.BodyFrame;
             if (bFrame != null)
             {
-                _bodyFrame.Dispose();
+                _bodyFrame?.Dispose();
                 _bodyFrame = bFrame;
             }
 
