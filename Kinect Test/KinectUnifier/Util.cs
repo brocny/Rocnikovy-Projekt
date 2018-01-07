@@ -112,11 +112,13 @@ namespace KinectUnifier
                 PixelFormat.Format32bppArgb);
 
             byte* bmpPointer = (byte*)bmpData.Scan0.ToPointer();
-            for (int i = 0; i < buffer.Length; i+= 4)
+            Marshal.Copy(buffer, 0, bmpData.Scan0, buffer.Length);
+
+            for (int i = 0; i < buffer.Length; i+= bytesPerPixel)
             {
-                bmpPointer[i] = buffer[i + 2];
+                bmpPointer[i] = buffer[i];
                 bmpPointer[i + 1] = buffer[i + 1];
-                bmpPointer[i + 2] = buffer[i];
+                bmpPointer[i + 2] = buffer[i + 2];
             }
             bmp.UnlockBits(bmpData);
             return bmp;
@@ -144,8 +146,9 @@ namespace KinectUnifier
         /// <param name="bufferWidth">Width of the image stored in <code>buffer</code></param>
         /// <param name="rect">The desired rectangle</param>
         /// <param name="bytesPerPixel">Bytes per pixel of the original (as well as returned) image</param>
+        /// <param name="reverseRgb">If true, data in the copied buffer will turned from (A)RGB to BGR(A) and vice versa</param>
         /// <returns>A buffer containing image data in the region defined by <code>rect</code></returns>
-        public static byte[] GetBufferRect(this byte[] buffer, int bufferWidth, Rectangle rect, int bytesPerPixel)
+        public static byte[] GetBufferRect(this byte[] buffer, int bufferWidth, Rectangle rect, int bytesPerPixel, bool reverseRgb = false)
         {
             int left = rect.Left;
             if (left < 0) left = 0;
@@ -165,14 +168,25 @@ namespace KinectUnifier
 
             var ret = new byte[width * height * bytesPerPixel];
             int targetI = 0;
+
             for (int y = top; y < bottom; y++)
             {
                 for (int x = left; x < right; x++)
                 {
                     var index = (y * bufferWidth + x) * bytesPerPixel;
-                    for (int i = index; i < index + bytesPerPixel; i++)
+                    if (reverseRgb)
                     {
-                        ret[targetI++] = buffer[i];
+                        for (int i = index + bytesPerPixel - 1; i >= index; i--)
+                        {
+                            ret[targetI++] = buffer[i];
+                        }
+                    }
+                    else
+                    {
+                        for (int i = index; i < index + bytesPerPixel; i++)
+                        {
+                            ret[targetI++] = buffer[i];
+                        }
                     }
                 }
             }

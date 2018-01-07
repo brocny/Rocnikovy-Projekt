@@ -60,7 +60,7 @@ namespace KinectOne
 
             public void CopyFramePixelDataToArray(byte[] buffer)
             {
-                _colorFrame.CopyConvertedFrameDataToArray(buffer, ColorImageFormat.Rgba);
+                _colorFrame.CopyConvertedFrameDataToArray(buffer, ColorImageFormat.Bgra);
             }
 
             public void CopyFramePixelDataToIntPtr(IntPtr ptr, int pixelDataLength)
