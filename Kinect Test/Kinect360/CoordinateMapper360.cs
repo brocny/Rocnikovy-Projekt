@@ -13,6 +13,7 @@ namespace Kinect360
         {
             _kinect360 = kinect360;
             _coordinateMapper = _kinect360.KinectSensor.CoordinateMapper;
+            
         }
 
         public void MapCameraPointsToColorSpace(Point3F[] cameraPoints, Point2F[] colorPoints)
