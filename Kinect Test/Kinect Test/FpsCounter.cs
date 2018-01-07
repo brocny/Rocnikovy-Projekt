@@ -21,7 +21,6 @@ namespace Kinect_Test
                 _framesRendered = 0;
                 _lastTime = DateTime.Now;
             }
-
         }
 
     }

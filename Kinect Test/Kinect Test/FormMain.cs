@@ -10,7 +10,7 @@ using Face;
 
 namespace Kinect_Test
 {
-    public partial class Form1 : Form
+    public partial class FormMain : Form
     {
         private readonly Renderer _renderer;
 
@@ -43,14 +43,12 @@ namespace Kinect_Test
 
         private Pen[] _bodyPens;
 
-        public Form1()
+        public FormMain()
         {
             InitializeComponent();
             
             _kinect = KinectFactory.KinectFactory.GetKinect();
             _synchContext = TaskScheduler.FromCurrentSynchronizationContext();
-
-            InitializeColorComponents();
 
             _faceDatabase = new FaceDatabase<byte[]>(new LuxandFaceInfo());
             _facePipeline = new LuxandFacePipeline(_faceDatabase);
@@ -61,6 +59,8 @@ namespace Kinect_Test
             _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
             _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
 
+            InitializeColorComponents();
+
             _renderer = new Renderer(_colorWidth, _colorHeight);
             _bodyPens = _bodyBrushes.Select(br => new Pen(br, 2.5f)).ToArray();
 
@@ -70,10 +70,10 @@ namespace Kinect_Test
 
         private void FacePipelineOnFaceCuttingComplete(object sender, FaceImage[] faceImages)
         {
-            if (faceImages?.Length != 0)
+            if (faceImages != null && faceImages.Length != 0)
             {
                 var image = faceImages[0];
-                facePictureBox.Image = image.PixelBuffer.BytesToBitmap(image.Width, image.Height, image.BytesPerPixel);
+                facePictureBox.Image = image.Bitmap;
             }
         }
 
@@ -110,6 +110,39 @@ namespace Kinect_Test
                 _fpsCounter.NewFrame();
                 statusLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
                 pictureBox1.Image = renderTask.Result;
+            }
+        }
+
+        void MultiFrameArrived_Test(object sender, MultiFrameReadyEventArgs e)
+        {
+            var multiFrame = e.MultiFrame;
+            if (multiFrame == null) return;
+
+            using (var colorFrame = multiFrame.ColorFrame)
+            using (var bodyFrame = multiFrame.BodyFrame)
+            {
+                var bodyBuffer = new IBody[bodyFrame.BodyCount];
+                var colorBuffer = new byte[colorFrame.PixelDataLength];
+
+                bodyFrame.CopyBodiesTo(bodyBuffer);
+                colorFrame.CopyFramePixelDataToArray(colorBuffer);
+
+                _renderer.Image =
+                    colorBuffer.BytesToBitmap(colorFrame.Width, colorFrame.Height, colorFrame.BytesPerPixel);
+
+                _renderer.DrawBodies(bodyBuffer, _bodyBrushes, _bodyPens, _coordinateMapper);
+
+                for (int i = 0; i < bodyBuffer.Length; i++)
+                {
+                    if (Util.TryGetHeadRectangle(bodyBuffer[i], _coordinateMapper, out var faceRect))
+                    {
+                        _renderer.DrawRectangles(new [] {faceRect}, _bodyPens);
+                    }
+                }
+
+                _fpsCounter.NewFrame();
+                pictureBox1.Image = _renderer.Image;
+                statusLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
             }
         }
 
@@ -166,6 +199,7 @@ namespace Kinect_Test
         private void loadButton_Click(object sender, EventArgs e)
         {
             Pause();
+
             var dialog = new FolderBrowserDialog
             {
                 Description = "Select folder containing face database data",
@@ -186,12 +220,14 @@ namespace Kinect_Test
                         $"Error: An error occured while loading the database from {dialog.SelectedPath}: {Environment.NewLine} {exc}");
                 }
             }
+
             UnPause();
         }
 
         private void saveButton_Click(object sender, EventArgs e)
         {
             Pause();
+
             var dialog = new FolderBrowserDialog()
             {
                 Description = "Select folder to save Face data to",
@@ -212,6 +248,7 @@ namespace Kinect_Test
                         $"Error: An error occured while the database to {dialog.SelectedPath}: {Environment.NewLine} {exc}");
                 }
             }
+
             UnPause();
         }
     }
