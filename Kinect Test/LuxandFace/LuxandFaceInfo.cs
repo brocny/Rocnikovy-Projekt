@@ -65,7 +65,7 @@ namespace LuxandFaceLib
         public void Serialize(Stream stream)
         {
             var writer = new BinaryWriter(stream);
-            writer.Write(Name);
+            writer.Write(Name ?? "");
             foreach (var template in _faceTemplates)
             {
                 writer.Write(template, 0, template.Length);
