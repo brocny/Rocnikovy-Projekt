@@ -30,6 +30,36 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == '360' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>K_360;DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'One' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>K_ONE;DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '360Release|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>K_360;DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'OneRelease|AnyCPU'">
+    <OutputPath>bin\Release\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -44,16 +74,33 @@
     <Compile Include="KinectFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\KinectOne\KinectOne.csproj">
-      <Project>{90dca39a-dc42-4d9a-8f85-7cad272350bb}</Project>
-      <Name>KinectOne</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\KinectUnifier\KinectUnifier.csproj">
-      <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
-      <Name>KinectUnifier</Name>
-      <Private>False</Private>
-    </ProjectReference>
-  </ItemGroup>
+  <Choose>
+    <When Condition="$(DefineConstants.Contains('K_ONE'))">
+      <ItemGroup>
+        <ProjectReference Include="..\KinectOne\KinectOne.csproj">
+          <Project>{90dca39a-dc42-4d9a-8f85-7cad272350bb}</Project>
+          <Name>KinectOne</Name>
+        </ProjectReference>
+        <ProjectReference Include="..\KinectUnifier\KinectUnifier.csproj">
+          <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
+          <Name>KinectUnifier</Name>
+          <Private>False</Private>
+        </ProjectReference>
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <ProjectReference Include="..\Kinect360\Kinect360.csproj">
+          <Project>{06501c40-b1c2-4f80-8fb3-c9cdb390649b}</Project>
+          <Name>Kinect360</Name>
+        </ProjectReference>
+        <ProjectReference Include="..\KinectUnifier\KinectUnifier.csproj">
+          <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
+          <Name>KinectUnifier</Name>
+          <Private>False</Private>
+        </ProjectReference>
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
