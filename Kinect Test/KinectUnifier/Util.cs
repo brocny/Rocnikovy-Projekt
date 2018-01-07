@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
-
 
 namespace KinectUnifier
 {
@@ -104,27 +102,20 @@ namespace KinectUnifier
             return true;
         }
 
-        public static unsafe Bitmap BytesToBitmap(this byte[] buffer, int width, int height, int bytesPerPixel)
+        public static Bitmap BytesToBitmap(this byte[] buffer, int width, int height, int bytesPerPixel)
         {
             if (buffer == null) return null;
             var bmp = new Bitmap(width, height, PixelFormat.Format32bppRgb);
             var bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly,
                 PixelFormat.Format32bppArgb);
 
-            byte* bmpPointer = (byte*)bmpData.Scan0.ToPointer();
             Marshal.Copy(buffer, 0, bmpData.Scan0, buffer.Length);
-
-            for (int i = 0; i < buffer.Length; i+= bytesPerPixel)
-            {
-                bmpPointer[i] = buffer[i];
-                bmpPointer[i + 1] = buffer[i + 1];
-                bmpPointer[i + 2] = buffer[i + 2];
-            }
+            
             bmp.UnlockBits(bmpData);
             return bmp;
         }
         
-        public static Rectangle CoordinateSystemConversion(Rectangle origRect, int origWidth, int origHeight, int newWidth, int newHeight)
+        public static Rectangle Rescale(this Rectangle origRect, int origWidth, int origHeight, int newWidth, int newHeight)
         {
             float xRatio = newWidth / (float)origWidth;
             float yRatio = newHeight / (float)origHeight;
@@ -132,7 +123,7 @@ namespace KinectUnifier
 
         }
 
-        public static Point CoordinateSystemConversion(Point origPoint, int origWidth, int origHeight, int newWidth, int newHeight)
+        public static Point Rescale(this Point origPoint, int origWidth, int origHeight, int newWidth, int newHeight)
         {
             float xRatio = newWidth / (float)origWidth;
             float yRatio = newHeight / (float)origHeight;
