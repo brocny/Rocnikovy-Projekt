@@ -99,7 +99,10 @@ namespace Kinect_Test
         {
             for (int i = 0; i < bodies.Length; i++)
             {
-                DrawBody(bodies[i], brushes[i % brushes.Length], pens[i % pens.Length], mapper);
+                if (bodies[i].IsTracked)
+                {
+                    DrawBody(bodies[i], brushes[i % brushes.Length], pens[i % pens.Length], mapper);
+                }
             }
         }
 
@@ -107,8 +110,8 @@ namespace Kinect_Test
         {
             using (var gr = Graphics.FromImage(_bmp))
             {
-                var bmpX = Math.Min(pos.X, _bmp.Width);
-                var bmpY = Math.Min(pos.Y, _bmp.Height);
+                var bmpX = Math.Max(0, Math.Min(pos.X, _bmp.Width));
+                var bmpY = Math.Max(0, Math.Min(pos.Y, _bmp.Height));
                 gr.FillEllipse(brush, bmpX - JointSize / 2, bmpY - JointSize / 2, JointSize, JointSize);
             }
         }
@@ -138,6 +141,8 @@ namespace Kinect_Test
             {
                 return;
             }
+
+            if (!joint0.IsTracked || !joint1.IsTracked) return;
 
             using(var gr = Graphics.FromImage(_bmp))
             gr.DrawLine(pen,
