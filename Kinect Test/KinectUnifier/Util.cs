@@ -139,7 +139,7 @@ namespace KinectUnifier
         /// <param name="bytesPerPixel">Bytes per pixel of the original (as well as returned) image</param>
         /// <param name="reverseRgb">If true, data in the copied buffer will turned from (A)RGB to BGR(A) and vice versa</param>
         /// <returns>A buffer containing image data in the region defined by <code>rect</code></returns>
-        public static byte[] GetBufferRect(this byte[] buffer, int bufferWidth, Rectangle rect, int bytesPerPixel, bool reverseRgb = false)
+        public static byte[] GetBufferRect(this byte[] buffer, int bufferWidth, Rectangle rect, int bytesPerPixel)
         {
             int left = rect.Left;
             if (left < 0) left = 0;
@@ -165,20 +165,11 @@ namespace KinectUnifier
                 for (int x = left; x < right; x++)
                 {
                     var index = (y * bufferWidth + x) * bytesPerPixel;
-                    if (reverseRgb)
+                    for (int i = index; i < index + bytesPerPixel; i++)
                     {
-                        for (int i = index + bytesPerPixel - 1; i >= index; i--)
-                        {
-                            ret[targetI++] = buffer[i];
-                        }
+                        ret[targetI++] = buffer[i];
                     }
-                    else
-                    {
-                        for (int i = index; i < index + bytesPerPixel; i++)
-                        {
-                            ret[targetI++] = buffer[i];
-                        }
-                    }
+                    
                 }
             }
 

@@ -1,38 +1,29 @@
-﻿#define ONE
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using KinectUnifier;
 
-
-
 namespace KinectFactory
 {
-#if ONE
-    using KinectOne;
-#else
-    using Kinect360;
-#endif
 
     public static class KinectFactory
     {
         public static IKinect GetKinect360()
         {
-#if ONE
-            return null;
+#if K_360
+            return new Kinect360.Kinect360();
 #else
-            return new Kinect360();
+            return null;
 #endif
         }
 
 
         public static IKinect GetKinectOne()
         {
-#if ONE
-            return new KinectOne();
+#if K_ONE
+            return new KinectOne.KinectOne();
 #else
             return null;
 #endif
@@ -40,10 +31,12 @@ namespace KinectFactory
 
         public static IKinect GetKinect()
         {
-#if ONE
+#if K_ONE
             return GetKinectOne();
-#else
+#elif K_360
             return GetKinect360();
+#else
+            return null;
 #endif
         }
     }

@@ -2,7 +2,6 @@
 using KinectUnifier;
 using Microsoft.Kinect;
 
-
 namespace Kinect360
 {
     public class Kinect360 : IKinect
