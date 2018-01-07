@@ -12,6 +12,8 @@ namespace Kinect_Test
 {
     public partial class FormMain : Form
     {
+        private ProgramState _programState;
+
         private readonly Renderer _renderer;
 
         private readonly IKinect _kinect;
@@ -20,14 +22,9 @@ namespace Kinect_Test
         private int _colorHeight;
         private int _colorWidth;
         private int _colorBytesPerPixel;
-        private byte[] _colorFrameBuffer;
-
-        private int _bodyCount;
-        private IBody[] _bodies;
 
         private FpsCounter _fpsCounter = new FpsCounter();
 
-        private List<Rectangle> _faceRectangles;
         private LuxandFacePipeline _facePipeline;
         private readonly FaceDatabase<byte[]> _faceDatabase;
 
@@ -173,6 +170,7 @@ namespace Kinect_Test
                 _kinect.Close();
                 button1.Text = "Start";
                 statusLabel.Text = "STOPPED";
+                _programState = ProgramState.Paused;
             }
         }
 
@@ -183,12 +181,8 @@ namespace Kinect_Test
                 _kinect.Open();
                 button1.Text = "Stop";
                 statusLabel.Text = "";
+                _programState = ProgramState.Running;
             }
-        }
-
-        private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
-        {
-
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -198,6 +192,7 @@ namespace Kinect_Test
 
         private void loadButton_Click(object sender, EventArgs e)
         {
+            var originalState = _programState;
             Pause();
 
             var dialog = new FolderBrowserDialog
@@ -221,11 +216,12 @@ namespace Kinect_Test
                 }
             }
 
-            UnPause();
+            if (originalState == ProgramState.Running) UnPause();
         }
 
         private void saveButton_Click(object sender, EventArgs e)
         {
+            var originalState = _programState;
             Pause();
 
             var dialog = new FolderBrowserDialog()
@@ -245,11 +241,16 @@ namespace Kinect_Test
                 catch (Exception exc)
                 {
                     MessageBox.Show(
-                        $"Error: An error occured while the database to {dialog.SelectedPath}: {Environment.NewLine} {exc}");
+                        $"Error: An error occured while saving the database to {dialog.SelectedPath}: {Environment.NewLine} {exc}");
                 }
             }
 
-            UnPause();
+            if(originalState == ProgramState.Running) UnPause();
         }
     }
+}
+
+enum ProgramState
+{
+    Running, Paused
 }
