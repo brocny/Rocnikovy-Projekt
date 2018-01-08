@@ -142,7 +142,7 @@ namespace LuxandFaceLib
                 var buffer = new byte[colorFrame.PixelDataLength];
                 colorFrame.CopyFramePixelDataToArray(buffer);
                 return buffer;
-            });
+            }, CancellationToken);
 
             var bodyTask = Task.Run(() =>
             {
@@ -151,16 +151,18 @@ namespace LuxandFaceLib
                 var faceIds = new List<long>(bodyCount);
                 var bodies = new IBody[bodyCount];
                 bodyFrame.CopyBodiesTo(bodies);
-                for (int i = 0; i < bodyCount;  i++)
+
+                foreach (var body in bodies.Where(b => b.IsTracked))
                 {
-                    if (Util.TryGetHeadRectangle(bodies[i], mapper, out var faceRect))
+                    if (Util.TryGetHeadRectangle(body, mapper, out var faceRect))
                     {
                         faceRects.Add(faceRect);
-                        faceIds.Add(bodies[i].TrackingId);
+                        faceIds.Add(body.TrackingId);
                     }
                 }
+
                 return (faceRects.ToArray(), faceIds.ToArray(), bodies);
-            });
+            }, CancellationToken);
 
             return new FaceLocationResult
             {
