@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,7 +25,9 @@ namespace LuxandFaceLib
         public event EventHandler<FSDKFaceImage[]> FaceDetectionComplete;
         public event EventHandler<FSDKFaceImage[]> FacialFeatureRecognitionComplete;
         public event EventHandler<FaceTemplate[]> FaceTemplateExtractionComplete;
-        public event EventHandler<(long trackingId, (int faceId, float confidence) match)[]> TemplateProcessingComplete; 
+        public event EventHandler<(long trackingId, (int faceId, float confidence) match)[]> TemplateProcessingComplete;
+
+        public event EventHandler<Task> Completion;
 
         public TaskScheduler SynchContext { get; set; }
         public CancellationToken CancellationToken { get; set; }
@@ -105,17 +108,22 @@ namespace LuxandFaceLib
             _fsdkImageCreatingBlock.LinkTo(_faceDetectionBlock, obj => obj != null);
             _fsdkImageCreatingBlock.LinkTo(nullBlock, obj => obj == null);
             _faceDetectionBlock.LinkTo(_facialFeaturesBlock, obj => obj != null);
-            _faceCuttingBlock.LinkTo(nullBlock, obj => obj == null);
+            _faceDetectionBlock.LinkTo(nullBlock, obj => obj == null);
             _facialFeaturesBlock.LinkTo(_templateExtractionBlock, obj => obj != null);
             _facialFeaturesBlock.LinkTo(nullBlock, obj => obj == null);
             _templateExtractionBlock.LinkTo(_templateProcessingBlock, obj => obj != null);
             _templateExtractionBlock.LinkTo(nullBlock, obj => obj == null);
 
+            Task.Factory.ContinueWhenAny(
+                new[]
+                {
+                    _faceCuttingBlock.Completion, _fsdkImageCreatingBlock.Completion, _faceDetectionBlock.Completion,
+                    _facialFeaturesBlock.Completion, _templateExtractionBlock.Completion,
+                    _templateProcessingBlock.Completion
+                }, t => Completion?.Invoke(this, t));
+
             SetFSDKParams();
         }
-
-        private FaceDatabase<byte[]> _faceDb;
-        private ConcurrentDictionary<long, int> _trackedFaces;
 
         public Task<FaceLocationResult> LocateFacesAsync(IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper)
         {
@@ -205,10 +213,10 @@ namespace LuxandFaceLib
         private  FSDKFaceImage[] CreateFSDKImages(FaceImage[] faceImages)
         {
             var results = new FSDKFaceImage[faceImages.Length];
-            Parallel.For (0, faceImages.Length, i=>
+            Parallel.For(0, faceImages.Length, i =>
             {
                 var fImage = faceImages[i];
-                
+
                 results[i] = new FSDKFaceImage
                 {
                     Width = fImage.Bitmap.Width,
@@ -319,6 +327,9 @@ namespace LuxandFaceLib
         private bool _handleArbitrayRot = false;
         private bool _determineRotAngle = false;
 
+        private FaceDatabase<byte[]> _faceDb;
+        private ConcurrentDictionary<long, int> _trackedFaces;
+
         private TransformBlock<FaceLocationResult, FaceImage[]> _faceCuttingBlock;
         private TransformBlock<FaceImage[], FSDKFaceImage[]> _fsdkImageCreatingBlock;
         private TransformBlock<FSDKFaceImage[], FSDKFaceImage[]> _faceDetectionBlock;
@@ -376,7 +387,7 @@ namespace LuxandFaceLib
         /// </summary>
         /// <returns>The age of the person, null if failed</returns>
         /// <remarks>The face's Features need to have been detected beforehand</remarks>
-        public int? GetAge()
+        public float? GetAge()
         {
             if (Features == null) return null;
 
@@ -386,7 +397,13 @@ namespace LuxandFaceLib
                 return null;
             }
 
-            return int.Parse(response.Split('=')[1]);
+            var age = response.Split('=', ';')[1];
+            if (float.TryParse(age, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out float ret))
+            {
+                return ret;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -404,7 +421,12 @@ namespace LuxandFaceLib
                 return null;
             }
 
-            return float.Parse(response.Split('=', ';')[1]);
+            if (float.TryParse(response.Split('=', ';')[1], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out float ret))
+            {
+                return ret;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -432,7 +454,12 @@ namespace LuxandFaceLib
                 return null;
             }
 
-            return float.Parse(response.Split('=', ';')[1]);
+            if (float.TryParse(response.Split('=', ';')[1], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out float ret))
+            {
+                return ret;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -450,7 +477,13 @@ namespace LuxandFaceLib
                 return null;
             }
 
-            return float.Parse(response.Split('=', ';')[3]);
+            var eyesOpen = response.Split('=', ';')[3];
+            if (float.TryParse(eyesOpen, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out float ret))
+            {
+                return ret;
+            }
+
+            return null;
         }
     }
 
