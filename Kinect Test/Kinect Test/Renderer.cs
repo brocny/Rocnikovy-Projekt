@@ -8,7 +8,7 @@ namespace Kinect_Test
 {
     public class Renderer
     {
-        public Font NameFont { get; set; } = new Font(FontFamily.GenericSansSerif, 36);
+        public Font NameFont { get; set; }
 
         public Bitmap Image
         {
@@ -23,6 +23,7 @@ namespace Kinect_Test
         {
             _colorWidth = colorFrameWidth;
             _colorHeight = colorFrameHeight;
+            NameFont = new Font(FontFamily.GenericSansSerif, _colorWidth / 25f);
 
             _bmp = new Bitmap(_colorWidth, _colorHeight);
         }
