@@ -43,8 +43,32 @@ namespace Kinect_Test
         public FormMain()
         {
             InitializeComponent();
+            var tryAgain = false;
+            do
+            {
+                try
+                {
+                    _kinect = KinectFactory.KinectFactory.GetKinect();
+                    tryAgain = false;
+                }
+                catch (ApplicationException e)
+                {
+                    var result = MessageBox.Show("Error: No Kinect device found!", "Kinect not found",
+                        MessageBoxButtons.RetryCancel,
+                        MessageBoxIcon.Error);
+                    if (result == DialogResult.Retry)
+                    {
+                        tryAgain = true;
+                    }
+
+                    if (result == DialogResult.Cancel)
+                    {
+                        Environment.Exit(1);
+                    }
+                }
+            } while (tryAgain);
             
-            _kinect = KinectFactory.KinectFactory.GetKinect();
+
             _synchContext = TaskScheduler.FromCurrentSynchronizationContext();
 
             _faceDatabase = new FaceDatabase<byte[]>(new LuxandFaceInfo());
@@ -212,7 +236,7 @@ namespace Kinect_Test
                 catch (Exception exc)
                 {
                     MessageBox.Show(
-                        $"Error: An error occured while loading the database from {dialog.SelectedPath}: {Environment.NewLine} {exc}");
+                        $"Error: An error occured while loading the database from {dialog.SelectedPath}: {Environment.NewLine}{exc}");
                 }
             }
 
@@ -241,7 +265,7 @@ namespace Kinect_Test
                 catch (Exception exc)
                 {
                     MessageBox.Show(
-                        $"Error: An error occured while saving the database to {dialog.SelectedPath}: {Environment.NewLine} {exc}");
+                        $"Error: An error occured while saving the database to {dialog.SelectedPath}: {Environment.NewLine}{exc}");
                 }
             }
 
