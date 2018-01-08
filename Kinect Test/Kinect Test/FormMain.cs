@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -18,10 +19,11 @@ namespace Kinect_Test
 
         private readonly IKinect _kinect;
         private readonly ICoordinateMapper _coordinateMapper;
-        
+
+        private int _colorBytesPerPixel;
         private int _colorHeight;
         private int _colorWidth;
-        private int _colorBytesPerPixel;
+        private long _displayedFaceTrackingId;
 
         private FpsCounter _fpsCounter = new FpsCounter();
 
@@ -51,7 +53,7 @@ namespace Kinect_Test
                     _kinect = KinectFactory.KinectFactory.GetKinect();
                     tryAgain = false;
                 }
-                catch (ApplicationException e)
+                catch (ApplicationException)
                 {
                     var result = MessageBox.Show("Error: No Kinect device found!", "Kinect not found",
                         MessageBoxButtons.RetryCancel,
@@ -73,10 +75,11 @@ namespace Kinect_Test
 
             _faceDatabase = new FaceDatabase<byte[]>(new LuxandFaceInfo());
             _facePipeline = new LuxandFacePipeline(_faceDatabase);
-
             _facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
 
             LuxandFacePipeline.InitializeLibrary();
+            _facePipeline.FacialFeatureRecognitionComplete += FacePipelinOnFeatureRecognition;
+
             _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
             _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
 
@@ -89,12 +92,28 @@ namespace Kinect_Test
             _kinect.Open();
         }
 
+        private void FacePipelinOnFeatureRecognition(object sender, FSDKFaceImage[] fsdkFaceImages)
+        {
+            var fsdkFaceImage = fsdkFaceImages.FirstOrDefault(f => f.TrackingId == _displayedFaceTrackingId);
+            if (fsdkFaceImage != null && _facePipeline.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out int faceId))
+            {
+                var confidenceMale = fsdkFaceImage.GetConfidenceMale();
+                if (confidenceMale == null) return;
+                var text = $"ID: {faceId}\nAge: {fsdkFaceImage.GetAge()}\nSmile: {fsdkFaceImage.GetSmile() * 100}%\n" + 
+                (confidenceMale > 0.5
+                    ? $"Male: {confidenceMale * 100}%"
+                    : $"Female: {(1 - confidenceMale) * 100}%");
+                faceLabel.InvokeIfRequired(f => f.Text = text);
+
+            }
+        }
+
         private void FacePipelineOnFaceCuttingComplete(object sender, FaceImage[] faceImages)
         {
             if (faceImages != null && faceImages.Length != 0)
             {
-                var image = faceImages[0];
-                facePictureBox.Image = image.Bitmap;
+                facePictureBox.Image = faceImages[0].Bitmap;
+                _displayedFaceTrackingId = faceImages[0].TrackingId;
             }
         }
 
@@ -277,4 +296,19 @@ namespace Kinect_Test
 enum ProgramState
 {
     Running, Paused
+}
+
+public static class ControlHelpers
+{
+    public static void InvokeIfRequired<T>(this T control, Action<T> action) where T : ISynchronizeInvoke
+    {
+        if (control.InvokeRequired)
+        {
+            control.Invoke(new Action(() => action(control)), null);
+        }
+        else
+        {
+            action(control);
+        }
+    }
 }
