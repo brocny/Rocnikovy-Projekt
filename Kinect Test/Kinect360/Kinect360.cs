@@ -37,7 +37,7 @@ namespace Kinect360
                 }
             }
             if (KinectSensor == null)
-                throw new Exception("No Kinect device found!");
+                throw new ApplicationException("No Kinect device found!");
         }
 
         public void Open()
@@ -49,8 +49,6 @@ namespace Kinect360
         {
             KinectSensor.Stop();
         }
-
-        
     }
 
 
