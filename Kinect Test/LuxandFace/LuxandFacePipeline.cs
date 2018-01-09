@@ -472,7 +472,7 @@ namespace LuxandFaceLib
             if (Features == null) return null;
 
             if (FSDK.FSDKE_OK !=
-                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out var response, 256))
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out var response, 128))
             {
                 return null;
             }
@@ -484,6 +484,34 @@ namespace LuxandFaceLib
             }
 
             return null;
+        }
+
+        public (float? eyesOpen, float? smile) GetExpression()
+        {
+            float? eyes = null;
+            float? smile = null;
+            if (Features == null) return (null,null);
+
+            if (FSDK.FSDKE_OK !=
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out var response, 128))
+            {
+                return (null, null);
+            }
+
+            var splitResponse = response.Split('=', ';');
+            var eyesString = splitResponse[3];
+            if (float.TryParse(eyesString, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out float eyesTemp))
+            {
+                eyes = eyesTemp;
+            }
+
+            var smileString = splitResponse[1];
+            if (float.TryParse(smileString, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out float smileTemp))
+            {
+                smile = smileTemp;
+            }
+
+            return (eyes, smile);
         }
     }
 
