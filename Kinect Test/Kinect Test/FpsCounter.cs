@@ -4,11 +4,11 @@ namespace Kinect_Test
 {
     class FpsCounter
     {
-        public float Fps => _fps;
+        public double Fps => _fps;
 
         private DateTime _lastTime;
         private int _framesRendered;
-        private float _fps;
+        private double _fps;
         private TimeSpan _delta;
 
         public void NewFrame()
@@ -17,7 +17,7 @@ namespace Kinect_Test
 
             if ((_delta = DateTime.Now - _lastTime).TotalMilliseconds > 800)
             {
-                _fps = 1000f * _framesRendered / _delta.Milliseconds;
+                _fps = 1000f * _framesRendered / _delta.TotalMilliseconds;
                 _framesRendered = 0;
                 _lastTime = DateTime.Now;
             }
