@@ -99,7 +99,11 @@ namespace Kinect_Test
             {
                 var confidenceMale = fsdkFaceImage.GetConfidenceMale();
                 if (confidenceMale == null) return;
-                var text = $"ID: {faceId}\nAge: {fsdkFaceImage.GetAge()}\nSmile: {fsdkFaceImage.GetSmile() * 100}%\n" + 
+                var expression = fsdkFaceImage.GetExpression();
+                var text = $"ID: {faceId}{Environment.NewLine}" +
+                           $"Age: {fsdkFaceImage.GetAge()}{Environment.NewLine}" +
+                           $"Smile: {expression.smile * 100}%{Environment.NewLine}" +
+                           $"Eyes Open:{expression.eyesOpen * 100}%{Environment.NewLine}" + 
                 (confidenceMale > 0.5
                     ? $"Male: {confidenceMale * 100}%"
                     : $"Female: {(1 - confidenceMale) * 100}%");
@@ -245,7 +249,7 @@ namespace Kinect_Test
                 SelectedPath = Environment.CurrentDirectory
             };
 
-            var result = dialog.ShowDialog();
+            var result = STAShowDialog(dialog);
             if (result == DialogResult.OK)
             {
                 try
@@ -274,7 +278,7 @@ namespace Kinect_Test
                 SelectedPath = Environment.CurrentDirectory
             };
 
-            var result = dialog.ShowDialog();
+            var result = STAShowDialog(dialog);
             if (result == DialogResult.OK)
             {
                 try
@@ -289,6 +293,29 @@ namespace Kinect_Test
             }
 
             if(originalState == ProgramState.Running) UnPause();
+        }
+
+        private DialogResult STAShowDialog(FolderBrowserDialog dialog)
+        {
+            DialogState state = new DialogState {Dialog = dialog};
+            System.Threading.Thread t = new
+                System.Threading.Thread(state.ThreadProcShowDialog);
+            t.SetApartmentState(System.Threading.ApartmentState.STA);
+            t.Start();
+            t.Join();
+            return state.Result;
+        }
+
+        private class DialogState
+        {
+            public DialogResult Result;
+            public FolderBrowserDialog Dialog;
+
+
+            public void ThreadProcShowDialog()
+            {
+                Result = Dialog.ShowDialog();
+            }
         }
     }
 }
