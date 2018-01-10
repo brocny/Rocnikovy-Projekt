@@ -40,14 +40,11 @@ namespace KinectUnifier
 
         public static bool TryGetHeadRectangleAndRotAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
         {
-            IJoint headJoint;
-            IJoint neckJoint;
-
             faceRect = Rectangle.Empty;
             rotationAngle = 0;
 
-            if (!body.Joints.TryGetValue(JointType.Head, out headJoint) ||
-                !body.Joints.TryGetValue(JointType.Neck, out neckJoint)) return false;
+            if (!body.Joints.TryGetValue(JointType.Head, out var headJoint) ||
+                !body.Joints.TryGetValue(JointType.Neck, out var neckJoint)) return false;
             if (!headJoint.IsTracked || !neckJoint.IsTracked) return false;
 
             var headJointColorPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
@@ -70,18 +67,15 @@ namespace KinectUnifier
         /// Get a rectangle containing a body's face based on the position of its neck and head
         /// </summary>
         /// <param name="body">The body of which we want the face rectangle</param>
-        /// <param name="mapper">Coordinate mapper <see cref="IKinect.CoordinateMapper"/></param>
-        /// <param name="faceRect">A <code>Rectangle</code> containing <code>body</code>'s face</param>
+        /// <param name="mapper">A coordinate mapper, used for mapping body's joints' positions to color space</param>
+        /// <param name="faceRect">A <c>Rectangle</c> containing <c>body</c>'s face</param>
         /// <returns>True if succesful</returns>
         public static bool TryGetHeadRectangle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect)
         {
-            IJoint headJoint;
-            IJoint neckJoint;
-
             faceRect = Rectangle.Empty;
 
-            if (!body.Joints.TryGetValue(JointType.Head, out headJoint) ||
-                !body.Joints.TryGetValue(JointType.Neck, out neckJoint)) return false;
+            if (!body.Joints.TryGetValue(JointType.Head, out IJoint headJoint) ||
+                !body.Joints.TryGetValue(JointType.Neck, out IJoint neckJoint)) return false;
             if (!headJoint.IsTracked || !neckJoint.IsTracked) return false;
 
             var headJointColorPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
@@ -189,64 +183,6 @@ namespace KinectUnifier
             if (bottom > height) bottom = height;
 
             return new Rectangle(left, top, right - left, bottom - top);
-        }
-    }
-
-
-    public struct Point4F
-    {
-        public float X;
-        public float Y;
-        public float Z;
-        public float W;
-
-        public Point4F(float x, float y, float z, float w)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-            W = w;
-        }
-    }
-
-    public struct Point3F
-    {
-        public float X;
-        public float Y;
-        public float Z;
-
-        public Point3F(float x, float y, float z)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
-
-        public static Point3F operator +(Point3F p1, Point3F p2)
-        {
-            return new Point3F(p1.X + p2.X, p1.Y + p2.Y, p1.Z + p1.Z);
-        }
-
-        public static Point3F operator /(Point3F p, int i)
-        {
-            return new Point3F(p.X  / i, p.Y / i, p.Z / i);
-        }
-    }
-
-    public struct Point2F
-    {
-        public float X;
-        public float Y;
-
-        public Point2F(float x, float y)
-        {
-            X = x;
-            Y = y;
-        }
-
-        public float DistanceTo(Point2F other)
-        {
-            return (float) Math.Sqrt((X - other.X) * (X - other.X) + (Y - other.Y) * (Y - other.Y));
         }
     }
 }
