@@ -190,8 +190,10 @@ namespace Face
             {
                 foreach (var face in _faceDatabase._storedFaces)
                 {
-                    using (var file = File.Open($"{outputDir}/{face.Key}.bin", FileMode.Create, FileAccess.Write))
-                        face.Value.Serialize(file);
+                    using (var fileStream = File.Open($"{outputDir}/{face.Key}.bin", FileMode.Create, FileAccess.Write))
+                    {
+                        face.Value.Serialize(fileStream);
+                    }
                 }
             }
 
@@ -221,14 +223,12 @@ namespace Face
 
                 foreach (var filePath in filePaths)
                 {
-                    var id = int.Parse(Path.GetFileNameWithoutExtension(filePath));
-                    using (var file = File.OpenRead(filePath))
-                    using (var stream = new FileStream(file.SafeFileHandle, FileAccess.Read))
+                    if (!int.TryParse(Path.GetFileNameWithoutExtension(filePath), out int id)) continue;
+                    using (var fileStream = File.OpenRead(filePath))
                     {
-                        var fInfo = _faceInfoBaseInstance.Deserialize(stream);
+                        var fInfo = _faceInfoBaseInstance.Deserialize(fileStream);
                         _db.Add(id, fInfo);
                     }
-                    
                 }
             }
         }
