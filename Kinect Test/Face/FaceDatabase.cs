@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace Face
@@ -13,12 +12,14 @@ namespace Face
     /// Thread-safe 
     /// </remarks>
     /// <typeparam name="T">Type of face templates</typeparam>
-    public class FaceDatabase<T>
+    public partial class FaceDatabase<T>
     {
         private ConcurrentDictionary<int, IFaceInfo<T>> _storedFaces;
         private IFaceInfo<T> _baseInstance;
 
         public int NextId { get; private set; }
+        public string SerializePath { get; set; } = null;
+
 
         public FaceDatabase(IFaceInfo<T> baseInstance, IDictionary<int, IFaceInfo<T>> initialDb = null)
         {
@@ -177,60 +178,6 @@ namespace Face
         {
             var deserializer = new FaceDatabaseDeserializer(_baseInstance, this);
             deserializer.Deserialize(dir);
-        }
-
-        public class FaceDatabaseSerializer
-        {
-            public FaceDatabaseSerializer(FaceDatabase<T> faceDatabase)
-            {
-                _faceDatabase = faceDatabase;
-            }
-
-            public void Serialize(string outputDir = "faces")
-            {
-                foreach (var face in _faceDatabase._storedFaces)
-                {
-                    using (var fileStream = File.Open($"{outputDir}/{face.Key}.bin", FileMode.Create, FileAccess.Write))
-                    {
-                        face.Value.Serialize(fileStream);
-                    }
-                }
-            }
-
-            private readonly FaceDatabase<T> _faceDatabase;
-        }
-
-        public class FaceDatabaseDeserializer
-        {
-            private IFaceInfo<T> _faceInfoBaseInstance;
-            private FaceDatabase<T> _db;
-
-            public FaceDatabaseDeserializer(IFaceInfo<T> faceInfoBaseInstance, FaceDatabase<T> db)
-            {
-                _faceInfoBaseInstance = faceInfoBaseInstance;
-                _db = db;
-
-            }
-
-            public void Deserialize(string dir = "faces")
-            {
-                if (!Directory.Exists(dir))
-                {
-                    throw new ArgumentException($"{dir} is not a valid directory path!");
-                }
-
-                var filePaths = Directory.EnumerateFiles(dir).Where(f => Path.GetExtension(f) == ".bin");
-
-                foreach (var filePath in filePaths)
-                {
-                    if (!int.TryParse(Path.GetFileNameWithoutExtension(filePath), out int id)) continue;
-                    using (var fileStream = File.OpenRead(filePath))
-                    {
-                        var fInfo = _faceInfoBaseInstance.Deserialize(fileStream);
-                        _db.Add(id, fInfo);
-                    }
-                }
-            }
         }
     }
 }
