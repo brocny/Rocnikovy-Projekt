@@ -79,10 +79,10 @@ namespace Face
         }
 
         /// <summary>
-        /// 
+        /// Get the the <c>id</c> of the face matching <paramref name="template"/> the closest and the <c>confidence</c> of the match
         /// </summary>
         /// <param name="template"></param>
-        /// <returns><code>name</code> of the best matching face and <code>confidence</code> value [0, 1]</returns>
+        /// <returns><c>id</c> of the best matching face and <code>confidence</code> value [0, 1]</returns>
         public (int id, float confidence) GetBestMatch(T template)
         {
             (int, float) retValue = (0, 0);
