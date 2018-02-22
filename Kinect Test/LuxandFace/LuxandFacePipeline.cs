@@ -66,7 +66,7 @@ namespace LuxandFaceLib
         public float TrackedFaceNewTemplateThreshold = 0.35f;
 
         public static string ActivationKey { get; set; } =
-            @"Nl+M84zDeJ0FQ3Ln59l7LQ66mBcxQUih8ajlKOe67HN9JEzqSaVI8IANO+bRLa4ohnGAbtmQ4w9cKHgxt3t8f8bnS9siTAAHyj0z1A9H4l+KwubWhXM5rdbQCM4SCauHowRwxUDRxCOt0+hUix2FfdshVvW6N/JraP5HybEuMd8=";
+            @"ocrTzAn1FVrzPDhjCSvECux7/jSDBHkqOxLbfDbYTJKjRkLhxUicRk5jpJOxvPAsKkfDHdvwJAD+PoTPoXhDDw55/AdPWagMzbbabtbDQQ4UbeeeN9IIqS09o78440AGXSmzUCfJHBBjwY1dIy5vL5DJgrOm27RTPd1kbGpOFFY=";
 
 
         private static bool _isLibraryActivated;
