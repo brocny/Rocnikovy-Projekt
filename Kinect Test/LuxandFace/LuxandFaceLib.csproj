@@ -83,6 +83,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FSDKFaceImage.cs" />
     <Compile Include="LuxandFaceInfo.cs" />
     <Compile Include="LuxandFacePipeline.cs" />
     <Compile Include="LuxandUtil.cs" />

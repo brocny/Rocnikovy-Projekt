@@ -157,57 +157,11 @@ namespace Kinect_Test
             }
         }
 
-        void MultiFrameArrived_Test(object sender, MultiFrameReadyEventArgs e)
-        {
-            var multiFrame = e.MultiFrame;
-            if (multiFrame == null) return;
-
-            using (var colorFrame = multiFrame.ColorFrame)
-            using (var bodyFrame = multiFrame.BodyFrame)
-            {
-                var bodyBuffer = new IBody[bodyFrame.BodyCount];
-                var colorBuffer = new byte[colorFrame.PixelDataLength];
-
-                bodyFrame.CopyBodiesTo(bodyBuffer);
-                colorFrame.CopyFramePixelDataToArray(colorBuffer);
-
-                _renderer.Image =
-                    colorBuffer.BytesToBitmap(colorFrame.Width, colorFrame.Height, colorFrame.BytesPerPixel);
-
-                _renderer.DrawBodies(bodyBuffer, _bodyBrushes, _bodyPens, _coordinateMapper);
-
-                for (int i = 0; i < bodyBuffer.Length; i++)
-                {
-                    if (Util.TryGetHeadRectangle(bodyBuffer[i], _coordinateMapper, out var faceRect))
-                    {
-                        _renderer.DrawRectangles(new [] {faceRect}, _bodyPens);
-                    }
-                }
-
-                _fpsCounter.NewFrame();
-                pictureBox1.Image = _renderer.Image;
-                statusLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
-            }
-        }
-
         void InitializeColorComponents()
         {
             _colorWidth = _kinect.ColorManager.HeightPixels;
             _colorHeight = _kinect.ColorManager.WidthPixels;
             _colorBytesPerPixel = _kinect.ColorManager.BytesPerPixel;
-        }
-        
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            if (_kinect.IsRunning)
-            {
-                Pause();
-            }
-            else
-            {
-                UnPause();                
-            }
         }
 
         private void Pause()
@@ -215,7 +169,6 @@ namespace Kinect_Test
             if (_kinect.IsRunning)
             {
                 _kinect.Close();
-                button1.Text = "Start";
                 statusLabel.Text = "STOPPED";
                 _programState = ProgramState.Paused;
             }
@@ -226,7 +179,6 @@ namespace Kinect_Test
             if (!_kinect.IsRunning)
             {
                 _kinect.Open();
-                button1.Text = "Stop";
                 statusLabel.Text = "";
                 _programState = ProgramState.Running;
             }
@@ -237,7 +189,39 @@ namespace Kinect_Test
             Pause();
         }
 
-        private void loadButton_Click(object sender, EventArgs e)
+        private DialogResult STAShowDialog(FolderBrowserDialog dialog)
+        {
+            DialogState state = new DialogState {Dialog = dialog};
+            System.Threading.Thread t = new
+                System.Threading.Thread(state.ThreadProcShowDialog);
+            t.SetApartmentState(System.Threading.ApartmentState.STA);
+            t.Start();
+            t.Join();
+            return state.Result;
+        }
+
+        private class DialogState
+        {
+            public DialogResult Result;
+            public FolderBrowserDialog Dialog;
+
+
+            public void ThreadProcShowDialog()
+            {
+                Result = Dialog.ShowDialog();
+            }
+        }
+
+        private void FormMain_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == ' ')
+            {
+                if(_programState == ProgramState.Paused) UnPause();
+                else if(_programState == ProgramState.Running) Pause();
+            }
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var originalState = _programState;
             Pause();
@@ -266,7 +250,7 @@ namespace Kinect_Test
             if (originalState == ProgramState.Running) UnPause();
         }
 
-        private void saveButton_Click(object sender, EventArgs e)
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var originalState = _programState;
             Pause();
@@ -284,6 +268,7 @@ namespace Kinect_Test
                 try
                 {
                     _faceDatabase.Serialize(dialog.SelectedPath);
+                    _faceDatabase.SerializePath = dialog.SelectedPath;
                 }
                 catch (Exception exc)
                 {
@@ -292,29 +277,37 @@ namespace Kinect_Test
                 }
             }
 
+            if (originalState == ProgramState.Running) UnPause();
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_faceDatabase.SerializePath == null)
+            {
+                saveAsToolStripMenuItem_Click(sender, e);
+                return;
+            }
+
+            var originalState = _programState;
+            Pause();
+
+            _faceDatabase.Serialize(_faceDatabase.SerializePath);
+
             if(originalState == ProgramState.Running) UnPause();
         }
 
-        private DialogResult STAShowDialog(FolderBrowserDialog dialog)
+        private void startStopSpaceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            DialogState state = new DialogState {Dialog = dialog};
-            System.Threading.Thread t = new
-                System.Threading.Thread(state.ThreadProcShowDialog);
-            t.SetApartmentState(System.Threading.ApartmentState.STA);
-            t.Start();
-            t.Join();
-            return state.Result;
-        }
-
-        private class DialogState
-        {
-            public DialogResult Result;
-            public FolderBrowserDialog Dialog;
-
-
-            public void ThreadProcShowDialog()
+            if (_programState == ProgramState.Running)
             {
-                Result = Dialog.ShowDialog();
+                Pause();
+                startStopSpaceToolStripMenuItem.Text = "Start (Space)";
+                
+            }
+            else if (_programState == ProgramState.Paused)
+            {
+                UnPause();
+                startStopSpaceToolStripMenuItem.Text = "Stop (Space)";
             }
         }
     }
