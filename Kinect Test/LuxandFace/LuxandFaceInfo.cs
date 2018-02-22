@@ -9,8 +9,11 @@ namespace LuxandFaceLib
 {
     public class LuxandFaceInfo : IFaceInfo<byte[]>
     {
+        public float? GenderConfidence { get; set; }
         public IReadOnlyCollection<byte[]> Templates => _faceTemplates;
         public string Name { get; set; }
+        public float? Age { get; set; }
+        public Gender Gender { get; set; }
 
         public LuxandFaceInfo()
         {
@@ -25,6 +28,11 @@ namespace LuxandFaceLib
         public void Merge(IFaceInfo<byte[]> info)
         {
             _faceTemplates.AddRange(info.Templates);
+        }
+
+        public float GetSimilarity(IFaceInfo<byte[]> faceInfo)
+        {
+            throw new System.NotImplementedException();
         }
 
         public void AddTemplate(byte[] faceTemplate)
