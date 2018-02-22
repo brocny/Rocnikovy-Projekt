@@ -254,8 +254,19 @@ namespace LuxandFaceLib
         private FaceTemplate[] ExtractTemplates(FSDKFaceImage[] f) 
         {
             var results = f.AsParallel()
-                   .Select(x => new FaceTemplate { TrackingId = x.TrackingId, Template = x.GetFaceTemplate() })
-                   .ToArray();
+                .Select(x =>
+                {
+                    var gender = x.GetGender();
+                    return new FaceTemplate
+                    {
+                        TrackingId = x.TrackingId,
+                        Template = x.GetFaceTemplate(),
+                        Age = x.GetAge() ?? 0,
+                        Gender = gender.gender,
+                        GenderConfidence = gender.confidence
+                    };
+                })
+                .ToArray();
             FaceTemplateExtractionComplete?.Invoke(this, results);
             return results;
         }
