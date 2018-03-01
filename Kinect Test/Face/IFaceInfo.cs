@@ -3,6 +3,10 @@ using System.IO;
 
 namespace Face
 {
+    /// <summary>
+    /// Interface for types used for storing multiple face templates of a single face
+    /// </summary>
+    /// <typeparam name="T">The type of face templates stored</typeparam>
     public interface IFaceInfo<T>
     {
         /// <summary>

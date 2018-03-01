@@ -72,8 +72,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FaceDatabase.cs" />
+    <Compile Include="FaceDatabaseDeserializer.cs" />
+    <Compile Include="FaceDatabaseSerializer.cs" />
+    <Compile Include="IFaceDatabase.cs" />
     <Compile Include="IFaceInfo.cs" />
-    <Compile Include="IFaceLIb.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

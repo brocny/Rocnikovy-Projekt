@@ -28,7 +28,7 @@ namespace Kinect_Test
         private FpsCounter _fpsCounter = new FpsCounter();
 
         private LuxandFacePipeline _facePipeline;
-        private readonly FaceDatabase<byte[]> _faceDatabase;
+        private FaceDatabase<byte[]> _faceDatabase;
 
         private IMultiManager _multiManager;
 
@@ -85,6 +85,9 @@ namespace Kinect_Test
 
             InitializeColorComponents();
 
+            startStopSpaceToolStripMenuItem.Text =
+                _programState == ProgramState.Running ? "Stop (Space)" : "Start (Space)";
+
             _renderer = new Renderer(_colorWidth, _colorHeight);
             _bodyPens = _bodyBrushes.Select(br => new Pen(br, 2.5f)).ToArray();
 
@@ -112,12 +115,12 @@ namespace Kinect_Test
             }
         }
 
-        private void FacePipelineOnFaceCuttingComplete(object sender, FaceImage[] faceImages)
+        private void FacePipelineOnFaceCuttingComplete(object sender, FaceCutout[] faceCutouts)
         {
-            if (faceImages != null && faceImages.Length != 0)
+            if (faceCutouts != null && faceCutouts.Length != 0)
             {
-                facePictureBox.Image = faceImages[0].Bitmap;
-                _displayedFaceTrackingId = faceImages[0].TrackingId;
+                facePictureBox.Image = faceCutouts[0].Bitmap;
+                _displayedFaceTrackingId = faceCutouts[0].TrackingId;
             }
         }
 
@@ -132,7 +135,7 @@ namespace Kinect_Test
                 if (colorFrame == null || bodyFrame == null) return;
                 var locTask =
                     _facePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
-                var createBitMapTask = locTask.ContinueWith(t => t.Result.ColorBuffer.BytesToBitmap(t.Result.Width, t.Result.Height, t.Result.BytesPerPixel));
+                var createBitMapTask = locTask.ContinueWith(t => t.Result.ColorBuffer.BytesToBitmap(t.Result.ImageWidth, t.Result.ImageHeight, t.Result.ImageBytesPerPixel));
                 var renderTask = createBitMapTask.ContinueWith(t =>
                 {
                     _renderer.Image = t.Result;
@@ -164,6 +167,20 @@ namespace Kinect_Test
             _colorBytesPerPixel = _kinect.ColorManager.BytesPerPixel;
         }
 
+        private void TogglePaused()
+        {
+            if (_programState == ProgramState.Paused)
+            {
+                UnPause();
+                startStopSpaceToolStripMenuItem.Text = "Stop (Space)";
+            }
+            else if (_programState == ProgramState.Running)
+            {
+                Pause();
+                startStopSpaceToolStripMenuItem.Text = "Start (Space)";
+            }
+        }
+
         private void Pause()
         {
             if (_kinect.IsRunning)
@@ -186,38 +203,14 @@ namespace Kinect_Test
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Pause();
-        }
-
-        private DialogResult STAShowDialog(FolderBrowserDialog dialog)
-        {
-            DialogState state = new DialogState {Dialog = dialog};
-            System.Threading.Thread t = new
-                System.Threading.Thread(state.ThreadProcShowDialog);
-            t.SetApartmentState(System.Threading.ApartmentState.STA);
-            t.Start();
-            t.Join();
-            return state.Result;
-        }
-
-        private class DialogState
-        {
-            public DialogResult Result;
-            public FolderBrowserDialog Dialog;
-
-
-            public void ThreadProcShowDialog()
-            {
-                Result = Dialog.ShowDialog();
-            }
+            _kinect.Close();
         }
 
         private void FormMain_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == ' ')
             {
-                if(_programState == ProgramState.Paused) UnPause();
-                else if(_programState == ProgramState.Running) Pause();
+                TogglePaused();
             }
         }
 
@@ -233,7 +226,9 @@ namespace Kinect_Test
                 SelectedPath = Environment.CurrentDirectory
             };
 
-            var result = STAShowDialog(dialog);
+            var result = DialogHelpers.STAShowDialog(dialog);
+            // make a backup of the current database in case something goes wrong
+            var copy = _faceDatabase.Clone();
             if (result == DialogResult.OK)
             {
                 try
@@ -244,6 +239,8 @@ namespace Kinect_Test
                 {
                     MessageBox.Show(
                         $"Error: An error occured while loading the database from {dialog.SelectedPath}: {Environment.NewLine}{exc}");
+                    // something went wrong -> revert
+                    _faceDatabase = (FaceDatabase<byte[]>) copy;
                 }
             }
 
@@ -262,19 +259,20 @@ namespace Kinect_Test
                 SelectedPath = Environment.CurrentDirectory
             };
 
-            var result = STAShowDialog(dialog);
+            var result = DialogHelpers.STAShowDialog(dialog);
             if (result == DialogResult.OK)
             {
                 try
                 {
                     _faceDatabase.Serialize(dialog.SelectedPath);
-                    _faceDatabase.SerializePath = dialog.SelectedPath;
                 }
                 catch (Exception exc)
                 {
                     MessageBox.Show(
                         $"Error: An error occured while saving the database to {dialog.SelectedPath}: {Environment.NewLine}{exc}");
                 }
+
+                _faceDatabase.SerializePath = dialog.SelectedPath;
             }
 
             if (originalState == ProgramState.Running) UnPause();
@@ -291,24 +289,22 @@ namespace Kinect_Test
             var originalState = _programState;
             Pause();
 
-            _faceDatabase.Serialize(_faceDatabase.SerializePath);
+            try
+            {
+                _faceDatabase.Serialize(_faceDatabase.SerializePath);
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show(
+                    $"Error: An error occured while saving the database to {_faceDatabase.SerializePath}: {Environment.NewLine}{exc}");
+            }
 
             if(originalState == ProgramState.Running) UnPause();
         }
 
         private void startStopSpaceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (_programState == ProgramState.Running)
-            {
-                Pause();
-                startStopSpaceToolStripMenuItem.Text = "Start (Space)";
-                
-            }
-            else if (_programState == ProgramState.Paused)
-            {
-                UnPause();
-                startStopSpaceToolStripMenuItem.Text = "Stop (Space)";
-            }
+            TogglePaused();
         }
     }
 }
@@ -316,6 +312,31 @@ namespace Kinect_Test
 enum ProgramState
 {
     Running, Paused
+}
+
+class DialogState
+{
+    public DialogResult Result;
+    public FolderBrowserDialog Dialog;
+
+    public void ThreadProcShowDialog()
+    {
+        Result = Dialog.ShowDialog();
+    }
+}
+
+static class DialogHelpers
+{
+    internal static DialogResult STAShowDialog(FolderBrowserDialog dialog)
+    {
+        var state = new DialogState { Dialog = dialog };
+        var thread = new
+            System.Threading.Thread(state.ThreadProcShowDialog);
+        thread.SetApartmentState(System.Threading.ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+        return state.Result;
+    }
 }
 
 public static class ControlHelpers

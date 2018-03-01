@@ -19,7 +19,7 @@ namespace Face
             {
                 foreach (var face in _faceDatabase._storedFaces)
                 {
-                    using (var fileStream = File.Open($"{outputDir}/{face.Key}.bin", FileMode.Create, FileAccess.Write))
+                    using (var fileStream = File.Open($"{outputDir}/{face.Key}.xml", FileMode.Create, FileAccess.Write))
                     {
                         face.Value.Serialize(fileStream);
                     }

@@ -8,8 +8,8 @@ namespace Face
     {
         public class FaceDatabaseDeserializer
         {
-            private IFaceInfo<T> _faceInfoBaseInstance;
-            private FaceDatabase<T> _db;
+            private readonly IFaceInfo<T> _faceInfoBaseInstance;
+            private readonly FaceDatabase<T> _db;
 
             public FaceDatabaseDeserializer(IFaceInfo<T> faceInfoBaseInstance, FaceDatabase<T> db)
             {
@@ -25,7 +25,7 @@ namespace Face
                     throw new ArgumentException($"{dir} is not a valid directory path!");
                 }
 
-                var filePaths = Directory.EnumerateFiles(dir).Where(f => Path.GetExtension(f) == ".bin");
+                var filePaths = Directory.EnumerateFiles(dir).Where(f => Path.GetExtension(f) == ".xml");
 
                 foreach (var filePath in filePaths)
                 {

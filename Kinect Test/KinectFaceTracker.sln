@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kinect Test", "Kinect Test\Kinect Test.csproj", "{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MainForm", "MainForm\MainForm.csproj", "{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectUnifier", "KinectUnifier\KinectUnifier.csproj", "{A103B1BD-322F-4A8F-B0EB-58393DE5D453}"
 EndProject

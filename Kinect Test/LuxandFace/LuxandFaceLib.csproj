@@ -65,8 +65,9 @@
     <OutputPath>bin\OneRelease\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FaceSDK.NET">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Luxand\FaceSDK\bin\win64\FaceSDK.NET.dll</HintPath>
+    <Reference Include="FaceSDK.NET, Version=6.4.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Luxand\FaceSDK\bin\win64\FaceSDK.NET.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

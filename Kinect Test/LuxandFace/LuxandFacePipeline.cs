@@ -19,7 +19,7 @@ namespace LuxandFaceLib
         /// </summary>
         public IReadOnlyDictionary<long, int> TrackedFaces => _trackedFaces;
 
-        public event EventHandler<FaceImage[]> FaceCuttingComplete;
+        public event EventHandler<FaceCutout[]> FaceCuttingComplete;
         public event EventHandler<FSDKFaceImage[]> FsdkImageCreationComplete;
         public event EventHandler<FSDKFaceImage[]> FaceDetectionComplete;
         public event EventHandler<FSDKFaceImage[]> FacialFeatureRecognitionComplete;
@@ -65,9 +65,8 @@ namespace LuxandFaceLib
         public float UntrackedFaceNewTemplateThreshold { get; set; } = 0.7f;
         public float TrackedFaceNewTemplateThreshold = 0.35f;
 
-        public static string ActivationKey { get; set; } =
+        internal const string ActivationKey =
             @"ocrTzAn1FVrzPDhjCSvECux7/jSDBHkqOxLbfDbYTJKjRkLhxUicRk5jpJOxvPAsKkfDHdvwJAD+PoTPoXhDDw55/AdPWagMzbbabtbDQQ4UbeeeN9IIqS09o78440AGXSmzUCfJHBBjwY1dIy5vL5DJgrOm27RTPd1kbGpOFFY=";
-
 
         private static bool _isLibraryActivated;
         public static void InitializeLibrary()
@@ -93,8 +92,8 @@ namespace LuxandFaceLib
                 CancellationToken = CancellationToken
             };
 
-            _faceCuttingBlock = new TransformBlock<FaceLocationResult, FaceImage[]>(new Func<FaceLocationResult, FaceImage[]>(CreateFaceImageCutouts), options);
-            _fsdkImageCreatingBlock = new TransformBlock<FaceImage[], FSDKFaceImage[]>(new Func<FaceImage[], FSDKFaceImage[]>(CreateFSDKImages), options);
+            _faceCuttingBlock = new TransformBlock<FaceLocationResult, FaceCutout[]>(new Func<FaceLocationResult, FaceCutout[]>(CreateFaceImageCutouts), options);
+            _fsdkImageCreatingBlock = new TransformBlock<FaceCutout[], FSDKFaceImage[]>(new Func<FaceCutout[], FSDKFaceImage[]>(CreateFSDKImages), options);
             _faceDetectionBlock = new TransformBlock<FSDKFaceImage[], FSDKFaceImage[]>(new Func<FSDKFaceImage[], FSDKFaceImage[]>(DetectFaces), options);
             _facialFeaturesBlock = new TransformBlock<FSDKFaceImage[], FSDKFaceImage[]>(new Func<FSDKFaceImage[], FSDKFaceImage[]>(DetectFacialFeatures), options);
             _templateExtractionBlock = new TransformBlock<FSDKFaceImage[], FaceTemplate[]>(new Func<FSDKFaceImage[], FaceTemplate[]>(ExtractTemplates), options);
@@ -170,17 +169,17 @@ namespace LuxandFaceLib
 
             return new FaceLocationResult
             {
-                BytesPerPixel = colorFrame.BytesPerPixel,
+                ImageBytesPerPixel = colorFrame.BytesPerPixel,
                 ColorBuffer = colorTask.Result,
                 FaceRectangles = bodyTask.Result.Item1,
-                Height = colorFrame.Height,
-                Width = colorFrame.Width,
+                ImageHeight = colorFrame.Height,
+                ImageWidth = colorFrame.Width,
                 Bodies =  bodyTask.Result.Item3,
                 TrackingIds = bodyTask.Result.Item2
             };
         }
 
-        private FaceImage[] CreateFaceImageCutouts(FaceLocationResult faceLocations) 
+        private FaceCutout[] CreateFaceImageCutouts(FaceLocationResult faceLocations) 
         {
             if (faceLocations?.FaceRectangles == null || faceLocations.FaceRectangles.Length == 0)
             {
@@ -188,14 +187,14 @@ namespace LuxandFaceLib
             }
 
             var numFaces = faceLocations.FaceRectangles.Length;
-            var result = new FaceImage[numFaces];
+            var result = new FaceCutout[numFaces];
             for (int i = 0; i < numFaces; i++)
             {
-                var pixelBuffer = faceLocations.ColorBuffer.GetBufferRect(faceLocations.Width,
-                    faceLocations.FaceRectangles[i], faceLocations.BytesPerPixel);
-                result[i] = new FaceImage
+                var pixelBuffer = faceLocations.ColorBuffer.GetBufferRect(faceLocations.ImageWidth,
+                    faceLocations.FaceRectangles[i], faceLocations.ImageBytesPerPixel);
+                result[i] = new FaceCutout
                 {
-                    Bitmap = pixelBuffer.BytesToBitmap(faceLocations.FaceRectangles[i].Width, faceLocations.FaceRectangles[i].Height, faceLocations.BytesPerPixel),
+                    Bitmap = pixelBuffer.BytesToBitmap(faceLocations.FaceRectangles[i].Width, faceLocations.FaceRectangles[i].Height, faceLocations.ImageBytesPerPixel),
                     OrigLocation = faceLocations.FaceRectangles[i].Location,
                     TrackingId = faceLocations.TrackingIds[i],
                 };
@@ -206,12 +205,12 @@ namespace LuxandFaceLib
             return result;
         }
 
-        private  FSDKFaceImage[] CreateFSDKImages(FaceImage[] faceImages)
+        private  FSDKFaceImage[] CreateFSDKImages(FaceCutout[] faceCutouts)
         {
-            var results = new FSDKFaceImage[faceImages.Length];
-            Parallel.For(0, faceImages.Length, i =>
+            var results = new FSDKFaceImage[faceCutouts.Length];
+            Parallel.For(0, faceCutouts.Length, i =>
             {
-                var fImage = faceImages[i];
+                var fImage = faceCutouts[i];
 
                 results[i] = new FSDKFaceImage
                 {
@@ -273,22 +272,23 @@ namespace LuxandFaceLib
 
         private void ProcessTemplates(FaceTemplate[] templates)
         {
-            var matchList = new (long trackingId, (int faceId, float confidence) match)[templates.Length];
+            var matches = new (long trackingId, (int faceId, float confidence) match)[templates.Length];
             for (var i = 0; i < templates.Length; i++)
             {
                 FaceTemplate t = templates[i];
+                // face is already tracked
                 if (_trackedFaces.TryGetValue(t.TrackingId, out var faceId))
                 {
                     var faceInfo = _faceDb.GetFaceInfo(faceId);
                     var similarity = faceInfo.GetSimilarity(t.Template);
                     if (similarity > SameFaceConfidenceThreshold)
                     {
-                        matchList[i] = (t.TrackingId, (faceId, similarity));
+                        matches[i] = (t.TrackingId, (faceId, similarity));
                     }
                     else if (similarity >= TrackedFaceNewTemplateThreshold)
                     {
                         faceInfo.AddTemplate(t.Template);
-                        matchList[i] = (t.TrackingId, (faceId, similarity));
+                        matches[i] = (t.TrackingId, (faceId, similarity));
                     }
                     else
                     {
@@ -318,11 +318,11 @@ namespace LuxandFaceLib
                         _faceDb.TryAddNewFace(id, t.Template);
                         _trackedFaces[t.TrackingId] = id;
                     }
-                    matchList[i] = (t.TrackingId, bestMatch);
+                    matches[i] = (t.TrackingId, bestMatch);
                 }
             }
 
-            TemplateProcessingComplete?.Invoke(this, matchList);
+            TemplateProcessingComplete?.Invoke(this, matches);
         }
 
         private void SetFSDKParams()
@@ -337,8 +337,8 @@ namespace LuxandFaceLib
         private FaceDatabase<byte[]> _faceDb;
         private ConcurrentDictionary<long, int> _trackedFaces;
 
-        private TransformBlock<FaceLocationResult, FaceImage[]> _faceCuttingBlock;
-        private TransformBlock<FaceImage[], FSDKFaceImage[]> _fsdkImageCreatingBlock;
+        private TransformBlock<FaceLocationResult, FaceCutout[]> _faceCuttingBlock;
+        private TransformBlock<FaceCutout[], FSDKFaceImage[]> _fsdkImageCreatingBlock;
         private TransformBlock<FSDKFaceImage[], FSDKFaceImage[]> _faceDetectionBlock;
         private TransformBlock<FSDKFaceImage[], FSDKFaceImage[]> _facialFeaturesBlock;
         private TransformBlock<FSDKFaceImage[], FaceTemplate[]> _templateExtractionBlock;
@@ -349,18 +349,24 @@ namespace LuxandFaceLib
 
     public class FaceLocationResult
     {
-        public int Width;
-        public int Height;
+        public int ImageWidth;
+        public int ImageHeight;
         public byte[] ColorBuffer;
         public Rectangle[] FaceRectangles;
         public long[] TrackingIds;
-        public int BytesPerPixel;
+        public int ImageBytesPerPixel;
         public IBody[] Bodies;
     }
 
-    public class FaceImage
+    public class FaceCutout
     {
+        /// <summary>
+        /// Bitmap image of the face
+        /// </summary>
         public Bitmap Bitmap;
+        /// <summary>
+        /// Original location of the top-left point of the face rectangle in the original image
+        /// </summary>
         public Point OrigLocation;
         public long TrackingId;
     }

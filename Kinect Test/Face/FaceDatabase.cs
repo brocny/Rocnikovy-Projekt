@@ -12,7 +12,7 @@ namespace Face
     /// Thread-safe 
     /// </remarks>
     /// <typeparam name="T">Type of face templates</typeparam>
-    public partial class FaceDatabase<T>
+    public partial class FaceDatabase<T> : ICloneable
     {
         private ConcurrentDictionary<int, IFaceInfo<T>> _storedFaces;
         private IFaceInfo<T> _baseInstance;
@@ -157,7 +157,7 @@ namespace Face
         /// <param name="id1">Face to be merged into</param>
         /// <param name="id2">Face to be consumed</param>
         /// <returns><code>true</code> if succesful</returns>
-        public bool Merge(int id1, int id2)
+        public bool MergeFaces(int id1, int id2)
         {
             if (_storedFaces.TryGetValue(id1, out var info1) && _storedFaces.TryGetValue(id1, out var info2))
             {
@@ -178,6 +178,17 @@ namespace Face
         {
             var deserializer = new FaceDatabaseDeserializer(_baseInstance, this);
             deserializer.Deserialize(dir);
+        }
+
+        public object Clone()
+        {
+            var ret = new FaceDatabase<T>(_baseInstance, _storedFaces)
+            {
+                SerializePath = this.SerializePath,
+                NextId = this.NextId
+            };
+
+            return ret;
         }
     }
 }

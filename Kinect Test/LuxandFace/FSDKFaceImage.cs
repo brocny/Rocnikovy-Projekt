@@ -11,6 +11,9 @@ namespace LuxandFaceLib
         public int ImageHandle;
         public int Width;
         public int Height;
+        /// <summary>
+        /// Location of the top-left of face rectangle in the original frame
+        /// </summary>
         public Point OrigLocation;
         public FSDK.TFacePosition FacePosition;
         public FSDK.TPoint[] Features;
