@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
@@ -216,6 +215,7 @@ namespace Kinect_Test
         }
 
         private const string FileFilter = "Xml files| *.xml|All files|*.*";
+        private static readonly string DefaultDbPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\KFT\FaceDb";
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var originalState = _programState;
@@ -223,7 +223,7 @@ namespace Kinect_Test
 
             var dialog = new OpenFileDialog
             {
-                InitialDirectory = $"{Environment.CurrentDirectory}\\FaceDb",
+                InitialDirectory = DefaultDbPath,
                 DefaultExt = "xml",
                 Filter = FileFilter,
                 Title = "Select file containing saved face database"
@@ -259,9 +259,14 @@ namespace Kinect_Test
             var originalState = _programState;
             Pause();
 
+            if (!Directory.Exists(DefaultDbPath))
+            {
+                Directory.CreateDirectory(DefaultDbPath);
+            }
+
             var dialog = new SaveFileDialog
             {
-                InitialDirectory = $"{Environment.CurrentDirectory}\\FaceDb",
+                InitialDirectory = DefaultDbPath,
                 DefaultExt = "xml",
                 Filter = FileFilter
             };
