@@ -1,4 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Xml;
 
 namespace Face
 {
@@ -11,18 +15,27 @@ namespace Face
                 _faceDatabase = faceDatabase;
             }
 
-            public FaceDatabaseSerializer()
+            public void Serialize(Stream stream)
             {
-            }
-
-            public void Serialize(string outputDir = "faces")
-            {
-                foreach (var face in _faceDatabase._storedFaces)
+                using (var sw = new StreamWriter(stream))
                 {
-                    using (var fileStream = File.Open($"{outputDir}/{face.Key}.xml", FileMode.Create, FileAccess.Write))
+                    var xw = XmlWriter.Create(sw, new XmlWriterSettings {Indent = true});
+                    xw.WriteStartDocument();
+                    xw.WriteStartElement("Faces");
+                    foreach (var face in _faceDatabase._storedFaces)
                     {
-                        face.Value.Serialize(fileStream);
+                        xw.WriteStartElement("FaceInfo");
+                        xw.WriteElementString("Id", face.Key.ToString());
+                        xw.Flush();
+                        sw.WriteLine();
+                        sw.Flush();
+                        face.Value.Serialize(stream);
+                        xw.WriteEndElement();
                     }
+                    xw.WriteEndElement();
+                    xw.WriteEndDocument();
+                    xw.Flush();
+                    sw.Flush();
                 }
             }
 

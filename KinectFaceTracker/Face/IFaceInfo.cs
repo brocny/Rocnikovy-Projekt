@@ -69,6 +69,8 @@ namespace Face
         /// </summary>
         /// <param name="stream"><c>Stream</c> to serialize into</param>
         void Serialize(Stream stream);
+
+        void Serialize(TextWriter writer);
         
         /// <summary>
         /// Create a new instance of the same type from a <c>Stream</c>
@@ -76,8 +78,9 @@ namespace Face
         /// <param name="stream"><c>Stream</c> to deserialize from</param>
         /// <returns>A new instance</returns>
         IFaceInfo<T> Deserialize(Stream stream);
-        
-        /// <summary>
+
+        IFaceInfo<T> Deserialize(TextReader reader);
+            /// <summary>
         /// Get a new instance of the same type
         /// </summary>
         /// <returns>A new instance of the same type</returns>

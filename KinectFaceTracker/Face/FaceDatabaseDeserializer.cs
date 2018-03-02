@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Xml;
 
 namespace Face
 {
@@ -18,25 +19,21 @@ namespace Face
 
             }
 
-            public void Deserialize(string dir = "faces")
+            public void Deserialize(Stream stream)
             {
-                if (!Directory.Exists(dir))
+                using (var xr = XmlReader.Create(stream, new XmlReaderSettings {CheckCharacters = false}))
                 {
-                    throw new ArgumentException($"{dir} is not a valid directory path!");
-                }
-
-                var filePaths = Directory.EnumerateFiles(dir).Where(f => Path.GetExtension(f) == ".xml");
-
-                foreach (var filePath in filePaths)
-                {
-                    if (!int.TryParse(Path.GetFileNameWithoutExtension(filePath), out int id)) continue;
-                    using (var fileStream = File.OpenRead(filePath))
+                    while (xr.ReadToFollowing("Id"))
                     {
-                        var fInfo = _faceInfoBaseInstance.Deserialize(fileStream);
-                        _db.Add(id, fInfo);
+
+                        var id = xr.ReadElementContentAsInt();
+                        xr.ReadToFollowing("LuxandFaceInfo");
+                        var sr = new StringReader(xr.ReadOuterXml());
+                        _db._storedFaces[id] = _faceInfoBaseInstance.Deserialize(sr);
                     }
                 }
             }
+
         }
     }
 }

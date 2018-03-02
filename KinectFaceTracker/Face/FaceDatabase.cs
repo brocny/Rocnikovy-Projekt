@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Xml.Serialization;
 
 namespace Face
 {
@@ -19,7 +21,6 @@ namespace Face
 
         public int NextId { get; private set; }
         public string SerializePath { get; set; } = null;
-
 
         public FaceDatabase(IFaceInfo<T> baseInstance, IDictionary<int, IFaceInfo<T>> initialDb = null)
         {
@@ -168,16 +169,16 @@ namespace Face
             return false;
         }
 
-        public void Serialize(string dir)
+        public void Serialize(Stream stream)
         {
             var serializer = new FaceDatabaseSerializer(this);
-            serializer.Serialize(dir);
+            serializer.Serialize(stream);
         }
 
-        public void Deserialize(string dir)
+        public void Deserialize(Stream stream)
         {
             var deserializer = new FaceDatabaseDeserializer(_baseInstance, this);
-            deserializer.Deserialize(dir);
+            deserializer.Deserialize(stream);
         }
 
         public object Clone()
@@ -190,6 +191,32 @@ namespace Face
 
             return ret;
         }
+
+        [Serializable]
+        public class FaceDatabaseSerializable
+        {
+            [XmlArray("Faces")]
+            [XmlArrayItem("FaceInfo")]
+            public List<SerializableTuple<int, IFaceInfo<T>>> List { get; set; }
+
+            public FaceDatabaseSerializable()
+            {
+                
+            }
+
+            public FaceDatabaseSerializable(FaceDatabase<T> db)
+            {
+                List = db._storedFaces
+                    .Select(x => new SerializableTuple<int, IFaceInfo<T>> {Key = x.Key, Value = x.Value}).ToList();
+            }
+        }
+    }
+
+    [Serializable]
+    public struct SerializableTuple<TKey, TValue>
+    {
+        public TKey Key { get; set; }
+        public TValue Value { get; set; }
     }
 }
 

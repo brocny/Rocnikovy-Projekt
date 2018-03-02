@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Serialization;
 using Face;
 using Luxand;
@@ -82,14 +83,32 @@ namespace LuxandFaceLib
 
         public void Serialize(Stream stream)
         {
+            var xw = XmlWriter.Create(stream, new XmlWriterSettings {OmitXmlDeclaration = true, CheckCharacters = false, Indent = true});
             XmlSerializer x = new XmlSerializer(typeof(LuxandFaceInfo));
-            x.Serialize(stream, this);
+            x.Serialize(xw, this);
+        }
+
+        public void Serialize(TextWriter writer)
+        {
+            var xw = XmlWriter.Create(writer,
+                new XmlWriterSettings {OmitXmlDeclaration = true, CheckCharacters = false, Indent = true});
+            XmlSerializer x = new XmlSerializer(typeof(LuxandFaceInfo));
+            x.Serialize(xw,this);
         }
 
         public IFaceInfo<byte[]> Deserialize(Stream stream)
         {
             var x = new XmlSerializer(typeof(LuxandFaceInfo));
             var ret = (LuxandFaceInfo) x.Deserialize(stream);
+            return ret;
+        }
+        
+
+        public IFaceInfo<byte[]> Deserialize(TextReader reader)
+        {
+            var xr = XmlReader.Create(reader, new XmlReaderSettings {CheckCharacters = false});
+            var x = new XmlSerializer(typeof(LuxandFaceInfo));
+            var ret = (LuxandFaceInfo) x.Deserialize(xr);
             return ret;
         }
 

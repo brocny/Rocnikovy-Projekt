@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using KinectUnifier;
@@ -214,36 +215,42 @@ namespace Kinect_Test
             }
         }
 
+        private const string FileFilter = "Xml files| *.xml|All files|*.*";
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var originalState = _programState;
             Pause();
 
-            var dialog = new FolderBrowserDialog
+            var dialog = new OpenFileDialog
             {
-                Description = "Select folder containing face database data",
-                ShowNewFolderButton = false,
-                SelectedPath = Environment.CurrentDirectory
+                InitialDirectory = $"{Environment.CurrentDirectory}\\FaceDb",
+                DefaultExt = "xml",
+                Filter = FileFilter,
+                Title = "Select file containing saved face database"
             };
 
-            var result = DialogHelpers.STAShowDialog(dialog);
+            var result = dialog.STAShowDialog();
             // make a backup of the current database in case something goes wrong
             var copy = _faceDatabase.Clone();
             if (result == DialogResult.OK)
             {
                 try
                 {
-                    _faceDatabase.Deserialize(dialog.SelectedPath);
+                    using (var fs = dialog.OpenFile())
+                    {
+                        _faceDatabase.Deserialize(fs);
+                    }
                 }
                 catch (Exception exc)
                 {
                     MessageBox.Show(
-                        $"Error: An error occured while loading the database from {dialog.SelectedPath}: {Environment.NewLine}{exc}");
+                        $"Error: An error occured while loading the database from {dialog.FileName}: {Environment.NewLine}{exc}");
                     // something went wrong -> revert
                     _faceDatabase = (FaceDatabase<byte[]>) copy;
                 }
             }
 
+            _faceDatabase.SerializePath = dialog.FileName;
             if (originalState == ProgramState.Running) UnPause();
         }
 
@@ -252,27 +259,31 @@ namespace Kinect_Test
             var originalState = _programState;
             Pause();
 
-            var dialog = new FolderBrowserDialog()
+            var dialog = new SaveFileDialog
             {
-                Description = "Select folder to save Face data to",
-                ShowNewFolderButton = true,
-                SelectedPath = Environment.CurrentDirectory
+                InitialDirectory = $"{Environment.CurrentDirectory}\\FaceDb",
+                DefaultExt = "xml",
+                Filter = FileFilter
             };
 
-            var result = DialogHelpers.STAShowDialog(dialog);
+            var result = dialog.STAShowDialog();
             if (result == DialogResult.OK)
             {
+
                 try
                 {
-                    _faceDatabase.Serialize(dialog.SelectedPath);
+                    using (var fs = dialog.OpenFile())
+                    {
+                        _faceDatabase.Serialize(fs);
+                    }
                 }
                 catch (Exception exc)
                 {
                     MessageBox.Show(
-                        $"Error: An error occured while saving the database to {dialog.SelectedPath}: {Environment.NewLine}{exc}");
+                        $"Error: An error occured while saving the database to {dialog.FileName}: {Environment.NewLine}{exc}");
                 }
 
-                _faceDatabase.SerializePath = dialog.SelectedPath;
+                _faceDatabase.SerializePath = dialog.FileName;
             }
 
             if (originalState == ProgramState.Running) UnPause();
@@ -291,7 +302,11 @@ namespace Kinect_Test
 
             try
             {
-                _faceDatabase.Serialize(_faceDatabase.SerializePath);
+                using (var fs = File.OpenWrite(_faceDatabase.SerializePath))
+                {
+
+                    _faceDatabase.Serialize(fs);
+                }
             }
             catch (Exception exc)
             {
@@ -317,7 +332,7 @@ enum ProgramState
 class DialogState
 {
     public DialogResult Result;
-    public FolderBrowserDialog Dialog;
+    public CommonDialog Dialog;
 
     public void ThreadProcShowDialog()
     {
@@ -327,7 +342,7 @@ class DialogState
 
 static class DialogHelpers
 {
-    internal static DialogResult STAShowDialog(FolderBrowserDialog dialog)
+    internal static DialogResult STAShowDialog(this CommonDialog dialog)
     {
         var state = new DialogState { Dialog = dialog };
         var thread = new
