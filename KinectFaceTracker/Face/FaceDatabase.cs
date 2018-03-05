@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -191,32 +192,6 @@ namespace Face
 
             return ret;
         }
-
-        [Serializable]
-        public class FaceDatabaseSerializable
-        {
-            [XmlArray("Faces")]
-            [XmlArrayItem("FaceInfo")]
-            public List<SerializableTuple<int, IFaceInfo<T>>> List { get; set; }
-
-            public FaceDatabaseSerializable()
-            {
-                
-            }
-
-            public FaceDatabaseSerializable(FaceDatabase<T> db)
-            {
-                List = db._storedFaces
-                    .Select(x => new SerializableTuple<int, IFaceInfo<T>> {Key = x.Key, Value = x.Value}).ToList();
-            }
-        }
-    }
-
-    [Serializable]
-    public struct SerializableTuple<TKey, TValue>
-    {
-        public TKey Key { get; set; }
-        public TValue Value { get; set; }
     }
 }
 
