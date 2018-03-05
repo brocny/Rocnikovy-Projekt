@@ -30,6 +30,7 @@ namespace Face
                         xr.ReadToFollowing("LuxandFaceInfo");
                         var sr = new StringReader(xr.ReadOuterXml());
                         _db._storedFaces[id] = _faceInfoBaseInstance.Deserialize(sr);
+                        _db.UpdateNextId(id);
                     }
                 }
             }

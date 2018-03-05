@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Serialization;
 
 namespace Face
@@ -23,23 +24,35 @@ namespace Face
         public int NextId { get; private set; }
         public string SerializePath { get; set; } = null;
 
-        public FaceDatabase(IFaceInfo<T> baseInstance, IDictionary<int, IFaceInfo<T>> initialDb = null)
+        public FaceDatabase(IFaceInfo<T> baseInstance = null, IEnumerable<KeyValuePair<int, IFaceInfo<T>>> initialDb = null)
         {
-            _baseInstance = baseInstance;
+            if (baseInstance == null)
+            {
+                var firstType = (from t in Assembly.GetExecutingAssembly().GetExportedTypes()
+                        where !t.IsAbstract && !t.IsInterface && typeof(IFaceInfo<T>).IsAssignableFrom(t) && t.GetConstructor(Type.EmptyTypes) != null
+                        select t)
+                    .FirstOrDefault();
+
+                if (firstType != null)
+                {
+                    _baseInstance = (IFaceInfo<T>)Activator.CreateInstance(firstType);
+                }
+                else
+                {
+                    throw new ApplicationException($"No suitable class implementing {typeof(IFaceInfo<T>)} found");
+                }
+            }
+            else
+            {
+                _baseInstance = baseInstance;
+            }
+
             _storedFaces = initialDb == null
                 ? new ConcurrentDictionary<int, IFaceInfo<T>>()
                 : new ConcurrentDictionary<int, IFaceInfo<T>>(initialDb);
         }
 
-        public FaceDatabase(IDictionary<int, IFaceInfo<T>> initialDb = null)
-        {
-            _baseInstance = Activator.CreateInstance<IFaceInfo<T>>();
-            _storedFaces = initialDb == null
-                ? new ConcurrentDictionary<int, IFaceInfo<T>>()
-                : new ConcurrentDictionary<int, IFaceInfo<T>>(initialDb);
-        }
-
-        public IFaceInfo<T> GetFaceInfo(int id) => _storedFaces[id];
+        public IFaceInfo<T> this[int index] => _storedFaces[index];
 
         public IEnumerable<int> GetAllIDs()
         {
@@ -50,6 +63,7 @@ namespace Face
         {
             return _storedFaces[id].Name;
         }
+
         /// <summary>
         /// Will do nothing if a face the same <code>name</code> is already in the database
         /// </summary>
@@ -70,6 +84,7 @@ namespace Face
             {
                 throw new ArgumentException($"{nameof(template)} invalid!");
             }
+
             return TryAddNewFace(id, faceInfo);
         }
 
@@ -98,6 +113,7 @@ namespace Face
                     retValue = match;
                 }
             }
+
             return retValue;
         }
 
@@ -115,6 +131,7 @@ namespace Face
                 faceInfo.AddTemplate(faceTemplate);
                 return true;
             }
+
             return false;
         }
 
