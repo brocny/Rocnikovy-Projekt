@@ -115,9 +115,9 @@ namespace LuxandFaceLib
             Task.Factory.ContinueWhenAny(
                 new[]
                 {
-                    _faceCuttingBlock.Completion, _fsdkImageCreatingBlock.Completion, _faceDetectionBlock.Completion,
-                    _facialFeaturesBlock.Completion, _templateExtractionBlock.Completion,
-                    _templateProcessingBlock.Completion
+                    _faceCuttingBlock.Completion, _fsdkImageCreatingBlock.Completion,
+                    _faceDetectionBlock.Completion,_facialFeaturesBlock.Completion,
+                    _templateExtractionBlock.Completion, _templateProcessingBlock.Completion
                 }, t => Completion?.Invoke(this, t));
 
             SetFSDKParams();
@@ -275,19 +275,19 @@ namespace LuxandFaceLib
             var matches = new (long trackingId, (int faceId, float confidence) match)[templates.Length];
             for (var i = 0; i < templates.Length; i++)
             {
-                FaceTemplate t = templates[i];
+                var t = templates[i];
                 // face is already tracked
                 if (_trackedFaces.TryGetValue(t.TrackingId, out var faceId))
                 {
-                    var faceInfo = _faceDb.GetFaceInfo(faceId);
-                    var similarity = faceInfo.GetSimilarity(t.Template);
+                    var faceInfo = _faceDb[faceId];
+                    var similarity = faceInfo.GetSimilarity(t);
                     if (similarity > SameFaceConfidenceThreshold)
                     {
                         matches[i] = (t.TrackingId, (faceId, similarity));
                     }
                     else if (similarity >= TrackedFaceNewTemplateThreshold)
                     {
-                        faceInfo.AddTemplate(t.Template);
+                        faceInfo.AddTemplate(t);
                         matches[i] = (t.TrackingId, (faceId, similarity));
                     }
                     else

@@ -80,6 +80,14 @@ namespace Kinect_Test
             LuxandFacePipeline.InitializeLibrary();
             _facePipeline.FacialFeatureRecognitionComplete += FacePipelinOnFeatureRecognition;
 
+            _facePipeline.Completion += (sender, task) =>
+            {
+                if (task.IsFaulted && task.Exception != null)
+                {
+                    throw task.Exception;
+                }
+            };
+
             _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
             _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
 

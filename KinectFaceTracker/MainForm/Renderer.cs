@@ -12,11 +12,8 @@ namespace Kinect_Test
 
         public Bitmap Image
         {
-            get { return _bmp; }
-            set
-            {
-                _bmp = value;
-            }
+            get => _bmp;
+            set => _bmp = value;
         }
 
         public Renderer(int colorFrameWidth, int colorFrameHeight)
