@@ -105,7 +105,7 @@ namespace LuxandFaceLib
         public (Gender gender, float confidence) GetGender()
         {
             var confMale = GetConfidenceMale();
-            if (confMale == null) return (Gender.Uknown, 0f);
+            if (confMale == null) return (Gender.Unknown, 0f);
 
             if (confMale > 0.5) return (Gender.Male, confMale.Value);
             return (Gender.Female, 1 - confMale.Value);

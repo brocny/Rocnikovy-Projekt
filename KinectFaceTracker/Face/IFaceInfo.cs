@@ -13,21 +13,34 @@ namespace Face
         /// Get similarity between <paramref name="template"/> and <c>this</c>
         /// </summary>
         /// <param name="template">The template to compare</param>
-        /// <returns>A value between 0 (no similaraty) and 1 (maximum similarity) between <c>this</c> and <paramref name="template"/></returns>
+        /// <returns>A value between 0 (no similaraty) and 1 (maximum similarity)</returns>
         float GetSimilarity(T template);
 
         /// <summary>
         /// Get similarity between <paramref name="faceInfo"/> and <c>this</c>
         /// </summary>
         /// <param name="faceInfo"></param>
-        /// <returns>A value between 0 (no similaraty) and 1 (maximum similarity) between <c>this</c> and <paramref name="faceInfo"/></returns>
+        /// <returns>A value between 0 (no similarity) and 1 (maximum similarity)</returns>
         float GetSimilarity(IFaceInfo<T> faceInfo);
+
+        /// <summary>
+        /// Get similarity between <param name="faceTemplate"> and <c>this</c></param>
+        /// </summary>
+        /// <param name="faceTemplate"></param>
+        /// <returns>A value between 0 (no similarity) and 1 (maximum similarity)</returns>
+        float GetSimilarity(IFaceTemplate<T> faceTemplate);
         
         /// <summary>
         /// Add a new template to this face
         /// </summary>
         /// <param name="template">Template to be added</param>
         void AddTemplate(T template);
+
+        /// <summary>
+        /// Add a new template including additional information included in FaceTemplate<typeparamref name="T"/> besides the actual template
+        /// </summary>
+        /// <param name="faceTemplate">Template to be added</param>
+        void AddTemplate(IFaceTemplate<T> faceTemplate);
         
         /// <summary>
         /// Add all the templates in <paramref name="other"/> into this
@@ -50,17 +63,17 @@ namespace Face
         /// <summary>
         /// Estimated age of the person
         /// </summary>
-        float? Age { get; set; }
+        float Age { get; }
 
         /// <summary>
         /// Person's gender
         /// </summary>
-        Gender Gender { get; set; }
+        Gender Gender { get;}
 
         /// <summary>
         /// Confidence that the <see cref="Gender"/> is correct between 0 and 1
         /// </summary>
-        float? GenderConfidence { get; set; }
+        float GenderConfidence { get; }
 
         IReadOnlyCollection<T> Templates { get; }
         
@@ -70,6 +83,10 @@ namespace Face
         /// <param name="stream"><c>Stream</c> to serialize into</param>
         void Serialize(Stream stream);
 
+        /// <summary>
+        /// Serialize this using a <c>TextWriter</c>
+        /// </summary>
+        /// <param name="writer"><c>TextWriter</c> to write to for serialization</param>
         void Serialize(TextWriter writer);
         
         /// <summary>
@@ -79,8 +96,14 @@ namespace Face
         /// <returns>A new instance</returns>
         IFaceInfo<T> Deserialize(Stream stream);
 
+        /// <summary>
+        /// Create a new instance of the same type by reading from a <c>TextReader</c>
+        /// </summary>
+        /// <param name="reader"><c>TextReader</c> to read from</param>
+        /// <returns>A new instance</returns>
         IFaceInfo<T> Deserialize(TextReader reader);
-            /// <summary>
+
+        /// <summary>
         /// Get a new instance of the same type
         /// </summary>
         /// <returns>A new instance of the same type</returns>
@@ -89,6 +112,6 @@ namespace Face
 
     public enum Gender
     {
-        Uknown, Female, Male
+        Unknown, Female, Male
     }
 }

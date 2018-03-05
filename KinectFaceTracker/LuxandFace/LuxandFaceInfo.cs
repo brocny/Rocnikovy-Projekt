@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Text;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,16 +15,34 @@ namespace LuxandFaceLib
     [Serializable]
     public class LuxandFaceInfo : IFaceInfo<byte[]>
     {
-        [XmlElement(IsNullable = true, ElementName = "GenderConf")]
-        public float? GenderConfidence { get; set; }
+        [XmlElement(ElementName = "GenderConf")]
+        public float GenderConfidence
+        {
+            get
+            {
+                if (_confidenceMale > 0.75) return _confidenceMale;
+                if (_confidenceMale < 0.25) return 1 - _confidenceMale;
+                return 0;
+            }
+        }
         [XmlIgnore]
         public IReadOnlyCollection<byte[]> Templates => _faceTemplates;
         [XmlAttribute("Name")]
         public string Name { get; set; }
-        [XmlElement(IsNullable = true, ElementName = "Age")]
-        public float? Age { get; set; }
+        [XmlElement(ElementName = "Age")]
+        public float Age { get; private set; }
+
         [XmlElement("Gender")]
-        public Gender Gender { get; set; }
+        public Gender Gender
+        {
+            get
+            {
+                if (_confidenceMale + 0.05 * _faceTemplates.Count < 0.95 && 1 - _confidenceMale + 0.05 * _faceTemplates.Count < 0.95 ) return Gender.Unknown;
+                if (_confidenceMale > 0.75) return Gender.Male;
+                if (_confidenceMale < 0.25) return Gender.Female;
+                return Gender.Unknown;
+            }
+        }
 
         public LuxandFaceInfo()
         {
@@ -45,9 +64,46 @@ namespace LuxandFaceLib
             return _faceTemplates.Max(x => faceInfo.GetSimilarity(x));
         }
 
+        public float GetSimilarity(IFaceTemplate<byte[]> faceTemplate)
+        {
+            const float wrongGenderPenalty = 0.75f,
+                maxAgeRatioWithoutPenalty = 1.25f,
+                minAgeRatioWithoutPenalty = 1f / maxAgeRatioWithoutPenalty;
+
+            float baseSim = GetSimilarity(faceTemplate.Template);
+            
+            float ageRatio = Age / faceTemplate.Age;
+            if (ageRatio > maxAgeRatioWithoutPenalty) baseSim /= ageRatio;
+            if (ageRatio < minAgeRatioWithoutPenalty) baseSim *= ageRatio;
+
+
+            if (faceTemplate.Gender != Gender.Unknown && faceTemplate.Gender != Gender)
+            {
+                baseSim *= wrongGenderPenalty;
+            }
+
+            return baseSim;
+        }
+
         public void AddTemplate(byte[] faceTemplate)
         {
             _faceTemplates.Add(faceTemplate);
+        }
+
+        public void AddTemplate(IFaceTemplate<byte[]> faceTemplate)
+        {
+            int ftCount = _faceTemplates.Count;
+
+            // Age is the average of observed ages
+            Age = (Age * ftCount + faceTemplate.Age) / (ftCount + 1);
+
+            if (faceTemplate.Gender != Gender.Unknown)
+            {
+                _confidenceMale = (_confidenceMale * ftCount
+                                  + (faceTemplate.Gender == Gender.Male ? faceTemplate.GenderConfidence: 1 - faceTemplate.GenderConfidence)) 
+                                  / (ftCount + 1);
+            }
+            _faceTemplates.Add(faceTemplate.Template);
         }
 
         public void AddTemplates(IEnumerable<byte[]> faceTemplates)
@@ -122,5 +178,7 @@ namespace LuxandFaceLib
             get => _faceTemplates.Select(x => Encoding.Default.GetString(x)).ToList();
             set => _faceTemplates = value.Select(x => Encoding.Default.GetBytes(x)).ToList();
         }
+
+        private float _confidenceMale;
     }
 }

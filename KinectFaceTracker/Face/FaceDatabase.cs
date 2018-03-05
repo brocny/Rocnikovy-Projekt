@@ -105,8 +105,9 @@ namespace Face
         {
             (int, float) retValue = (0, 0);
 
-            var matches = _storedFaces.AsParallel().Select(x => (x.Key, x.Value.GetSimilarity(template))).AsEnumerable();
-            foreach (var match in matches)
+            var matches = from storedFace in _storedFaces.AsParallel()
+                select (storedFace.Key, storedFace.Value.GetSimilarity(template));
+            foreach (var match in matches.AsSequential())
             {
                 if (match.Item2 > retValue.Item2)
                 {
@@ -115,6 +116,26 @@ namespace Face
             }
 
             return retValue;
+        }
+
+        public (int id, float confidence) GetBestMatch(IFaceTemplate<T> template)
+        {
+            (int, float) ret = (0, 0);
+            var matches = from f in _storedFaces.AsParallel()
+                let fv = f.Value
+                where !fv.Age.HasValue || (fv.Age.Value / template.Age > 0.75 && fv.Age.Value / template.Age < 1.33)
+                where fv.Gender == template.Gender || fv.Gender == Gender.Unknown
+                select (f.Key, fv.GetSimilarity(template));
+
+            foreach (var match in matches.AsSequential())
+            {
+                if (match.Item2 > ret.Item2)
+                {
+                    ret = match;
+                }
+            }
+
+            return ret;
         }
 
         /// <summary>

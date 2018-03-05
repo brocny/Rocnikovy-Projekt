@@ -371,12 +371,12 @@ namespace LuxandFaceLib
         public long TrackingId;
     }
 
-    public class FaceTemplate
+    public class FaceTemplate : IFaceTemplate<byte[]>
     {
-        public byte[] Template;
-        public float Age;
-        public Gender Gender;
-        public float GenderConfidence;
-        public long TrackingId;
+        public byte[] Template { get; internal set; }
+        public float Age { get; internal set; }
+        public Gender Gender { get; internal set; }
+        public float GenderConfidence { get; internal set; }
+        public long TrackingId { get; internal set; }
     }
 }
