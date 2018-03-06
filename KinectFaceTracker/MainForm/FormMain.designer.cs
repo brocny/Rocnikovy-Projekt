@@ -74,7 +74,7 @@
             // faceLabel
             // 
             this.faceLabel.AutoSize = true;
-            this.faceLabel.Location = new System.Drawing.Point(978, 228);
+            this.faceLabel.Location = new System.Drawing.Point(978, 250);
             this.faceLabel.Name = "faceLabel";
             this.faceLabel.Size = new System.Drawing.Size(0, 17);
             this.faceLabel.TabIndex = 7;

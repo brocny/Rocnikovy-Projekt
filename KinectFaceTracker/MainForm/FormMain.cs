@@ -182,12 +182,10 @@ namespace Kinect_Test
             if (_programState == ProgramState.Paused)
             {
                 UnPause();
-                startStopSpaceToolStripMenuItem.Text = "Stop (Space)";
             }
             else if (_programState == ProgramState.Running)
             {
                 Pause();
-                startStopSpaceToolStripMenuItem.Text = "Start (Space)";
             }
         }
 
@@ -198,6 +196,7 @@ namespace Kinect_Test
                 _kinect.Close();
                 statusLabel.Text = "STOPPED";
                 _programState = ProgramState.Paused;
+                startStopSpaceToolStripMenuItem.Text = "Stop (Space)";
             }
         }
 
@@ -208,6 +207,7 @@ namespace Kinect_Test
                 _kinect.Open();
                 statusLabel.Text = "";
                 _programState = ProgramState.Running;
+                startStopSpaceToolStripMenuItem.Text = "Start (Space)";
             }
         }
 
@@ -295,7 +295,7 @@ namespace Kinect_Test
                 catch (Exception exc)
                 {
                     MessageBox.Show(
-                        $"Error: An error occured while saving the database to {dialog.FileName}: {Environment.NewLine}{exc}");
+                        $"Error: An error occured while saving the database to {dialog.FileName}:{Environment.NewLine}{exc}");
                 }
 
                 _faceDatabase.SerializePath = dialog.FileName;
@@ -325,7 +325,7 @@ namespace Kinect_Test
             catch (Exception exc)
             {
                 MessageBox.Show(
-                    $"Error: An error occured while saving the database to {_faceDatabase.SerializePath}: {Environment.NewLine}{exc}");
+                    $"Error: An error occured while saving the database to {_faceDatabase.SerializePath}:{Environment.NewLine}{exc}");
             }
 
             if(originalState == ProgramState.Running) UnPause();
