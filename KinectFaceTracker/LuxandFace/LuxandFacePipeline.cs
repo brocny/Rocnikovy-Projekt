@@ -26,7 +26,7 @@ namespace LuxandFaceLib
         public event EventHandler<FaceTemplate[]> FaceTemplateExtractionComplete;
         public event EventHandler<(long trackingId, (int faceId, float confidence) match)[]> TemplateProcessingComplete;
 
-        public event EventHandler<Task> Completion;
+        public Task<Task> Completion;
 
         public TaskScheduler SynchContext { get; set; }
         public CancellationToken CancellationToken { get; set; }
@@ -112,13 +112,9 @@ namespace LuxandFaceLib
             _templateExtractionBlock.LinkTo(_templateProcessingBlock, obj => obj != null);
             _templateExtractionBlock.LinkTo(nullBlock, obj => obj == null);
 
-            Task.Factory.ContinueWhenAny(
-                new[]
-                {
-                    _faceCuttingBlock.Completion, _fsdkImageCreatingBlock.Completion,
-                    _faceDetectionBlock.Completion,_facialFeaturesBlock.Completion,
-                    _templateExtractionBlock.Completion, _templateProcessingBlock.Completion
-                }, t => Completion?.Invoke(this, t));
+            Completion = Task.WhenAny(
+                _faceCuttingBlock.Completion, _fsdkImageCreatingBlock.Completion, _faceDetectionBlock.Completion,
+                _facialFeaturesBlock.Completion, _templateExtractionBlock.Completion, _templateProcessingBlock.Completion);
 
             SetFSDKParams();
         }
@@ -194,9 +190,12 @@ namespace LuxandFaceLib
                     faceLocations.FaceRectangles[i], faceLocations.ImageBytesPerPixel);
                 result[i] = new FaceCutout
                 {
-                    Bitmap = pixelBuffer.BytesToBitmap(faceLocations.FaceRectangles[i].Width, faceLocations.FaceRectangles[i].Height, faceLocations.ImageBytesPerPixel),
+                    PixelBuffer = pixelBuffer,
                     OrigLocation = faceLocations.FaceRectangles[i].Location,
                     TrackingId = faceLocations.TrackingIds[i],
+                    Width = faceLocations.FaceRectangles[i].Width,
+                    Height = faceLocations.FaceRectangles[i].Height,
+                    BytesPerPixel = faceLocations.ImageBytesPerPixel
                 };
             }
             
@@ -208,20 +207,22 @@ namespace LuxandFaceLib
         private  FSDKFaceImage[] CreateFSDKImages(FaceCutout[] faceCutouts)
         {
             var results = new FSDKFaceImage[faceCutouts.Length];
-            Parallel.For(0, faceCutouts.Length, i =>
+            for(int i = 0; i < faceCutouts.Length; i++)
             {
-                var fImage = faceCutouts[i];
+                var faceCutout = faceCutouts[i];
 
                 results[i] = new FSDKFaceImage
                 {
-                    Width = fImage.Bitmap.Width,
-                    Height = fImage.Bitmap.Height,
-                    OrigLocation = fImage.OrigLocation,
-                    TrackingId = fImage.TrackingId,
+                    Width = faceCutout.Width,
+                    Height = faceCutout.Height,
+                    OrigLocation = faceCutout.OrigLocation,
+                    TrackingId = faceCutout.TrackingId,
                 };
 
-                FSDK.LoadImageFromCLRImage(ref results[i].ImageHandle, fImage.Bitmap);
-            });
+                FSDK.LoadImageFromBuffer(ref results[i].ImageHandle, faceCutout.PixelBuffer, faceCutout.Width,
+                    faceCutout.Height, faceCutout.Width * faceCutout.BytesPerPixel,
+                    LuxandUtil.ImageModeFromBytesPerPixel(faceCutout.BytesPerPixel));
+            }
 
             FsdkImageCreationComplete?.Invoke(this, results);
             return results;
@@ -363,7 +364,12 @@ namespace LuxandFaceLib
         /// <summary>
         /// Bitmap image of the face
         /// </summary>
-        public Bitmap Bitmap;
+        public byte[] PixelBuffer;
+
+        public int Width;
+        public int Height;
+
+        public int BytesPerPixel;
         /// <summary>
         /// Original location of the top-left point of the face rectangle in the original image
         /// </summary>

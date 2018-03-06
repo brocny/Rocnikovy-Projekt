@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 using KinectUnifier;
 using LuxandFaceLib;
@@ -78,15 +79,15 @@ namespace Kinect_Test
             _facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
 
             LuxandFacePipeline.InitializeLibrary();
-            _facePipeline.FacialFeatureRecognitionComplete += FacePipelinOnFeatureRecognition;
+            _facePipeline.FacialFeatureRecognitionComplete += FacePipelineOnFeatureRecognition;
 
-            _facePipeline.Completion += (sender, task) =>
+            _facePipeline.Completion.ContinueWith(t =>
             {
-                if (task.IsFaulted && task.Exception != null)
+                if (t.Result.IsFaulted)
                 {
-                    throw task.Exception;
+                    throw t.Exception;
                 }
-            };
+            }, _synchContext);
 
             _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
             _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
@@ -103,23 +104,20 @@ namespace Kinect_Test
             _kinect.Open();
         }
 
-        private void FacePipelinOnFeatureRecognition(object sender, FSDKFaceImage[] fsdkFaceImages)
+        private void FacePipelineOnFeatureRecognition(object sender, FSDKFaceImage[] fsdkFaceImages)
         {
             var fsdkFaceImage = fsdkFaceImages.FirstOrDefault(f => f.TrackingId == _displayedFaceTrackingId);
             if (fsdkFaceImage != null && _facePipeline.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out int faceId))
             {
-                var confidenceMale = fsdkFaceImage.GetConfidenceMale();
-                if (confidenceMale == null) return;
+                var (gender, confidence) = fsdkFaceImage.GetGender();
+                if (gender == Gender.Unknown) return;
                 var expression = fsdkFaceImage.GetExpression();
                 var text = $"ID: {faceId}{Environment.NewLine}" +
-                           $"Age: {fsdkFaceImage.GetAge()}{Environment.NewLine}" +
-                           $"Smile: {expression.smile * 100}%{Environment.NewLine}" +
-                           $"Eyes Open:{expression.eyesOpen * 100}%{Environment.NewLine}" + 
-                (confidenceMale > 0.5
-                    ? $"Male: {confidenceMale * 100}%"
-                    : $"Female: {(1 - confidenceMale) * 100}%");
+                           $"Age: {fsdkFaceImage.GetAge() :F2}{Environment.NewLine}" +
+                           $"Smile: {expression.smile * 100 :F2}%{Environment.NewLine}" +
+                           $"Eyes Open: {expression.eyesOpen * 100 :F2}%{Environment.NewLine}" +
+                           $"{(gender == Gender.Male ? "Male:" : "Female:")} {confidence * 100 :F2}%";
                 faceLabel.InvokeIfRequired(f => f.Text = text);
-
             }
         }
 
@@ -127,7 +125,10 @@ namespace Kinect_Test
         {
             if (faceCutouts != null && faceCutouts.Length != 0)
             {
-                facePictureBox.Image = faceCutouts[0].Bitmap;
+                var fco = faceCutouts[0];
+                facePictureBox.InvokeIfRequired(f => f.Image = fco.PixelBuffer.BytesToBitmap(fco.Width, fco.Height, fco.BytesPerPixel));
+                
+                //facePictureBox.Image = faceCutouts[0].Bitmap;
                 _displayedFaceTrackingId = faceCutouts[0].TrackingId;
             }
         }
@@ -164,6 +165,7 @@ namespace Kinect_Test
 
                 _fpsCounter.NewFrame();
                 statusLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
+                Application.DoEvents();
                 pictureBox1.Image = renderTask.Result;
             }
         }
@@ -317,7 +319,6 @@ namespace Kinect_Test
             {
                 using (var fs = File.OpenWrite(_faceDatabase.SerializePath))
                 {
-
                     _faceDatabase.Serialize(fs);
                 }
             }
