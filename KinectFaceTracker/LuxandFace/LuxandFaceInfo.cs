@@ -20,8 +20,8 @@ namespace LuxandFaceLib
         {
             get
             {
-                if (_confidenceMale > 0.75) return _confidenceMale;
-                if (_confidenceMale < 0.25) return 1 - _confidenceMale;
+                if (_confidenceMale > GenderMinConfidence) return _confidenceMale;
+                if (_confidenceMale < 1f - GenderMinConfidence) return 1 - _confidenceMale;
                 return 0;
             }
         }
@@ -37,9 +37,13 @@ namespace LuxandFaceLib
         {
             get
             {
-                if (_confidenceMale + 0.05 * _faceTemplates.Count < 0.95 && 1 - _confidenceMale + 0.05 * _faceTemplates.Count < 0.95 ) return Gender.Unknown;
-                if (_confidenceMale > 0.75) return Gender.Male;
-                if (_confidenceMale < 0.25) return Gender.Female;
+                const float minTotalConf = 0.95f, confPerTemplate = 0.05f;
+
+                if (_confidenceMale + confPerTemplate * _faceTemplates.Count < minTotalConf 
+                    && 1f - _confidenceMale + confPerTemplate * _faceTemplates.Count < minTotalConf)
+                    return Gender.Unknown;
+                if (_confidenceMale > GenderMinConfidence) return Gender.Male;
+                if (_confidenceMale < 1f - GenderMinConfidence) return Gender.Female;
                 return Gender.Unknown;
             }
         }
@@ -97,6 +101,7 @@ namespace LuxandFaceLib
             // Age is the average of observed ages
             Age = (Age * ftCount + faceTemplate.Age) / (ftCount + 1);
 
+            // Gender confidence is the average of observations
             if (faceTemplate.Gender != Gender.Unknown)
             {
                 _confidenceMale = (_confidenceMale * ftCount
@@ -180,5 +185,7 @@ namespace LuxandFaceLib
         }
 
         private float _confidenceMale;
+
+        private const float GenderMinConfidence = 0.75f;
     }
 }

@@ -123,7 +123,7 @@ namespace Face
             (int, float) ret = (0, 0);
             var matches = from f in _storedFaces.AsParallel()
                 let fv = f.Value
-                where !fv.Age.HasValue || (fv.Age.Value / template.Age > 0.75 && fv.Age.Value / template.Age < 1.33)
+                where fv.Age == 0f || (fv.Age / template.Age > 0.75f && fv.Age / template.Age < 1.33f)
                 where fv.Gender == template.Gender || fv.Gender == Gender.Unknown
                 select (f.Key, fv.GetSimilarity(template));
 

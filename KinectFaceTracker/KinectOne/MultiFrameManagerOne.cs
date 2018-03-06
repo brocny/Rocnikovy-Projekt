@@ -14,7 +14,7 @@ namespace KinectOne
         {
             FrameTypes = frameTypes;
             _kinectOne = kinect;
-            _multiReader = _kinectOne.KinectSensor.OpenMultiSourceFrameReader(FrameSourceTypes.Body | FrameSourceTypes.Color | FrameSourceTypes.BodyIndex);
+            _multiReader = _kinectOne.KinectSensor.OpenMultiSourceFrameReader(FrameSourceTypes.Body | FrameSourceTypes.Color);
             _multiReader.MultiSourceFrameArrived += MultiReaderOnMultiSourceFrameArrived;
         }
 
