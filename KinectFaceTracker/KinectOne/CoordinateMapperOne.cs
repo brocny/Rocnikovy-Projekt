@@ -1,5 +1,8 @@
-﻿using KinectUnifier;
+﻿using System.Numerics;
+using KinectUnifier;
 using Microsoft.Kinect;
+using Vector2 = System.Numerics.Vector2;
+using Vector3 = System.Numerics.Vector3;
 
 namespace KinectOne
 {
@@ -13,7 +16,7 @@ namespace KinectOne
 
         }
 
-        public void MapCameraPointsToColorSpace(Point3F[] cameraPoints, Point2F[] colorPoints)
+        public void MapCameraPointsToColorSpace(Vector3[] cameraPoints, Vector2[] colorPoints)
         {
             for (int i = 0; i < cameraPoints.Length && i < colorPoints.Length; i++)
             {
@@ -25,11 +28,11 @@ namespace KinectOne
                         Z = cameraPoints[i].Z
                     });
 
-                colorPoints[i] = new Point2F(colorSpacePoint.X, colorSpacePoint.Y);
+                colorPoints[i] = new Vector2(colorSpacePoint.X, colorSpacePoint.Y);
             }
         }
 
-        public void MapCameraPointsToDepthSpace(Point3F[] cameraPoints, Point2F[] depthPoints)
+        public void MapCameraPointsToDepthSpace(Vector3[] cameraPoints, Vector2[] depthPoints)
         {
             for (int i = 0; i < cameraPoints.Length && i < depthPoints.Length; i++)
             {
@@ -41,23 +44,23 @@ namespace KinectOne
                     Z = cameraPoints[i].Z
                 });
 
-                depthPoints[i] = new Point2F(depthSpacePoint.X, depthSpacePoint.Y);
+                depthPoints[i] = new Vector2(depthSpacePoint.X, depthSpacePoint.Y);
             }
         }
 
-        public Point2F MapCameraPointToColorSpace(Point3F cameraPoint)
+        public Vector2 MapCameraPointToColorSpace(Vector3 cameraPoint)
         {
             var colorSpacePoint =
-                _coordinateMapper.MapCameraPointToColorSpace(new CameraSpacePoint()
+                _coordinateMapper.MapCameraPointToColorSpace(new CameraSpacePoint
                 {
                     X = cameraPoint.X,
                     Y = cameraPoint.Y,
                     Z = cameraPoint.Z
                 });
-            return new Point2F(colorSpacePoint.X, colorSpacePoint.Y);
+            return new Vector2(colorSpacePoint.X, colorSpacePoint.Y);
         }
 
-        public Point2F MapCameraPointToDepthSpace(Point3F cameraPoint)
+        public Vector2 MapCameraPointToDepthSpace(Vector3 cameraPoint)
         {
             var depthSpacePoint = _coordinateMapper.MapCameraPointToDepthSpace(new CameraSpacePoint()
             {
@@ -65,7 +68,7 @@ namespace KinectOne
                 Y = cameraPoint.Y,
                 Z = cameraPoint.Z
             });
-            return new Point2F(depthSpacePoint.X, depthSpacePoint.Y);
+            return new Vector2(depthSpacePoint.X, depthSpacePoint.Y);
         }
     }
 }

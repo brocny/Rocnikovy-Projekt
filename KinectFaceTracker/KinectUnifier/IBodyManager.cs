@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
+using System.Numerics;
 
 namespace KinectUnifier
 {
@@ -32,12 +28,12 @@ namespace KinectUnifier
 
         int BodyCount { get; }
         
-        Point4F FloorClipPlane { get; }
+        Vector4 FloorClipPlane { get; }
     }
 
     public interface IJoint
     {
-        Point3F Position { get; }
+        Vector3 Position { get; }
         bool IsTracked { get; }
     }
 

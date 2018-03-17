@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using KinectUnifier;
+using System.Numerics;
 
 namespace KinectFaceTracker
 {
@@ -105,14 +106,14 @@ namespace KinectFaceTracker
             }
         }
 
-        public void DrawJoint(Point2F pos, Brush brush)
+        public void DrawJoint(Vector2 pos, Brush brush)
         {
             var bmpX = Math.Max(0, Math.Min(pos.X, _bmp.Width));
             var bmpY = Math.Max(0, Math.Min(pos.Y, _bmp.Height));
             _gr.FillEllipse(brush, bmpX - JointSize / 2, bmpY - JointSize / 2, JointSize, JointSize);
         }
 
-        public void DrawJoint(Point2F pos, Brush brush, float size)
+        public void DrawJoint(Vector2 pos, Brush brush, float size)
         {
             var bmpX = Math.Min(pos.X, _bmp.Width);
             var bmpY = Math.Min(pos.Y, _bmp.Height);
@@ -125,7 +126,7 @@ namespace KinectFaceTracker
         }
 
         public void DrawBone(IReadOnlyDictionary<JointType, IJoint> joints,
-            IDictionary<JointType, Point2F> jointColorSpacePoints, JointType jointType0, JointType jointType1, Pen pen)
+            IDictionary<JointType, Vector2> jointColorSpacePoints, JointType jointType0, JointType jointType1, Pen pen)
         {
             if (!joints.TryGetValue(jointType0, out var joint0) || !joints.TryGetValue(jointType1, out var joint1))
             {

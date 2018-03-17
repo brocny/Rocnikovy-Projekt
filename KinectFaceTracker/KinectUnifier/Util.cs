@@ -2,25 +2,26 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace KinectUnifier
 {
     public static class Util
     {
-        public static IDictionary<JointType, Point2F> MapJointsToColorSpace(IBody body, ICoordinateMapper mapper)
+        public static IDictionary<JointType, Vector2> MapJointsToColorSpace(IBody body, ICoordinateMapper mapper)
         {
-            var ret = new Dictionary<JointType, Point2F>();
+            var ret = new Dictionary<JointType, Vector2>();
 
             foreach (var joint in body.Joints)
             {
-                Point3F cameraPoint = joint.Value.Position;
+                Vector3 cameraPoint = joint.Value.Position;
                 if (cameraPoint.Z < 0)
                 {
                     cameraPoint.Z = 0.1f;
                 }
 
-                Point2F colorPoint =
+                Vector2 colorPoint =
                        mapper.MapCameraPointToColorSpace(joint.Value.Position);
 
                 ret.Add(joint.Key, colorPoint);
@@ -183,6 +184,14 @@ namespace KinectUnifier
             if (bottom > height) bottom = height;
 
             return new Rectangle(left, top, right - left, bottom - top);
+        }
+    }
+
+    public static class Vector2Extensions
+    {
+        public static float DistanceTo(this Vector2 v, Vector2 w)
+        {
+            return (float)Math.Sqrt((v.X - w.X) * (v.X - w.X) + (v.Y - w.Y) * (v.Y - w.Y));
         }
     }
 }

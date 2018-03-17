@@ -1,4 +1,5 @@
-﻿using KinectUnifier;
+﻿using System.Numerics;
+using KinectUnifier;
 using Microsoft.Kinect;
 
 
@@ -16,7 +17,7 @@ namespace Kinect360
             
         }
 
-        public void MapCameraPointsToColorSpace(Point3F[] cameraPoints, Point2F[] colorPoints)
+        public void MapCameraPointsToColorSpace(Vector3[] cameraPoints, Vector2[] colorPoints)
         {
             for (int i = 0; i < cameraPoints.Length && i < colorPoints.Length; i++)
             {
@@ -28,11 +29,11 @@ namespace Kinect360
                         Z = cameraPoints[i].Z
                     }, _kinect360.ColorManager == null ? ColorImageFormat.RgbResolution640x480Fps30 : _kinect360._colorManager.ColorImageFormat);
 
-                colorPoints[i] = new Point2F(colorSpacePoint.X, colorSpacePoint.Y);
+                colorPoints[i] = new Vector2(colorSpacePoint.X, colorSpacePoint.Y);
             }
         }
 
-        public void MapCameraPointsToDepthSpace(Point3F[] cameraPoints, Point2F[] depthPoints)
+        public void MapCameraPointsToDepthSpace(Vector3[] cameraPoints, Vector2[] depthPoints)
         {
             for (int i = 0; i < cameraPoints.Length && i < depthPoints.Length; i++)
             {
@@ -44,11 +45,11 @@ namespace Kinect360
                         Z = cameraPoints[i].Z
                     }, DepthImageFormat.Resolution640x480Fps30);
 
-                depthPoints[i] = new Point2F(colorSpacePoint.X, colorSpacePoint.Y);
+                depthPoints[i] = new Vector2(colorSpacePoint.X, colorSpacePoint.Y);
             }
         }
 
-        public Point2F MapCameraPointToColorSpace(Point3F cameraPoint)
+        public Vector2 MapCameraPointToColorSpace(Vector3 cameraPoint)
         {
             var colorSpacePoint =
                _coordinateMapper.MapSkeletonPointToColorPoint(new SkeletonPoint()
@@ -57,10 +58,10 @@ namespace Kinect360
                    Y = cameraPoint.Y,
                    Z = cameraPoint.Z
                }, _kinect360.ColorManager == null ? ColorImageFormat.RgbResolution640x480Fps30 : _kinect360._colorManager.ColorImageFormat);
-            return new Point2F(colorSpacePoint.X, colorSpacePoint.Y);
+            return new Vector2(colorSpacePoint.X, colorSpacePoint.Y);
         }
 
-        public Point2F MapCameraPointToDepthSpace(Point3F cameraPoint)
+        public Vector2 MapCameraPointToDepthSpace(Vector3 cameraPoint)
         {
             var colorSpacePoint =
                _coordinateMapper.MapSkeletonPointToDepthPoint(new SkeletonPoint()
@@ -69,7 +70,7 @@ namespace Kinect360
                    Y = cameraPoint.Y,
                    Z = cameraPoint.Z
                }, DepthImageFormat.Resolution640x480Fps30);
-            return new Point2F(colorSpacePoint.X, colorSpacePoint.Y);
+            return new Vector2(colorSpacePoint.X, colorSpacePoint.Y);
         }
     }
 

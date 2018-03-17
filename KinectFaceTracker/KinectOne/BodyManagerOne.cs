@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using KinectUnifier;
 using Microsoft.Kinect;
 using JointType = KinectUnifier.JointType;
+using Vector4 = System.Numerics.Vector4;
 
 namespace KinectOne
 {
@@ -55,12 +57,12 @@ namespace KinectOne
 
             public int BodyCount => _bodyFrame.BodyCount;
 
-            public Point4F FloorClipPlane
+            public Vector4 FloorClipPlane
             {
                 get
                 {
                     var fcp = _bodyFrame.FloorClipPlane;
-                    return new Point4F(fcp.X, fcp.Y, fcp.Y, fcp.W);
+                    return new Vector4(fcp.X, fcp.Y, fcp.Y, fcp.W);
                 }
             }
 
@@ -155,7 +157,7 @@ namespace KinectOne
                 _joint = joint;
             }
 
-            public Point3F Position => new Point3F(_joint.Position.X, _joint.Position.Y, _joint.Position.Z);
+            public Vector3 Position => new Vector3(_joint.Position.X, _joint.Position.Y, _joint.Position.Z);
             public bool IsTracked => _joint.TrackingState == TrackingState.Tracked;
 
         }

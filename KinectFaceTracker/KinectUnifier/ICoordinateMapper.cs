@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,10 +10,10 @@ namespace KinectUnifier
 {
     public interface ICoordinateMapper
     {
-        Point2F MapCameraPointToDepthSpace(Point3F cameraPoint);
-        void MapCameraPointsToDepthSpace(Point3F[] cameraPoints, Point2F[] depthPoints);
+        System.Numerics.Vector2 MapCameraPointToDepthSpace(System.Numerics.Vector3 cameraPoint);
+        void MapCameraPointsToDepthSpace(System.Numerics.Vector3[] cameraPoints, System.Numerics.Vector2[] depthPoints);
 
-        Point2F MapCameraPointToColorSpace(Point3F cameraPoint);
-        void MapCameraPointsToColorSpace(Point3F[] cameraPoints, Point2F[] colorPoints);
+        System.Numerics.Vector2 MapCameraPointToColorSpace(System.Numerics.Vector3 cameraPoint);
+        void MapCameraPointsToColorSpace(System.Numerics.Vector3[] cameraPoints, System.Numerics.Vector2[] colorPoints);
     }
 }

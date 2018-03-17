@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using KinectUnifier;
 using Microsoft.Kinect;
+using System.Numerics;
+
+using Vector4 = System.Numerics.Vector4;
 using JointType = KinectUnifier.JointType;
 
 
@@ -53,12 +56,12 @@ namespace Kinect360
 
             public int BodyCount => _skeletonFrame.SkeletonArrayLength;
 
-            public Point4F FloorClipPlane
+            public Vector4 FloorClipPlane
             {
                 get
                 {
                     var fcp = _skeletonFrame.FloorClipPlane;
-                    return new Point4F(fcp.Item1, fcp.Item1, fcp.Item3, fcp.Item4);
+                    return new Vector4(fcp.Item1, fcp.Item1, fcp.Item3, fcp.Item4);
                 }
             }
 
@@ -190,13 +193,13 @@ namespace Kinect360
 
         public class FakeJoint : IJoint
         {
-            public FakeJoint(Point3F position, bool isTracked)
+            public FakeJoint(Vector3 position, bool isTracked)
             {
                 Position = position;
                 IsTracked = isTracked;
             }
 
-            public Point3F Position { get; }
+            public Vector3 Position { get; }
             public bool IsTracked { get; }
         }
 
@@ -210,7 +213,7 @@ namespace Kinect360
             }
 
             public bool IsTracked => _joint.TrackingState == JointTrackingState.Tracked;
-            public Point3F Position => new Point3F(_joint.Position.X, _joint.Position.Y, _joint.Position.Z);
+            public Vector3 Position => new Vector3(_joint.Position.X, _joint.Position.Y, _joint.Position.Z);
         }
     }
 
