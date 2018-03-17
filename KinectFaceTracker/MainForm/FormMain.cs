@@ -1,16 +1,15 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Windows.Forms;
 using KinectUnifier;
 using LuxandFaceLib;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic;
 using Face;
 
-namespace Kinect_Test
+namespace KinectFaceTracker
 {
     public partial class FormMain : Form
     {
@@ -24,7 +23,13 @@ namespace Kinect_Test
         private int _colorBytesPerPixel;
         private int _colorHeight;
         private int _colorWidth;
+        private int _imageWidth;
+        private int _imageHeight;
+
         private long _displayedFaceTrackingId;
+
+        private Rectangle[] _lastFaceRects;
+        private long[] _lastTrackingIds;
 
         private FpsCounter _fpsCounter = new FpsCounter();
 
@@ -85,12 +90,15 @@ namespace Kinect_Test
             {
                 if (t.Result.IsFaulted)
                 {
-                    throw t.Exception;
+                    t.Result.Wait();
                 }
             }, _synchContext);
 
             _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
             _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
+
+            _imageHeight = pictureBox1.Height;
+            _imageWidth = pictureBox1.Width;
 
             InitializeColorComponents();
 
@@ -107,12 +115,12 @@ namespace Kinect_Test
         private void FacePipelineOnFeatureRecognition(object sender, FSDKFaceImage[] fsdkFaceImages)
         {
             var fsdkFaceImage = fsdkFaceImages.FirstOrDefault(f => f.TrackingId == _displayedFaceTrackingId);
-            if (fsdkFaceImage != null && _facePipeline.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out int faceId))
+            if (fsdkFaceImage != null && _facePipeline.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out TrackingStatus trackingStatus))
             {
                 var (gender, confidence) = fsdkFaceImage.GetGender();
                 if (gender == Gender.Unknown) return;
                 var expression = fsdkFaceImage.GetExpression();
-                var text = $"ID: {faceId}{Environment.NewLine}" +
+                var text = $"ID: {trackingStatus.FaceId}{Environment.NewLine}" +
                            $"Age: {fsdkFaceImage.GetAge() :F2}{Environment.NewLine}" +
                            $"Smile: {expression.smile * 100 :F2}%{Environment.NewLine}" +
                            $"Eyes Open: {expression.eyesOpen * 100 :F2}%{Environment.NewLine}" +
@@ -127,8 +135,6 @@ namespace Kinect_Test
             {
                 var fco = faceCutouts[0];
                 facePictureBox.InvokeIfRequired(f => f.Image = fco.PixelBuffer.BytesToBitmap(fco.Width, fco.Height, fco.BytesPerPixel));
-                
-                //facePictureBox.Image = faceCutouts[0].Bitmap;
                 _displayedFaceTrackingId = faceCutouts[0].TrackingId;
             }
         }
@@ -144,7 +150,14 @@ namespace Kinect_Test
                 if (colorFrame == null || bodyFrame == null) return;
                 var locTask =
                     _facePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
-                var createBitMapTask = locTask.ContinueWith(t => t.Result.ColorBuffer.BytesToBitmap(t.Result.ImageWidth, t.Result.ImageHeight, t.Result.ImageBytesPerPixel));
+                var createBitMapTask = locTask.ContinueWith(t =>
+                {
+                    var result = t.Result;
+                    _lastFaceRects = result.FaceRectangles;
+                    _lastTrackingIds = result.TrackingIds;
+                    return result.ColorBuffer.BytesToBitmap(result.ImageWidth, result.ImageHeight,
+                            result.ImageBytesPerPixel);
+                });
                 var renderTask = createBitMapTask.ContinueWith(t =>
                 {
                     _renderer.Image = t.Result;
@@ -153,10 +166,12 @@ namespace Kinect_Test
                     _renderer.DrawRectangles(res.FaceRectangles, _bodyPens);
                     for (int i = 0; i < res.FaceRectangles.Length; i++)
                     {   
-                        if(_facePipeline.TrackedFaces.TryGetValue(res.TrackingIds[i], out var faceId))
+                        if(_facePipeline.TrackedFaces.TryGetValue(res.TrackingIds[i], out var trackingStatus))
                         {
                             var rect = res.FaceRectangles[i];
-                            _renderer.DrawName(faceId.ToString(), rect.Left, rect.Bottom, _bodyBrushes[i]);
+                            var faceLabel = _faceDatabase.GetName(trackingStatus.FaceId) ??
+                                            trackingStatus.FaceId.ToString();
+                            _renderer.DrawName(faceLabel, rect.Left, rect.Bottom, _bodyBrushes[i]);
                         }
                     }
 
@@ -172,8 +187,8 @@ namespace Kinect_Test
 
         void InitializeColorComponents()
         {
-            _colorWidth = _kinect.ColorManager.HeightPixels;
-            _colorHeight = _kinect.ColorManager.WidthPixels;
+            _colorWidth = _kinect.ColorManager.WidthPixels;
+            _colorHeight = _kinect.ColorManager.HeightPixels;
             _colorBytesPerPixel = _kinect.ColorManager.BytesPerPixel;
         }
 
@@ -335,50 +350,32 @@ namespace Kinect_Test
         {
             TogglePaused();
         }
+
+        private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
+        {
+            var clickPos = e.Location.Rescale(_imageWidth, _imageHeight, _colorWidth, _colorHeight);
+            for (int i = 0; i < _lastFaceRects.Length; i++)
+            {
+                var rect = _lastFaceRects[i];
+                if (rect.Contains(clickPos))
+                {
+                    long id = _lastTrackingIds[i];
+                    if (_facePipeline.TrackedFaces.TryGetValue(id, out var status))
+                    {
+                        var name = Interaction.InputBox("Enter person's name", "Person name dialog", null);
+                        if (name != null && _faceDatabase.TryGetValue(status.FaceId, out var faceInfo))
+                        {
+                            faceInfo.Name = name;
+                        }
+
+                    }
+                }
+            }
+        }
     }
 }
 
 enum ProgramState
 {
     Running, Paused
-}
-
-class DialogState
-{
-    public DialogResult Result;
-    public CommonDialog Dialog;
-
-    public void ThreadProcShowDialog()
-    {
-        Result = Dialog.ShowDialog();
-    }
-}
-
-static class DialogHelpers
-{
-    internal static DialogResult STAShowDialog(this CommonDialog dialog)
-    {
-        var state = new DialogState { Dialog = dialog };
-        var thread = new
-            System.Threading.Thread(state.ThreadProcShowDialog);
-        thread.SetApartmentState(System.Threading.ApartmentState.STA);
-        thread.Start();
-        thread.Join();
-        return state.Result;
-    }
-}
-
-public static class ControlHelpers
-{
-    public static void InvokeIfRequired<T>(this T control, Action<T> action) where T : ISynchronizeInvoke
-    {
-        if (control.InvokeRequired)
-        {
-            control.Invoke(new Action(() => action(control)), null);
-        }
-        else
-        {
-            action(control);
-        }
-    }
 }
