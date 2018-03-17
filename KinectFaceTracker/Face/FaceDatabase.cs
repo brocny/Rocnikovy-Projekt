@@ -52,6 +52,11 @@ namespace Face
                 : new ConcurrentDictionary<int, IFaceInfo<T>>(initialDb);
         }
 
+        public bool TryGetValue(int id, out IFaceInfo<T> faceInfo)
+        {
+            return _storedFaces.TryGetValue(id, out faceInfo);
+        }
+
         public IFaceInfo<T> this[int index] => _storedFaces[index];
 
         public IEnumerable<int> GetAllIDs()
