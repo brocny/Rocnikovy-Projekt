@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace Kinect_Test
+namespace KinectFaceTracker
 {
     static class Program
     {

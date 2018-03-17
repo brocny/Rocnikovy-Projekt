@@ -38,7 +38,7 @@ namespace KinectUnifier
         /// </summary>
         const float FaceHeight = 2.1f;
 
-        public static bool TryGetHeadRectangleAndRotAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
+        public static bool TryGetHeadRectangleAndYawAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
         {
             faceRect = Rectangle.Empty;
             rotationAngle = 0;
@@ -103,7 +103,7 @@ namespace KinectUnifier
             var bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly,
                 PixelFormat.Format32bppArgb);
 
-            Marshal.Copy(buffer, 0, bmpData.Scan0, buffer.Length);
+            Marshal.Copy(buffer, 0, bmpData.Scan0, width * height * bytesPerPixel);
             
             bmp.UnlockBits(bmpData);
             return bmp;

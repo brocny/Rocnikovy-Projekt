@@ -27,10 +27,10 @@ namespace LuxandFaceLib
         }
         [XmlIgnore]
         public IReadOnlyCollection<byte[]> Templates => _faceTemplates;
-        [XmlAttribute("Name")]
+        [XmlElement(ElementName = "Name")]
         public string Name { get; set; }
         [XmlElement(ElementName = "Age")]
-        public float Age { get; private set; }
+        public float Age { get; set; }
 
         [XmlElement("Gender")]
         public Gender Gender

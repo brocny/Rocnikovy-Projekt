@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Kinect_Test
+namespace KinectFaceTracker
 {
     class FpsCounter
     {

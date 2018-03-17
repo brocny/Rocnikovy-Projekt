@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Kinect_Test.Properties {
+namespace KinectFaceTracker.Properties {
     using System;
     
     

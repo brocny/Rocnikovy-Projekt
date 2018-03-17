@@ -1,7 +1,5 @@
 ﻿using KinectUnifier;
 
-
-
 namespace KinectFactory
 {
 #if K_ONE
