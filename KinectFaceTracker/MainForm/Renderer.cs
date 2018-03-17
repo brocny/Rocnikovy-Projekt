@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using KinectUnifier;
 
-namespace Kinect_Test
+namespace KinectFaceTracker
 {
     public class Renderer
     {
@@ -13,14 +13,18 @@ namespace Kinect_Test
         public Bitmap Image
         {
             get => _bmp;
-            set => _bmp = value;
+            set
+            {
+                _bmp = value;
+                _gr = Graphics.FromImage(_bmp);
+            }
         }
 
         public Renderer(int colorFrameWidth, int colorFrameHeight)
         {
             _colorWidth = colorFrameWidth;
             _colorHeight = colorFrameHeight;
-            NameFont = new Font(FontFamily.GenericSansSerif, _colorWidth / 25f);
+            NameFont = new Font(FontFamily.GenericSansSerif, _colorWidth / 40);
 
             _bmp = new Bitmap(_colorWidth, _colorHeight);
         }
@@ -33,19 +37,19 @@ namespace Kinect_Test
         public float JointSize { get; set; } = 7;
         public float BoneThickness { get; set; } = 1;
 
+        private Graphics _gr;
+
 
         public void Clear()
         {
             if (_bmp == null)
             {
-                _bmp = new Bitmap(_colorWidth, _colorHeight);
+                Image = new Bitmap(_colorWidth, _colorHeight);
+                
             }
             else
             {
-                using (var gr = Graphics.FromImage(_bmp))
-                {
-                    gr.FillRectangle(Brushes.Black, 0, 0, _bmp.Width, _bmp.Height);
-                }
+                _gr.FillRectangle(Brushes.Black, 0, 0, _bmp.Width, _bmp.Height);
             }
             
         }
@@ -66,18 +70,15 @@ namespace Kinect_Test
 
         public void DrawRectangles(Rectangle[] rects, Pen[] pens)
         {
-            using (var gr = Graphics.FromImage(_bmp))
+            for (int i = 0; i < rects.Length; i++)
             {
-                for (int i = 0; i < rects.Length; i++)
-                {
-                    gr.DrawRectangle(pens[i], rects[i]);
-                }
+                _gr.DrawRectangle(pens[i], rects[i]);
             }
         }
 
         public void DrawBodyWithFaceBox(IBody body, byte[] colorBuffer, int colorFrameBpp, Brush brush, Pen pen, ICoordinateMapper mapper)
         {
-            if (Util.TryGetHeadRectangleAndRotAngle(body, mapper, out var faceRect, out var _))
+            if (Util.TryGetHeadRectangleAndYawAngle(body, mapper, out var faceRect, out var _))
             {
                 DrawColorBox(faceRect, colorBuffer, colorFrameBpp);
             }
@@ -106,44 +107,35 @@ namespace Kinect_Test
 
         public void DrawJoint(Point2F pos, Brush brush)
         {
-            using (var gr = Graphics.FromImage(_bmp))
-            {
-                var bmpX = Math.Max(0, Math.Min(pos.X, _bmp.Width));
-                var bmpY = Math.Max(0, Math.Min(pos.Y, _bmp.Height));
-                gr.FillEllipse(brush, bmpX - JointSize / 2, bmpY - JointSize / 2, JointSize, JointSize);
-            }
+            var bmpX = Math.Max(0, Math.Min(pos.X, _bmp.Width));
+            var bmpY = Math.Max(0, Math.Min(pos.Y, _bmp.Height));
+            _gr.FillEllipse(brush, bmpX - JointSize / 2, bmpY - JointSize / 2, JointSize, JointSize);
         }
 
         public void DrawJoint(Point2F pos, Brush brush, float size)
         {
-            using (var gr = Graphics.FromImage(_bmp))
-            {
-                var bmpX = Math.Min(pos.X, _bmp.Width);
-                var bmpY = Math.Min(pos.Y, _bmp.Height);
-                gr.FillEllipse(brush, bmpX - size / 2, bmpY - size / 2, size, size);
-            }
+            var bmpX = Math.Min(pos.X, _bmp.Width);
+            var bmpY = Math.Min(pos.Y, _bmp.Height);
+            _gr.FillEllipse(brush, bmpX - size / 2, bmpY - size / 2, size, size);
         }
 
         public void DrawBone(PointF p1, PointF p2, Pen pen)
         {
-            using(var gr = Graphics.FromImage(_bmp))
-                gr.DrawLine(pen, p1, p2);
+            _gr.DrawLine(pen, p1, p2);
         }
 
         public void DrawBone(IReadOnlyDictionary<JointType, IJoint> joints,
             IDictionary<JointType, Point2F> jointColorSpacePoints, JointType jointType0, JointType jointType1, Pen pen)
         {
-            IJoint joint0;
-            IJoint joint1;
-            if (!joints.TryGetValue(jointType0, out joint0) || !joints.TryGetValue(jointType1, out joint1))
+            if (!joints.TryGetValue(jointType0, out var joint0) || !joints.TryGetValue(jointType1, out var joint1))
             {
                 return;
             }
 
             if (!joint0.IsTracked || !joint1.IsTracked) return;
 
-            using(var gr = Graphics.FromImage(_bmp))
-            gr.DrawLine(pen,
+           
+            _gr.DrawLine(pen,
                 jointColorSpacePoints[jointType0].X,
                 jointColorSpacePoints[jointType0].Y,
                 jointColorSpacePoints[jointType1].X,
@@ -155,33 +147,26 @@ namespace Kinect_Test
         {
             if (features == null)
                 return;
-            using(var gr = Graphics.FromImage(_bmp))
             foreach (var f in features)
             {
                 var bmpX = f.X;
                 var bmpY = f.Y;
 
-                gr.FillEllipse(brush, bmpX, bmpY, size, size);
+                _gr.FillEllipse(brush, bmpX, bmpY, size, size);
             }
         }
 
         public void DrawName(string name, int xPos, int yPos, Brush brush)
         {
-            using (var gr = Graphics.FromImage(_bmp))
-            {
-                if (name != null)
-                    gr.DrawString(name, NameFont, brush, xPos, yPos);
-            }
+            if (name != null)
+                _gr.DrawString(name, NameFont, brush, xPos, yPos);
         }
 
         public void DrawNames(string[] names, Point[] positions, Brush[] brushes)
         {
-            using (var gr = Graphics.FromImage(_bmp))
+            for (int i = 0; i < names.Length; i++)
             {
-                for (int i = 0; i < names.Length; i++)
-                {
-                    gr.DrawString(names[i], NameFont, brushes[i], positions[i]);
-                }
+                _gr.DrawString(names[i], NameFont, brushes[i], positions[i]);
             }
         }
 
