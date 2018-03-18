@@ -2,43 +2,21 @@
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using Face;
 using KinectUnifier;
 using LuxandFaceLib;
-using System.Threading.Tasks;
 using Microsoft.VisualBasic;
-using Face;
 
 namespace KinectFaceTracker
 {
     public partial class FormMain : Form
     {
-        private ProgramState _programState;
+        private const string FileFilter = "Xml files| *.xml|All files|*.*";
 
-        private readonly Renderer _renderer;
-
-        private readonly IKinect _kinect;
-        private readonly ICoordinateMapper _coordinateMapper;
-
-        private int _colorBytesPerPixel;
-        private int _colorHeight;
-        private int _colorWidth;
-        private int _imageWidth;
-        private int _imageHeight;
-
-        private long _displayedFaceTrackingId;
-
-        private Rectangle[] _lastFaceRects;
-        private long[] _lastTrackingIds;
-
-        private FpsCounter _fpsCounter = new FpsCounter();
-
-        private LuxandFacePipeline _facePipeline;
-        private FaceDatabase<byte[]> _faceDatabase;
-
-        private IMultiManager _multiManager;
-
-        private TaskScheduler _synchContext;
+        private static readonly string DefaultDbPath =
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\KFT\FaceDb";
 
         private readonly Brush[] _bodyBrushes =
         {
@@ -46,36 +24,38 @@ namespace KinectFaceTracker
             Brushes.Red
         };
 
-        private Pen[] _bodyPens;
+        private readonly ICoordinateMapper _coordinateMapper;
+
+        private readonly Renderer _renderer;
+
+        private readonly Pen[] _bodyPens;
+
+        private int _colorHeight;
+        private int _colorWidth;
+
+        private long _displayedFaceTrackingId;
+        private FaceDatabase<byte[]> _faceDatabase;
+
+        private readonly LuxandFacePipeline _facePipeline;
+
+        private readonly FpsCounter _fpsCounter = new FpsCounter();
+        private readonly int _imageHeight;
+        private readonly int _imageWidth;
+
+        private IKinect _kinect;
+
+        private Rectangle[] _lastFaceRects;
+        private long[] _lastTrackingIds;
+
+        private readonly IMultiManager _multiManager;
+        private ProgramState _programState;
+
+        private readonly TaskScheduler _synchContext;
 
         public FormMain()
         {
             InitializeComponent();
-            var tryAgain = false;
-            do
-            {
-                try
-                {
-                    _kinect = KinectFactory.KinectFactory.GetKinect();
-                    tryAgain = false;
-                }
-                catch (ApplicationException)
-                {
-                    var result = MessageBox.Show("Error: No Kinect device found!", "Kinect not found",
-                        MessageBoxButtons.RetryCancel,
-                        MessageBoxIcon.Error);
-                    if (result == DialogResult.Retry)
-                    {
-                        tryAgain = true;
-                    }
-
-                    if (result == DialogResult.Cancel)
-                    {
-                        Environment.Exit(1);
-                    }
-                }
-            } while (tryAgain);
-            
+            InitializeKinect();
 
             _synchContext = TaskScheduler.FromCurrentSynchronizationContext();
 
@@ -88,10 +68,7 @@ namespace KinectFaceTracker
 
             _facePipeline.Completion.ContinueWith(t =>
             {
-                if (t.Result.IsFaulted)
-                {
-                    t.Result.Wait();
-                }
+                if (t.Result.IsFaulted) t.Result.Wait();
             }, _synchContext);
 
             _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
@@ -112,19 +89,46 @@ namespace KinectFaceTracker
             _kinect.Open();
         }
 
+        private void InitializeKinect()
+        {
+            bool tryAgain = false;
+            do
+            {
+                try
+                {
+                    _kinect = KinectFactory.KinectFactory.GetKinect();
+                    tryAgain = false;
+                }
+                catch (ApplicationException)
+                {
+                    var result = MessageBox.Show("Error: No Kinect device found!", "Kinect not found",
+                        MessageBoxButtons.RetryCancel,
+                        MessageBoxIcon.Error);
+                    if (result == DialogResult.Retry) tryAgain = true;
+
+                    if (result == DialogResult.Cancel) Environment.Exit(1);
+                }
+            } while (tryAgain);
+        }
+
         private void FacePipelineOnFeatureRecognition(object sender, FSDKFaceImage[] fsdkFaceImages)
         {
             var fsdkFaceImage = fsdkFaceImages.FirstOrDefault(f => f.TrackingId == _displayedFaceTrackingId);
-            if (fsdkFaceImage != null && _facePipeline.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out TrackingStatus trackingStatus))
+            if (fsdkFaceImage != null &&
+                _facePipeline.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out var trackingStatus))
             {
                 var (gender, confidence) = fsdkFaceImage.GetGender();
                 if (gender == Gender.Unknown) return;
                 var expression = fsdkFaceImage.GetExpression();
-                var text = $"ID: {trackingStatus.FaceId}{Environment.NewLine}" +
-                           $"Age: {fsdkFaceImage.GetAge() :F2}{Environment.NewLine}" +
-                           $"Smile: {expression.smile * 100 :F2}%{Environment.NewLine}" +
-                           $"Eyes Open: {expression.eyesOpen * 100 :F2}%{Environment.NewLine}" +
-                           $"{(gender == Gender.Male ? "Male:" : "Female:")} {confidence * 100 :F2}%";
+                string text = _faceDatabase.TryGetValue(trackingStatus.FaceId, out var faceInfo)
+                    ? faceInfo.Name + Environment.NewLine
+                    : "";
+
+                text += $"ID: {trackingStatus.FaceId}{Environment.NewLine}" +
+                        $"Age: {fsdkFaceImage.GetAge():F2}{Environment.NewLine}" +
+                        $"Smile: {expression.smile * 100:F2}%{Environment.NewLine}" +
+                        $"Eyes Open: {expression.eyesOpen * 100:F2}%{Environment.NewLine}" +
+                        $"{(gender == Gender.Male ? "Male:" : "Female:")} {confidence * 100:F2}%";
                 faceLabel.InvokeIfRequired(f => f.Text = text);
             }
         }
@@ -134,7 +138,8 @@ namespace KinectFaceTracker
             if (faceCutouts != null && faceCutouts.Length != 0)
             {
                 var fco = faceCutouts[0];
-                facePictureBox.InvokeIfRequired(f => f.Image = fco.PixelBuffer.BytesToBitmap(fco.Width, fco.Height, fco.BytesPerPixel));
+                facePictureBox.InvokeIfRequired(f =>
+                    f.Image = fco.PixelBuffer.BytesToBitmap(fco.Width, fco.Height, fco.BytesPerPixel));
                 _displayedFaceTrackingId = faceCutouts[0].TrackingId;
             }
         }
@@ -156,7 +161,7 @@ namespace KinectFaceTracker
                     _lastFaceRects = result.FaceRectangles;
                     _lastTrackingIds = result.TrackingIds;
                     return result.ColorBuffer.BytesToBitmap(result.ImageWidth, result.ImageHeight,
-                            result.ImageBytesPerPixel);
+                        result.ImageBytesPerPixel);
                 });
                 var renderTask = createBitMapTask.ContinueWith(t =>
                 {
@@ -165,15 +170,13 @@ namespace KinectFaceTracker
                     _renderer.DrawBodies(res.Bodies, _bodyBrushes, _bodyPens, _coordinateMapper);
                     _renderer.DrawRectangles(res.FaceRectangles, _bodyPens);
                     for (int i = 0; i < res.FaceRectangles.Length; i++)
-                    {   
-                        if(_facePipeline.TrackedFaces.TryGetValue(res.TrackingIds[i], out var trackingStatus))
+                        if (_facePipeline.TrackedFaces.TryGetValue(res.TrackingIds[i], out var trackingStatus))
                         {
                             var rect = res.FaceRectangles[i];
-                            var faceLabel = _faceDatabase.GetName(trackingStatus.FaceId) ??
-                                            trackingStatus.FaceId.ToString();
+                            string faceLabel = _faceDatabase.GetName(trackingStatus.FaceId) ??
+                                               trackingStatus.FaceId.ToString();
                             _renderer.DrawName(faceLabel, rect.Left, rect.Bottom, _bodyBrushes[i]);
                         }
-                    }
 
                     return _renderer.Image;
                 });
@@ -185,23 +188,17 @@ namespace KinectFaceTracker
             }
         }
 
-        void InitializeColorComponents()
+        private void InitializeColorComponents()
         {
             _colorWidth = _kinect.ColorManager.WidthPixels;
             _colorHeight = _kinect.ColorManager.HeightPixels;
-            _colorBytesPerPixel = _kinect.ColorManager.BytesPerPixel;
         }
 
         private void TogglePaused()
         {
             if (_programState == ProgramState.Paused)
-            {
                 UnPause();
-            }
-            else if (_programState == ProgramState.Running)
-            {
-                Pause();
-            }
+            else if (_programState == ProgramState.Running) Pause();
         }
 
         private void Pause()
@@ -226,21 +223,16 @@ namespace KinectFaceTracker
             }
         }
 
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             _kinect.Close();
         }
 
         private void FormMain_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if (e.KeyChar == ' ')
-            {
-                TogglePaused();
-            }
+            if (e.KeyChar == ' ') TogglePaused();
         }
 
-        private const string FileFilter = "Xml files| *.xml|All files|*.*";
-        private static readonly string DefaultDbPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\KFT\FaceDb";
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var originalState = _programState;
@@ -258,7 +250,6 @@ namespace KinectFaceTracker
             // make a backup of the current database in case something goes wrong
             var copy = _faceDatabase.Clone();
             if (result == DialogResult.OK)
-            {
                 try
                 {
                     using (var fs = dialog.OpenFile())
@@ -273,7 +264,6 @@ namespace KinectFaceTracker
                     // something went wrong -> revert
                     _faceDatabase = (FaceDatabase<byte[]>) copy;
                 }
-            }
 
             _faceDatabase.SerializePath = dialog.FileName;
             if (originalState == ProgramState.Running) UnPause();
@@ -284,10 +274,7 @@ namespace KinectFaceTracker
             var originalState = _programState;
             Pause();
 
-            if (!Directory.Exists(DefaultDbPath))
-            {
-                Directory.CreateDirectory(DefaultDbPath);
-            }
+            if (!Directory.Exists(DefaultDbPath)) Directory.CreateDirectory(DefaultDbPath);
 
             var dialog = new SaveFileDialog
             {
@@ -299,7 +286,6 @@ namespace KinectFaceTracker
             var result = dialog.STAShowDialog();
             if (result == DialogResult.OK)
             {
-
                 try
                 {
                     using (var fs = dialog.OpenFile())
@@ -343,7 +329,7 @@ namespace KinectFaceTracker
                     $"Error: An error occured while saving the database to {_faceDatabase.SerializePath}:{Environment.NewLine}{exc}");
             }
 
-            if(originalState == ProgramState.Running) UnPause();
+            if (originalState == ProgramState.Running) UnPause();
         }
 
         private void startStopSpaceToolStripMenuItem_Click(object sender, EventArgs e)
@@ -356,26 +342,21 @@ namespace KinectFaceTracker
             var clickPos = e.Location.Rescale(_imageWidth, _imageHeight, _colorWidth, _colorHeight);
             for (int i = 0; i < _lastFaceRects.Length; i++)
             {
-                var rect = _lastFaceRects[i];
-                if (rect.Contains(clickPos))
+                if (!_lastFaceRects[i].Contains(clickPos)) continue;
+                long id = _lastTrackingIds[i];
+                if (_facePipeline.TrackedFaces.TryGetValue(id, out var status))
                 {
-                    long id = _lastTrackingIds[i];
-                    if (_facePipeline.TrackedFaces.TryGetValue(id, out var status))
-                    {
-                        var name = Interaction.InputBox("Enter person's name", "Person name dialog", null);
-                        if (name != null && _faceDatabase.TryGetValue(status.FaceId, out var faceInfo))
-                        {
-                            faceInfo.Name = name;
-                        }
-
-                    }
+                    string name = Interaction.InputBox("Enter person's name", "Person name dialog", null);
+                    if (name != null && _faceDatabase.TryGetValue(status.FaceId, out var faceInfo))
+                        faceInfo.Name = name;
                 }
             }
         }
     }
 }
 
-enum ProgramState
+internal enum ProgramState
 {
-    Running, Paused
+    Running,
+    Paused
 }

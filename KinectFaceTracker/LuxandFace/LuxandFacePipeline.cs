@@ -378,10 +378,10 @@ namespace LuxandFaceLib
     {
         public int ImageWidth;
         public int ImageHeight;
+        public int ImageBytesPerPixel;
         public byte[] ColorBuffer;
         public Rectangle[] FaceRectangles;
         public long[] TrackingIds;
-        public int ImageBytesPerPixel;
         public IBody[] Bodies;
     }
 
