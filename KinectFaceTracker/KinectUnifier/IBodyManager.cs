@@ -35,6 +35,7 @@ namespace KinectUnifier
     {
         Vector3 Position { get; }
         bool IsTracked { get; }
+        JointType JointType { get; }
     }
 
     public enum JointType

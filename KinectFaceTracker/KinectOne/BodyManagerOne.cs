@@ -1,19 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
-using KinectUnifier;
 using Microsoft.Kinect;
-using JointType = KinectUnifier.JointType;
+using KinectUnifier;
+
+using MyJointType = KinectUnifier.JointType;
+using KJointType = Microsoft.Kinect.JointType;
 using Vector4 = System.Numerics.Vector4;
 
 namespace KinectOne
 {
     public class BodyManagerOne : IBodyManager
     {
-        private KinectOne _kinectOne;
+        private readonly KinectOne _kinectOne;
 
         private BodyFrameReader _bodyFrameReader;
-        private BodyFrameSource _bodyFrameSource;
+        private readonly BodyFrameSource _bodyFrameSource;
 
         public int BodyCount => _bodyFrameSource.BodyCount;
 
@@ -32,7 +35,6 @@ namespace KinectOne
             {
                 BodyFrameReady?.Invoke(this, new BodyFrameReadyEventArgs(new BodyFrameOne(bodyFrame)));
             }
-            
         }
 
         public void Open()
@@ -48,7 +50,7 @@ namespace KinectOne
 
         public class BodyFrameOne : IBodyFrame
         {
-            private BodyFrame _bodyFrame;
+            private readonly BodyFrame _bodyFrame;
 
             public BodyFrameOne(BodyFrame bodyFrame)
             {
@@ -74,7 +76,6 @@ namespace KinectOne
                 {
                     bodies[i] = new BodyOne(bodyData[i]);
                 }
-
             }
 
             public void Dispose()
@@ -85,64 +86,58 @@ namespace KinectOne
 
         public class BodyOne : IBody
         {
-            private Body _body;
-            static readonly List<ValueTuple<JointType, JointType>> bones = new List<ValueTuple<JointType, JointType>>
+            private readonly Body _body;
+            private static readonly List<ValueTuple<MyJointType, MyJointType>> bones = new List<ValueTuple<MyJointType, MyJointType>>
             {
                 // Torso
-                new ValueTuple<JointType, JointType>(JointType.Head, JointType.Neck),
-                new ValueTuple<JointType, JointType>(JointType.Neck, JointType.ShoulderCenter),
-                new ValueTuple<JointType, JointType>(JointType.ShoulderCenter, JointType.SpineMid),
-                new ValueTuple<JointType, JointType>(JointType.SpineMid, JointType.HipCenter),
-                new ValueTuple<JointType, JointType>(JointType.ShoulderCenter, JointType.ShoulderRight),
-                new ValueTuple<JointType, JointType>(JointType.ShoulderCenter, JointType.ShoulderLeft),
-                new ValueTuple<JointType, JointType>(JointType.HipCenter, JointType.HipRight),
-                new ValueTuple<JointType, JointType>(JointType.HipCenter, JointType.HipLeft),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.Head, MyJointType.Neck),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.Neck, MyJointType.ShoulderCenter),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.ShoulderCenter, MyJointType.SpineMid),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.SpineMid, MyJointType.HipCenter),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.ShoulderCenter, MyJointType.ShoulderRight),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.ShoulderCenter, MyJointType.ShoulderLeft),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.HipCenter, MyJointType.HipRight),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.HipCenter, MyJointType.HipLeft),
 
                 // Right Arm
-                new ValueTuple<JointType, JointType>(JointType.ShoulderRight, JointType.ElbowRight),
-                new ValueTuple<JointType, JointType>(JointType.ElbowRight, JointType.WristRight),
-                new ValueTuple<JointType, JointType>(JointType.WristRight, JointType.HandRight),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.ShoulderRight, MyJointType.ElbowRight),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.ElbowRight, MyJointType.WristRight),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.WristRight, MyJointType.HandRight),
 
                 // Left Arm
-                new ValueTuple<JointType, JointType>(JointType.ShoulderLeft, JointType.ElbowLeft),
-                new ValueTuple<JointType, JointType>(JointType.ElbowLeft, JointType.WristLeft),
-                new ValueTuple<JointType, JointType>(JointType.WristLeft, JointType.HandLeft),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.ShoulderLeft, MyJointType.ElbowLeft),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.ElbowLeft, MyJointType.WristLeft),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.WristLeft, MyJointType.HandLeft),
 
                 // Right Leg
-                new ValueTuple<JointType, JointType>(JointType.HipRight, JointType.KneeRight),
-                new ValueTuple<JointType, JointType>(JointType.KneeRight, JointType.AnkleRight),
-                new ValueTuple<JointType, JointType>(JointType.AnkleRight, JointType.FootRight),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.HipRight, MyJointType.KneeRight),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.KneeRight, MyJointType.AnkleRight),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.AnkleRight, MyJointType.FootRight),
 
                 // Left Leg
-                new ValueTuple<JointType, JointType>(JointType.HipLeft, JointType.KneeLeft),
-                new ValueTuple<JointType, JointType>(JointType.KneeLeft, JointType.AnkleLeft),
-                new ValueTuple<JointType, JointType>(JointType.AnkleLeft, JointType.FootLeft),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.HipLeft, MyJointType.KneeLeft),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.KneeLeft, MyJointType.AnkleLeft),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.AnkleLeft, MyJointType.FootLeft),
 
                 // Left hand
-                new ValueTuple<JointType, JointType>(JointType.HandLeft, JointType.HandTipLeft),
-                new ValueTuple<JointType, JointType>(JointType.HandLeft, JointType.ThumbLeft),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.HandLeft, MyJointType.HandTipLeft),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.HandLeft, MyJointType.ThumbLeft),
 
                 //Right hand
-                new ValueTuple<JointType, JointType>(JointType.HandRight, JointType.HandTipRight),
-                new ValueTuple<JointType, JointType>(JointType.HandRight, JointType.ThumbRight)
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.HandRight, MyJointType.HandTipRight),
+                new ValueTuple<MyJointType, MyJointType>(MyJointType.HandRight, MyJointType.ThumbRight)
             };
 
-            public IReadOnlyList<ValueTuple<JointType, JointType>> Bones => bones;
+            public IReadOnlyList<ValueTuple<MyJointType, MyJointType>> Bones => bones;
 
             public BodyOne(Body body)
             {
-                _body = body;
-                _joints = new Dictionary<JointType, IJoint>(25);
-                //TODO: Do this in O(1) instead of O(n)
-                foreach (var joint in _body.Joints)
-                {
-                    _joints.Add((JointType)(int)joint.Key, new JointOne(joint.Value));
-                }
+                _body = body;;
             }
 
-            
-            public IReadOnlyDictionary<KinectUnifier.JointType, IJoint> Joints => _joints;
-            private Dictionary<KinectUnifier.JointType, IJoint> _joints;
+            public IReadOnlyDictionary<MyJointType, IJoint> Joints => _joints ??
+                (_joints = _body.Joints.ToDictionary(x => x.Key.ToMyJointType(), x => (IJoint) new JointOne(x.Value)));
+            private Dictionary<MyJointType, IJoint> _joints;
 
             public bool IsTracked => _body.IsTracked;
             public long TrackingId => (long)_body.TrackingId;
@@ -159,8 +154,20 @@ namespace KinectOne
 
             public Vector3 Position => new Vector3(_joint.Position.X, _joint.Position.Y, _joint.Position.Z);
             public bool IsTracked => _joint.TrackingState == TrackingState.Tracked;
+            public MyJointType JointType => _joint.JointType.ToMyJointType();
+        }
+    }
 
+    public static class JointTypeExtensions
+    {
+        public static KJointType ToKJointType(this MyJointType myJointType)
+        {
+            return (KJointType) (int) myJointType;
         }
 
+        public static MyJointType ToMyJointType(this KJointType kJointType)
+        {
+            return (MyJointType) (int) kJointType;
+        }
     }
 }
