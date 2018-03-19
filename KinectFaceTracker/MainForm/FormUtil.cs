@@ -35,7 +35,7 @@ namespace KinectFaceTracker
         {
             if (control.InvokeRequired)
             {
-                control.Invoke(new Action(() => action(control)), null);
+                control.BeginInvoke(new Action(() => action(control)), null);
             }
             else
             {

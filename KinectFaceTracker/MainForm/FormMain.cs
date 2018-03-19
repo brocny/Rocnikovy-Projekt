@@ -24,31 +24,27 @@ namespace KinectFaceTracker
             Brushes.Red
         };
 
-        private readonly ICoordinateMapper _coordinateMapper;
 
         private readonly Renderer _renderer;
 
         private readonly Pen[] _bodyPens;
 
-        private int _colorHeight;
-        private int _colorWidth;
+        private readonly int _kinectFrameWidth;
+        private readonly int _kinectFrameHeight;
 
         private long _displayedFaceTrackingId;
-        private FaceDatabase<byte[]> _faceDatabase;
-
-        private readonly LuxandFacePipeline _facePipeline;
 
         private readonly FpsCounter _fpsCounter = new FpsCounter();
         private readonly int _imageHeight;
         private readonly int _imageWidth;
 
-        private IKinect _kinect;
+        private readonly KinectFaceTracker _kft;
 
         private Rectangle[] _lastFaceRects;
         private long[] _lastTrackingIds;
 
-        private readonly IMultiManager _multiManager;
         private ProgramState _programState;
+        private readonly ICoordinateMapper _coordinateMapper;
 
         private readonly TaskScheduler _synchContext;
 
@@ -59,44 +55,86 @@ namespace KinectFaceTracker
 
             _synchContext = TaskScheduler.FromCurrentSynchronizationContext();
 
-            _faceDatabase = new FaceDatabase<byte[]>(new LuxandFaceInfo());
-            _facePipeline = new LuxandFacePipeline(_faceDatabase);
-            _facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
+            var facePipeline = new LuxandFacePipeline(new FaceDatabase<byte[]>(new LuxandFaceInfo()));
+            facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
+            facePipeline.FacialFeatureRecognitionComplete += FacePipelineOnFeatureRecognition;
 
             LuxandFacePipeline.InitializeLibrary();
-            _facePipeline.FacialFeatureRecognitionComplete += FacePipelineOnFeatureRecognition;
+            var kinect = InitializeKinect();
+            _kinectFrameWidth = kinect.ColorManager.HeightPixels;
+            _kinectFrameHeight = kinect.ColorManager.WidthPixels;
+            _coordinateMapper = kinect.CoordinateMapper;
+            _kft = new KinectFaceTracker(facePipeline, kinect);
+            _kft.FrameArrived += KftOnFrameArrived;
 
-            _facePipeline.Completion.ContinueWith(t =>
-            {
-                if (t.Result.IsFaulted) t.Result.Wait();
-            }, _synchContext);
-
-            _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color);
-            _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
+            _kft.FacePipeline.FacialFeatureRecognitionComplete += FacePipelineOnFeatureRecognition;
+            _kft.Start();
 
             _imageHeight = pictureBox1.Height;
             _imageWidth = pictureBox1.Width;
 
-            InitializeColorComponents();
-
             startStopSpaceToolStripMenuItem.Text =
                 _programState == ProgramState.Running ? "Stop (Space)" : "Start (Space)";
 
-            _renderer = new Renderer(_colorWidth, _colorHeight);
+            _renderer = new Renderer(_kinectFrameHeight, _kinectFrameWidth);
             _bodyPens = _bodyBrushes.Select(br => new Pen(br, 2.5f)).ToArray();
+            
+        }
+        
+        private async void KftOnFrameArrived(object sender, FrameArrivedEventArgs e)
+        {
+            var faceLocations = e.FaceLocationResult;
 
-            _coordinateMapper = _kinect.CoordinateMapper;
-            _kinect.Open();
+            var bitmap = await Task.Run(() => faceLocations.ColorBuffer.BytesToBitmap(faceLocations.ImageWidth, faceLocations.ImageHeight,
+                faceLocations.ImageBytesPerPixel));
+
+            var task = Task.Run(async () =>
+            {
+                int numFaces = faceLocations.FaceRectangles.Length;
+                var faceLabelTask = Task.Run(() =>
+                {
+                    var labels = new string[numFaces];
+                    for (int i = 0; i < numFaces; i++)
+                    {
+                        if (_kft.TrackedFaces.TryGetValue(faceLocations.TrackingIds[i], out var trackingStatus))
+                        {
+                            labels[i] = _kft.FaceDatabase.GetName(trackingStatus.FaceId) ??
+                                               trackingStatus.FaceId.ToString();
+                        }
+                    }
+
+                    return labels;
+                });
+
+                _renderer.Image = bitmap;
+                _renderer.DrawBodies(faceLocations.Bodies, _bodyBrushes, _bodyPens, _coordinateMapper);
+                _renderer.DrawRectangles(faceLocations.FaceRectangles, _bodyPens);
+
+                var faceLabels = await faceLabelTask;
+                for (int i = 0; i < numFaces; i++)
+                {
+                    var rect = faceLocations.FaceRectangles[i];
+                    _renderer.DrawName(faceLabels[i], rect.Left, rect.Bottom, _bodyBrushes[i]);
+                }
+                return _renderer.Image;
+            });
+
+            _fpsCounter.NewFrame();
+            _lastFaceRects = faceLocations.FaceRectangles;
+            _lastTrackingIds = faceLocations.TrackingIds;
+            statusLabel.Text = $"{_fpsCounter.Fps:F2}";
+            pictureBox1.Image = task.Result;
         }
 
-        private void InitializeKinect()
+        private IKinect InitializeKinect()
         {
+            IKinect kinect = null;
             bool tryAgain = false;
             do
             {
                 try
                 {
-                    _kinect = KinectFactory.KinectFactory.GetKinect();
+                    kinect = KinectFactory.KinectFactory.GetKinect();
                     tryAgain = false;
                 }
                 catch (ApplicationException)
@@ -106,21 +144,23 @@ namespace KinectFaceTracker
                         MessageBoxIcon.Error);
                     if (result == DialogResult.Retry) tryAgain = true;
 
-                    if (result == DialogResult.Cancel) Environment.Exit(1);
+                    if (result == DialogResult.Cancel) return null;
                 }
             } while (tryAgain);
+
+            return kinect;
         }
 
         private void FacePipelineOnFeatureRecognition(object sender, FSDKFaceImage[] fsdkFaceImages)
         {
             var fsdkFaceImage = fsdkFaceImages.FirstOrDefault(f => f.TrackingId == _displayedFaceTrackingId);
             if (fsdkFaceImage != null &&
-                _facePipeline.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out var trackingStatus))
+                _kft.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out var trackingStatus))
             {
                 var (gender, confidence) = fsdkFaceImage.GetGender();
                 if (gender == Gender.Unknown) return;
                 var expression = fsdkFaceImage.GetExpression();
-                string text = _faceDatabase.TryGetValue(trackingStatus.FaceId, out var faceInfo)
+                string text = _kft.FaceDatabase.TryGetValue(trackingStatus.FaceId, out var faceInfo)
                     ? faceInfo.Name + Environment.NewLine
                     : "";
 
@@ -144,56 +184,6 @@ namespace KinectFaceTracker
             }
         }
 
-        private void MultiManagerOnMultiFrameArrived(object sender, MultiFrameReadyEventArgs e)
-        {
-            var multiFrame = e.MultiFrame;
-            if (multiFrame == null) return;
-
-            using (var colorFrame = multiFrame.ColorFrame)
-            using (var bodyFrame = multiFrame.BodyFrame)
-            {
-                if (colorFrame == null || bodyFrame == null) return;
-                var locTask =
-                    _facePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
-                var createBitMapTask = locTask.ContinueWith(t =>
-                {
-                    var result = t.Result;
-                    _lastFaceRects = result.FaceRectangles;
-                    _lastTrackingIds = result.TrackingIds;
-                    return result.ColorBuffer.BytesToBitmap(result.ImageWidth, result.ImageHeight,
-                        result.ImageBytesPerPixel);
-                });
-                var renderTask = createBitMapTask.ContinueWith(t =>
-                {
-                    _renderer.Image = t.Result;
-                    var res = locTask.Result;
-                    _renderer.DrawBodies(res.Bodies, _bodyBrushes, _bodyPens, _coordinateMapper);
-                    _renderer.DrawRectangles(res.FaceRectangles, _bodyPens);
-                    for (int i = 0; i < res.FaceRectangles.Length; i++)
-                        if (_facePipeline.TrackedFaces.TryGetValue(res.TrackingIds[i], out var trackingStatus))
-                        {
-                            var rect = res.FaceRectangles[i];
-                            string faceLabel = _faceDatabase.GetName(trackingStatus.FaceId) ??
-                                               trackingStatus.FaceId.ToString();
-                            _renderer.DrawName(faceLabel, rect.Left, rect.Bottom, _bodyBrushes[i]);
-                        }
-
-                    return _renderer.Image;
-                });
-
-                _fpsCounter.NewFrame();
-                statusLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
-                Application.DoEvents();
-                pictureBox1.Image = renderTask.Result;
-            }
-        }
-
-        private void InitializeColorComponents()
-        {
-            _colorWidth = _kinect.ColorManager.WidthPixels;
-            _colorHeight = _kinect.ColorManager.HeightPixels;
-        }
-
         private void TogglePaused()
         {
             if (_programState == ProgramState.Paused)
@@ -203,9 +193,9 @@ namespace KinectFaceTracker
 
         private void Pause()
         {
-            if (_kinect.IsRunning)
+            if (_kft.IsRunning)
             {
-                _kinect.Close();
+                _kft.Stop();
                 statusLabel.Text = "STOPPED";
                 _programState = ProgramState.Paused;
                 startStopSpaceToolStripMenuItem.Text = "Stop (Space)";
@@ -214,9 +204,9 @@ namespace KinectFaceTracker
 
         private void UnPause()
         {
-            if (!_kinect.IsRunning)
+            if (!_kft.IsRunning)
             {
-                _kinect.Open();
+                _kft.Start();
                 statusLabel.Text = "";
                 _programState = ProgramState.Running;
                 startStopSpaceToolStripMenuItem.Text = "Start (Space)";
@@ -225,7 +215,7 @@ namespace KinectFaceTracker
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
-            _kinect.Close();
+            _kft.Stop();
         }
 
         private void FormMain_KeyPress(object sender, KeyPressEventArgs e)
@@ -248,13 +238,13 @@ namespace KinectFaceTracker
 
             var result = dialog.STAShowDialog();
             // make a backup of the current database in case something goes wrong
-            var copy = _faceDatabase.Clone();
+            var copy = _kft.FaceDatabase.Clone();
             if (result == DialogResult.OK)
                 try
                 {
                     using (var fs = dialog.OpenFile())
                     {
-                        _faceDatabase.Deserialize(fs);
+                        _kft.FaceDatabase.Deserialize(fs);
                     }
                 }
                 catch (Exception exc)
@@ -262,10 +252,10 @@ namespace KinectFaceTracker
                     MessageBox.Show(
                         $"Error: An error occured while loading the database from {dialog.FileName}: {Environment.NewLine}{exc}");
                     // something went wrong -> revert
-                    _faceDatabase = (FaceDatabase<byte[]>) copy;
+                    _kft.FaceDatabase = (FaceDatabase<byte[]>) copy;
                 }
 
-            _faceDatabase.SerializePath = dialog.FileName;
+            _kft.FaceDatabase.SerializePath = dialog.FileName;
             if (originalState == ProgramState.Running) UnPause();
         }
 
@@ -290,7 +280,7 @@ namespace KinectFaceTracker
                 {
                     using (var fs = dialog.OpenFile())
                     {
-                        _faceDatabase.Serialize(fs);
+                        _kft.FaceDatabase.Serialize(fs);
                     }
                 }
                 catch (Exception exc)
@@ -299,7 +289,7 @@ namespace KinectFaceTracker
                         $"Error: An error occured while saving the database to {dialog.FileName}:{Environment.NewLine}{exc}");
                 }
 
-                _faceDatabase.SerializePath = dialog.FileName;
+                _kft.FaceDatabase.SerializePath = dialog.FileName;
             }
 
             if (originalState == ProgramState.Running) UnPause();
@@ -307,7 +297,7 @@ namespace KinectFaceTracker
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (_faceDatabase.SerializePath == null)
+            if (string.IsNullOrEmpty(_kft.FaceDatabase.SerializePath))
             {
                 saveAsToolStripMenuItem_Click(sender, e);
                 return;
@@ -318,15 +308,15 @@ namespace KinectFaceTracker
 
             try
             {
-                using (var fs = File.OpenWrite(_faceDatabase.SerializePath))
+                using (var fs = File.OpenWrite(_kft.FaceDatabase.SerializePath))
                 {
-                    _faceDatabase.Serialize(fs);
+                    _kft.FaceDatabase.Serialize(fs);
                 }
             }
             catch (Exception exc)
             {
                 MessageBox.Show(
-                    $"Error: An error occured while saving the database to {_faceDatabase.SerializePath}:{Environment.NewLine}{exc}");
+                    $"Error: An error occured while saving the database to {_kft.FaceDatabase.SerializePath}:{Environment.NewLine}{exc}");
             }
 
             if (originalState == ProgramState.Running) UnPause();
@@ -339,15 +329,15 @@ namespace KinectFaceTracker
 
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
-            var clickPos = e.Location.Rescale(_imageWidth, _imageHeight, _colorWidth, _colorHeight);
+            var clickPos = e.Location.Rescale(_imageWidth, _imageHeight, _kinectFrameHeight, _kinectFrameWidth);
             for (int i = 0; i < _lastFaceRects.Length; i++)
             {
                 if (!_lastFaceRects[i].Contains(clickPos)) continue;
                 long id = _lastTrackingIds[i];
-                if (_facePipeline.TrackedFaces.TryGetValue(id, out var status))
+                if (_kft.TrackedFaces.TryGetValue(id, out var status))
                 {
                     string name = Interaction.InputBox("Enter person's name", "Person name dialog", null);
-                    if (name != null && _faceDatabase.TryGetValue(status.FaceId, out var faceInfo))
+                    if (name != null && _kft.FaceDatabase.TryGetValue(status.FaceId, out var faceInfo))
                         faceInfo.Name = name;
                 }
             }

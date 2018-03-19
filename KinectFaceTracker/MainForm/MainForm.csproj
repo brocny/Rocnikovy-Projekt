@@ -173,6 +173,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ClassLibrary1\KinectFaceTracker.csproj">
+      <Project>{6a321ce4-251c-479f-bd14-a67614256e20}</Project>
+      <Name>KinectFaceTracker</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Face\Face.csproj">
       <Project>{c5c7b973-a73c-4f44-8dfc-3c741f4b28a6}</Project>
       <Name>Face</Name>
