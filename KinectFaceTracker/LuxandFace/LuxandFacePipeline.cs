@@ -10,6 +10,7 @@ using KinectUnifier;
 using Luxand;
 using System.Threading.Tasks.Dataflow;
 using System.Buffers;
+using System.Xml;
 
 namespace LuxandFaceLib
 {
@@ -125,18 +126,14 @@ namespace LuxandFaceLib
             SetFSDKParams();
         }
 
-        public async Task<FaceLocationResult> LocateFacesAsync(IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper)
+        public async Task<FaceLocationResult> LocateFacesAsync(IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper, bool post = true)
         {
             var faces = await Task.Run(() => LocateFaces(colorFrame, bodyFrame, mapper), CancellationToken);
-            if (_faceCuttingBlock.InputCount <= 1)
-            {
-                _faceCuttingBlock.Post(faces);
-            }
-
+            if (post) _faceCuttingBlock.Post(faces);
             return faces;
         }
 
-        private FaceLocationResult LocateFaces(IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper) 
+        private async Task<FaceLocationResult> LocateFaces(IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper) 
         {
             var colorTask = Task.Run(() =>
             {
@@ -168,18 +165,21 @@ namespace LuxandFaceLib
                     }
                 }
 
-                return (faceRects.ToArray(), faceIds.ToArray(), bodies);
+                return (faceRects: faceRects.ToArray(), faceIds: faceIds.ToArray(), bodies);
             }, CancellationToken);
+
+            var bodyResult = await bodyTask;
+            var colorResult = await colorTask;
 
             return new FaceLocationResult
             {
                 ImageBytesPerPixel = colorFrame.BytesPerPixel,
-                ColorBuffer = colorTask.Result,
-                FaceRectangles = bodyTask.Result.Item1,
+                ColorBuffer = colorResult,
+                FaceRectangles = bodyResult.faceRects,
                 ImageHeight = colorFrame.Height,
                 ImageWidth = colorFrame.Width,
-                Bodies =  bodyTask.Result.Item3,
-                TrackingIds = bodyTask.Result.Item2
+                Bodies = bodyResult.bodies,
+                TrackingIds = bodyResult.faceIds
             };
         }
 
