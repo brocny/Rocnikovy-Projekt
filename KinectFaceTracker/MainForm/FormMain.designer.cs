@@ -46,18 +46,23 @@
             // 
             // pictureBox1
             // 
-            this.pictureBox1.Location = new System.Drawing.Point(12, 32);
+            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pictureBox1.Location = new System.Drawing.Point(0, 32);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(960, 540);
+            this.pictureBox1.Size = new System.Drawing.Size(960, 520);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
+            this.pictureBox1.SizeChanged += new System.EventHandler(this.pictureBox1_SizeChanged);
             this.pictureBox1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseClick);
             // 
             // statusLabel
             // 
+            this.statusLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.statusLabel.AutoSize = true;
-            this.statusLabel.Location = new System.Drawing.Point(12, 575);
+            this.statusLabel.Location = new System.Drawing.Point(12, 546);
             this.statusLabel.Name = "statusLabel";
             this.statusLabel.Size = new System.Drawing.Size(37, 17);
             this.statusLabel.TabIndex = 1;
@@ -65,17 +70,19 @@
             // 
             // facePictureBox
             // 
-            this.facePictureBox.Location = new System.Drawing.Point(981, 32);
+            this.facePictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.facePictureBox.Location = new System.Drawing.Point(978, 32);
             this.facePictureBox.Name = "facePictureBox";
-            this.facePictureBox.Size = new System.Drawing.Size(173, 213);
+            this.facePictureBox.Size = new System.Drawing.Size(177, 215);
             this.facePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.facePictureBox.TabIndex = 4;
             this.facePictureBox.TabStop = false;
             // 
             // faceLabel
             // 
+            this.faceLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.faceLabel.AutoSize = true;
-            this.faceLabel.Location = new System.Drawing.Point(978, 250);
+            this.faceLabel.Location = new System.Drawing.Point(987, 250);
             this.faceLabel.Name = "faceLabel";
             this.faceLabel.Size = new System.Drawing.Size(0, 17);
             this.faceLabel.TabIndex = 7;
@@ -88,7 +95,7 @@
             this.startStopSpaceToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1158, 28);
+            this.menuStrip1.Size = new System.Drawing.Size(1167, 28);
             this.menuStrip1.TabIndex = 8;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -134,7 +141,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1158, 618);
+            this.ClientSize = new System.Drawing.Size(1167, 584);
             this.Controls.Add(this.faceLabel);
             this.Controls.Add(this.facePictureBox);
             this.Controls.Add(this.statusLabel);
@@ -143,6 +150,7 @@
             this.DoubleBuffered = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
+            this.MinimumSize = new System.Drawing.Size(490, 340);
             this.Name = "FormMain";
             this.Text = "Kinect Face Tracker";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);

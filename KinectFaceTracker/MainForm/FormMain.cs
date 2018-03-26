@@ -35,8 +35,8 @@ namespace KinectFaceTracker
         private long _displayedFaceTrackingId;
 
         private readonly FpsCounter _fpsCounter = new FpsCounter();
-        private readonly int _imageHeight;
-        private readonly int _imageWidth;
+        private int _imageHeight;
+        private int _imageWidth;
 
         private readonly KinectFaceTracker _kft;
 
@@ -341,6 +341,12 @@ namespace KinectFaceTracker
                         faceInfo.Name = name;
                 }
             }
+        }
+
+        private void pictureBox1_SizeChanged(object sender, EventArgs e)
+        {
+            _imageWidth = pictureBox1.Width;
+            _imageHeight = pictureBox1.Height;
         }
     }
 }

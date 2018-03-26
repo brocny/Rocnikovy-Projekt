@@ -25,7 +25,7 @@ namespace KinectFaceTracker
         {
             _colorWidth = colorFrameWidth;
             _colorHeight = colorFrameHeight;
-            NameFont = new Font(FontFamily.GenericSansSerif, _colorWidth / 40);
+            NameFont = new Font(FontFamily.GenericSansSerif, _colorWidth / 60);
 
             _bmp = new Bitmap(_colorWidth, _colorHeight);
         }
