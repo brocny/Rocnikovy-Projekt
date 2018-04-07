@@ -77,6 +77,7 @@
             this.facePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.facePictureBox.TabIndex = 4;
             this.facePictureBox.TabStop = false;
+            this.facePictureBox.MouseClick += new System.Windows.Forms.MouseEventHandler(this.facePictureBox_MouseClick);
             // 
             // faceLabel
             // 

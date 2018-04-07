@@ -18,7 +18,7 @@ namespace KinectUnifier
         void Close();
     }
 
-    public class ColorFrameReadyEventArgs
+    public class ColorFrameReadyEventArgs : EventArgs
     { 
         public IColorFrame ColorFrame { get; }
 

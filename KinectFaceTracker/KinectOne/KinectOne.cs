@@ -8,6 +8,7 @@ namespace KinectOne
         public KinectSensor KinectSensor { get; private set; }
 
         public bool IsKinectOne => true;
+        public bool IsAvailable => KinectSensor.IsAvailable;
 
         public IBodyManager BodyManager => _bodyManager ?? (_bodyManager = new BodyManagerOne(this));
         public IColorManager ColorManager => _colorManager ?? (_colorManager = new ColorManagerOne(this));
