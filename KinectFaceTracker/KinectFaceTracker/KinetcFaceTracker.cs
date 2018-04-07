@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Face;
 using KinectUnifier;
+using LuxandFace;
 using LuxandFaceLib;
 
 namespace KinectFaceTracker
