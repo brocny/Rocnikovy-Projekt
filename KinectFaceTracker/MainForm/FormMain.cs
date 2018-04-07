@@ -2,10 +2,12 @@
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Face;
 using KinectUnifier;
+using LuxandFace;
 using LuxandFaceLib;
 using Microsoft.VisualBasic;
 
@@ -50,24 +52,27 @@ namespace KinectFaceTracker
 
         public FormMain()
         {
+            var kinect = InitializeKinect();
+            if (kinect == null)
+            {
+                Environment.Exit(1);
+            }
             InitializeComponent();
-            InitializeKinect();
 
             _synchContext = TaskScheduler.FromCurrentSynchronizationContext();
 
             var facePipeline = new LuxandFacePipeline(new FaceDatabase<byte[]>(new LuxandFaceInfo()));
             facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
-            facePipeline.FacialFeatureRecognitionComplete += FacePipelineOnFeatureRecognition;
+            facePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
 
             LuxandFacePipeline.InitializeLibrary();
-            var kinect = InitializeKinect();
             _kinectFrameWidth = kinect.ColorManager.HeightPixels;
             _kinectFrameHeight = kinect.ColorManager.WidthPixels;
             _coordinateMapper = kinect.CoordinateMapper;
             _kft = new KinectFaceTracker(facePipeline, kinect);
             _kft.FrameArrived += KftOnFrameArrived;
 
-            _kft.FacePipeline.FacialFeatureRecognitionComplete += FacePipelineOnFeatureRecognition;
+            _kft.FacePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
             _kft.Start();
 
             _imageHeight = pictureBox1.Height;
@@ -81,11 +86,11 @@ namespace KinectFaceTracker
             
         }
         
-        private async void KftOnFrameArrived(object sender, FrameArrivedEventArgs e)
+        private void KftOnFrameArrived(object sender, FrameArrivedEventArgs e)
         {
             var faceLocations = e.FaceLocationResult;
 
-            var bitmap = await Task.Run(() => faceLocations.ColorBuffer.BytesToBitmap(faceLocations.ImageWidth, faceLocations.ImageHeight,
+            var bitmapTask = Task.Run(() => faceLocations.ColorBuffer.BytesToBitmap(faceLocations.ImageWidth, faceLocations.ImageHeight,
                 faceLocations.ImageBytesPerPixel));
 
             var task = Task.Run(async () =>
@@ -98,15 +103,15 @@ namespace KinectFaceTracker
                     {
                         if (_kft.TrackedFaces.TryGetValue(faceLocations.TrackingIds[i], out var trackingStatus))
                         {
-                            labels[i] = _kft.FaceDatabase.GetName(trackingStatus.FaceId) ??
-                                               trackingStatus.FaceId.ToString();
+                            labels[i] = _kft.FaceDatabase.GetName(trackingStatus.TopCandidate.FaceId) ??
+                                               trackingStatus.TopCandidate.FaceId.ToString();
                         }
                     }
 
                     return labels;
                 });
 
-                _renderer.Image = bitmap;
+                _renderer.Image = await bitmapTask;
                 _renderer.DrawBodies(faceLocations.Bodies, _bodyBrushes, _bodyPens, _coordinateMapper);
                 _renderer.DrawRectangles(faceLocations.FaceRectangles, _bodyPens);
 
@@ -122,7 +127,7 @@ namespace KinectFaceTracker
             _fpsCounter.NewFrame();
             _lastFaceRects = faceLocations.FaceRectangles;
             _lastTrackingIds = faceLocations.TrackingIds;
-            statusLabel.Text = $"{_fpsCounter.Fps:F2}";
+            statusLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
             pictureBox1.Image = task.Result;
         }
 
@@ -151,25 +156,33 @@ namespace KinectFaceTracker
             return kinect;
         }
 
-        private void FacePipelineOnFeatureRecognition(object sender, FSDKFaceImage[] fsdkFaceImages)
+        private void FacePipelineOnFeatureDetection(object sender, FSDKFaceImage[] fsdkFaceImages)
         {
             var fsdkFaceImage = fsdkFaceImages.FirstOrDefault(f => f.TrackingId == _displayedFaceTrackingId);
-            if (fsdkFaceImage != null &&
-                _kft.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out var trackingStatus))
+            if (fsdkFaceImage != null)
             {
                 var (gender, confidence) = fsdkFaceImage.GetGender();
                 if (gender == Gender.Unknown) return;
                 var expression = fsdkFaceImage.GetExpression();
-                string text = _kft.FaceDatabase.TryGetValue(trackingStatus.FaceId, out var faceInfo)
-                    ? faceInfo.Name + Environment.NewLine
-                    : "";
+                StringBuilder labelBuilder = new StringBuilder();
+                if (_kft.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out var trackingStatus))
+                {
+                    if (_kft.FaceDatabase.TryGetValue(trackingStatus.TopCandidate.FaceId, out var faceInfo)
+                        && !string.IsNullOrEmpty(faceInfo.Name))
+                    {
+                        labelBuilder.AppendLine(faceInfo.Name);
+                    }
 
-                text += $"ID: {trackingStatus.FaceId}{Environment.NewLine}" +
-                        $"Age: {fsdkFaceImage.GetAge():F2}{Environment.NewLine}" +
-                        $"Smile: {expression.smile * 100:F2}%{Environment.NewLine}" +
-                        $"Eyes Open: {expression.eyesOpen * 100:F2}%{Environment.NewLine}" +
-                        $"{(gender == Gender.Male ? "Male:" : "Female:")} {confidence * 100:F2}%";
-                faceLabel.InvokeIfRequired(f => f.Text = text);
+                    labelBuilder.Append("ID: ");
+                    labelBuilder.AppendLine(trackingStatus.TopCandidate.FaceId.ToString());
+                }
+
+                labelBuilder.AppendLine($"Age: {fsdkFaceImage.GetAge():F2}");
+                labelBuilder.AppendLine($"Smile: {expression.smile * 100:F2}%");
+                labelBuilder.AppendLine($"Eyes Open: {expression.eyesOpen * 100:F2}%");
+                labelBuilder.AppendLine($"{(gender == Gender.Male ? "Male:" : "Female:")} {confidence * 100:F2}%");
+                        
+                faceLabel.InvokeIfRequired(f => f.Text = labelBuilder.ToString());
             }
         }
 
@@ -329,17 +342,51 @@ namespace KinectFaceTracker
 
         private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
         {
+            if (_lastFaceRects == null) return;
             var clickPos = e.Location.Rescale(_imageWidth, _imageHeight, _kinectFrameHeight, _kinectFrameWidth);
+            long id = 0;
+            bool foundId = false;
             for (int i = 0; i < _lastFaceRects.Length; i++)
             {
-                if (!_lastFaceRects[i].Contains(clickPos)) continue;
-                long id = _lastTrackingIds[i];
-                if (_kft.TrackedFaces.TryGetValue(id, out var status))
+                if (_lastFaceRects[i].Contains(clickPos))
                 {
-                    string name = Interaction.InputBox("Enter person's name", "Person name dialog", null);
-                    if (name != null && _kft.FaceDatabase.TryGetValue(status.FaceId, out var faceInfo))
-                        faceInfo.Name = name;
+                    id = _lastTrackingIds[i];
+                    foundId = true;
+                    break;
                 }
+            }
+
+            if(!foundId) return;
+
+            switch (e.Button)
+            {
+                case MouseButtons.Left:
+                    NameFace(id);
+                    break;
+                case MouseButtons.Right:
+                    CaptureFace(id);
+                    break;
+                default:
+                    return;
+            }
+        }
+
+        private void CaptureFace(long trackingId)
+        {
+            _kft.FacePipeline.Capture(trackingId);
+        }
+
+        private void NameFace(long trackingId)
+        {
+            if (_kft.TrackedFaces.TryGetValue(trackingId, out var status))
+            {
+                string name = Interaction.InputBox("Enter person's name", "Person name dialog", null);
+                if (name == null) return;
+                CaptureFace(trackingId);
+                if (!_kft.FaceDatabase.TryGetValue(status.TopCandidate.FaceId, out var faceInfo))
+                    return;
+
+                faceInfo.Name = name;
             }
         }
 
@@ -347,6 +394,19 @@ namespace KinectFaceTracker
         {
             _imageWidth = pictureBox1.Width;
             _imageHeight = pictureBox1.Height;
+        }
+
+        private void facePictureBox_MouseClick(object sender, MouseEventArgs e)
+        {
+            switch (e.Button)
+            {
+                case MouseButtons.Left:
+                    NameFace(_displayedFaceTrackingId);
+                    break;
+                case MouseButtons.Right:
+                    CaptureFace(_displayedFaceTrackingId);
+                    break;
+            }
         }
     }
 }

@@ -108,7 +108,7 @@ namespace Face
         /// <returns><c>id</c> of the best matching face and <code>confidence</code> value [0, 1]</returns>
         public (int id, float confidence) GetBestMatch(T template)
         {
-            (int, float) retValue = (0, 0);
+            (int, float) retValue = (-1, 0);
 
             var matches = from storedFace in _storedFaces.AsParallel()
                 select (storedFace.Key, storedFace.Value.GetSimilarity(template));
@@ -125,7 +125,7 @@ namespace Face
 
         public (int id, float confidence) GetBestMatch(IFaceTemplate<T> template)
         {
-            (int, float) ret = (0, 0);
+            (int, float) ret = (-1, 0);
             var matches = from f in _storedFaces.AsParallel()
                 let fv = f.Value
                 where fv.Age == 0f || (fv.Age / template.Age > 0.75f && fv.Age / template.Age < 1.33f)
@@ -161,24 +161,46 @@ namespace Face
             return false;
         }
 
-        public void AddOrUpdate(int id, T faceTemlate)
+        public void AddOrUpdate(int id, IFaceTemplate<T> template)
         {
             if (_storedFaces.TryGetValue(id, out var faceInfo))
             {
-                faceInfo.AddTemplate(faceTemlate);
+                faceInfo.AddTemplate(template);
             }
             else
             {
                 var newInfo = _baseInstance.NewInstance();
-                newInfo.AddTemplate(faceTemlate);
-                if (newInfo.IsValid(faceTemlate))
+                newInfo.AddTemplate(template);
+                if (newInfo.IsValid(template.Template))
                 {
                     _storedFaces[id] = newInfo;
                     UpdateNextId(id);
                 }
                 else
                 {
-                    throw new ArgumentException($"{nameof(faceTemlate)} invalid!");
+                    throw new ArgumentException($"{nameof(template)} invalid!");
+                }
+            }
+        }
+
+        public void AddOrUpdate(int id, T template)
+        {
+            if (_storedFaces.TryGetValue(id, out var faceInfo))
+            {
+                faceInfo.AddTemplate(template);
+            }
+            else
+            {
+                var newInfo = _baseInstance.NewInstance();
+                newInfo.AddTemplate(template);
+                if (newInfo.IsValid(template))
+                {
+                    _storedFaces[id] = newInfo;
+                    UpdateNextId(id);
+                }
+                else
+                {
+                    throw new ArgumentException($"{nameof(template)} invalid!");
                 }
             }
         }

@@ -10,25 +10,21 @@ using KinectUnifier;
 using Luxand;
 using System.Threading.Tasks.Dataflow;
 using System.Buffers;
-using System.Xml;
+using LuxandFace;
 
 namespace LuxandFaceLib
 {
     public class LuxandFacePipeline
     {
-        /// <summary>
-        /// Guaranteed thread-safety
-        /// </summary>
-        public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _trackedFaces;
-
         public event EventHandler<FaceCutout[]> FaceCuttingComplete;
         public event EventHandler<FSDKFaceImage[]> FsdkImageCreationComplete;
         public event EventHandler<FSDKFaceImage[]> FaceDetectionComplete;
-        public event EventHandler<FSDKFaceImage[]> FacialFeatureRecognitionComplete;
+        public event EventHandler<FSDKFaceImage[]> FacialFeatureDetectionComplete;
         public event EventHandler<FaceTemplate[]> FaceTemplateExtractionComplete;
-        public event EventHandler<(long trackingId, (int faceId, float confidence) match)[]> TemplateProcessingComplete;
-
+        public event EventHandler<Match[]> TemplateProcessingComplete;
+        public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _templateProc.TrackedFaces;
         public Task<Task> Completion;
+        public void Capture(long trakckingId) { _templateProc.AddTemplate(trakckingId);}
 
         public TaskScheduler SynchContext { get; set; }
         public CancellationToken CancellationToken { get; set; }
@@ -63,12 +59,7 @@ namespace LuxandFaceLib
             }
         }
 
-        public float SameFaceConfidenceThreshold { get; set; } = 0.92f;
-        public float UntrackedFaceNewTemplateThreshold { get; set; } = 0.7f;
-
         public FaceDatabase<byte[]> FaceDb { get; set; }
-
-        public float TrackedFaceNewTemplateThreshold = 0.35f;
 
         internal const string ActivationKey =
             @"ocrTzAn1FVrzPDhjCSvECux7/jSDBHkqOxLbfDbYTJKjRkLhxUicRk5jpJOxvPAsKkfDHdvwJAD+PoTPoXhDDw55/AdPWagMzbbabtbDQQ4UbeeeN9IIqS09o78440AGXSmzUCfJHBBjwY1dIy5vL5DJgrOm27RTPd1kbGpOFFY=";
@@ -85,10 +76,11 @@ namespace LuxandFaceLib
             _isLibraryActivated = true;
         }
 
-        public LuxandFacePipeline(FaceDatabase<byte[]> db = null, TaskScheduler taskScheduler = null, IDictionary<long, TrackingStatus> trackedFaces = null)
+        public LuxandFacePipeline(FaceDatabase<byte[]> db = null, TaskScheduler taskScheduler = null)
         {
             FaceDb = db ?? new FaceDatabase<byte[]>();
-            _trackedFaces = trackedFaces == null ? new ConcurrentDictionary<long, TrackingStatus>() : new ConcurrentDictionary<long, TrackingStatus>(trackedFaces);
+            _templateProc = new TemplateProcessor(FaceDb);
+            _trackedFaces = new ConcurrentDictionary<long, TrackingStatus>();
 
             var options = new ExecutionDataflowBlockOptions {
                 BoundedCapacity = 1,
@@ -220,13 +212,18 @@ namespace LuxandFaceLib
             {
                 if (_trackedFaces.TryGetValue(faceCutout.TrackingId, out var status))
                 {
-                    if (status.Confirmations >= 5 && status.SkippedFrames <= 10)
+                    var topCand = status.TopCandidate;
+                    if (topCand != null)
                     {
-                        status.SkippedFrames++;
-                        continue;
-                    }
+                        if (topCand.Confirmations >= 5 && topCand.SkippedFrames <= 10)
+                        {
+                            topCand.SkippedFrames++;
+                            continue;
+                        }
 
-                    status.SkippedFrames = 0;
+                        topCand.SkippedFrames = 0;
+                    }
+                        
                 }
 
                 var result = new FSDKFaceImage
@@ -270,7 +267,7 @@ namespace LuxandFaceLib
                 fsdkFaceImages[i].DetectFeatures();
             });
 
-            FacialFeatureRecognitionComplete?.Invoke(this, fsdkFaceImages);
+            FacialFeatureDetectionComplete?.Invoke(this, fsdkFaceImages);
             return fsdkFaceImages;
         }
         
@@ -296,58 +293,8 @@ namespace LuxandFaceLib
 
         private void ProcessTemplates(FaceTemplate[] templates)
         {
-            var matches = new (long trackingId, (int faceId, float confidence) match)[templates.Length];
-            for (var i = 0; i < templates.Length; i++)
-            {
-                var t = templates[i];
-                // face is already tracked
-                if (_trackedFaces.TryGetValue(t.TrackingId, out var trackingStatus))
-                {
-                    var faceInfo = FaceDb[trackingStatus.FaceId];
-                    var similarity = faceInfo.GetSimilarity(t);
-                    if (similarity > SameFaceConfidenceThreshold)
-                    {
-                        matches[i] = (t.TrackingId, (trackingStatus.FaceId, similarity));
-                        trackingStatus.Confirmations++;
-                    }
-                    else if (similarity >= TrackedFaceNewTemplateThreshold)
-                    {
-                        faceInfo.AddTemplate(t);
-                        matches[i] = (t.TrackingId, (trackingStatus.FaceId, similarity));
-                    }
-                    else
-                    {
-                        NewFace();
-                    }
-                }
-                else
-                {
-                    NewFace();
-                }
-
-                void NewFace()
-                {
-                    var bestMatch = FaceDb.GetBestMatch(t.Template);
-                    if (bestMatch.confidence >= SameFaceConfidenceThreshold)
-                    {
-                        _trackedFaces[t.TrackingId] = new TrackingStatus {FaceId = bestMatch.id};
-                    }
-                    else if (bestMatch.confidence >= UntrackedFaceNewTemplateThreshold)
-                    {
-                        FaceDb.TryAddFaceTemplateToExistingFace(bestMatch.id, t.Template);
-                        _trackedFaces[t.TrackingId] = new TrackingStatus {FaceId = bestMatch.id};
-                    }
-                    else
-                    {
-                        int id = FaceDb.NextId;
-                        FaceDb.TryAddNewFace(id, t.Template);
-                        _trackedFaces[t.TrackingId] = new TrackingStatus {FaceId = id};
-                    }
-                    matches[i] = (t.TrackingId, bestMatch);
-                }
-            }
-
-            TemplateProcessingComplete?.Invoke(this, matches);
+            var matches = _templateProc.ProcessTemplates(templates);
+            TemplateProcessingComplete?.Invoke(this, matches.ToArray());
         }
 
         private void SetFSDKParams()
@@ -355,11 +302,13 @@ namespace LuxandFaceLib
             FSDK.SetFaceDetectionParameters(_handleArbitrayRot, _determineRotAngle, _internalResizeWidth);
         }
 
-        private int _internalResizeWidth = 100;
+        private int _internalResizeWidth = 50;
         private bool _handleArbitrayRot = false;
         private bool _determineRotAngle = false;
 
         private ConcurrentDictionary<long, TrackingStatus> _trackedFaces;
+
+        private TemplateProcessor _templateProc;
 
         private TransformBlock<FaceLocationResult, FaceCutout[]> _faceCuttingBlock;
         private TransformBlock<FaceCutout[], FSDKFaceImage[]> _fsdkImageCreatingBlock;
@@ -411,10 +360,4 @@ namespace LuxandFaceLib
         public long TrackingId { get; internal set; }
     }
 
-    public class TrackingStatus
-    {
-        public short Confirmations;
-        public short SkippedFrames;
-        public int FaceId;
-    }
 }
