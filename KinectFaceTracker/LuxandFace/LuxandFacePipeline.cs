@@ -62,7 +62,7 @@ namespace LuxandFaceLib
         public IFaceDatabase<byte[]> FaceDb { get; set; }
 
         internal const string ActivationKey =
-            @"ocrTzAn1FVrzPDhjCSvECux7/jSDBHkqOxLbfDbYTJKjRkLhxUicRk5jpJOxvPAsKkfDHdvwJAD+PoTPoXhDDw55/AdPWagMzbbabtbDQQ4UbeeeN9IIqS09o78440AGXSmzUCfJHBBjwY1dIy5vL5DJgrOm27RTPd1kbGpOFFY=";
+            @"hp/l+aH4rdJKVKg0Jk+KIMmyzeKusO+5R4ZJ45xJJEIRM9PxoL4qrANFDvabmSzZt2rE1cQ6NNUUmrpTMgnrM4b/PpupNxRizmu/yRhzx0qKX3hLlLB6ZK73edGhxsrAH/NieibA6EFyCEwa2QErNVFGM/kplfxKw61XQ03zHAw=";
 
         private static bool _isLibraryActivated;
         public static void InitializeLibrary()
@@ -76,9 +76,9 @@ namespace LuxandFaceLib
             _isLibraryActivated = true;
         }
 
-        public LuxandFacePipeline(FaceDatabase<byte[]> db = null, TaskScheduler taskScheduler = null)
+        public LuxandFacePipeline(IFaceDatabase<byte[]> db = null, TaskScheduler taskScheduler = null)
         {
-            FaceDb = db ?? new FaceDatabase<byte[]>();
+            FaceDb = db ?? new DictionaryFaceDatabase<byte[]>();
             _templateProc = new TemplateProcessor(FaceDb);
             _trackedFaces = new ConcurrentDictionary<long, TrackingStatus>();
 
