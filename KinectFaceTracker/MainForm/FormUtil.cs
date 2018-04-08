@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace KinectFaceTracker
 {
-    struct DialogState
+    class DialogState
     {
         public DialogResult Result;
         public CommonDialog Dialog;

@@ -9,7 +9,6 @@ namespace KinectUnifier
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
         private readonly HashSet<T> _hashSet = new HashSet<T>();
 
-        #region Implementation of ICollection<T> ...ish
         public bool Add(T item)
         {
             _lock.EnterWriteLock();
@@ -77,7 +76,6 @@ namespace KinectUnifier
                 }
             }
         }
-        #endregion
 
         #region Dispose
         public void Dispose()
@@ -88,9 +86,11 @@ namespace KinectUnifier
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
-                if (_lock != null)
-                    _lock.Dispose();
+            {
+                _lock?.Dispose();
+            }
         }
+
         ~ConcurrentHashSet()
         {
             Dispose(false);

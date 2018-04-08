@@ -15,7 +15,7 @@ namespace LuxandFaceLib
     [Serializable]
     public class LuxandFaceInfo : IFaceInfo<byte[]>
     {
-        [XmlElement(ElementName = "GenderConf")]
+        [XmlIgnore]
         public float GenderConfidence
         {
             get
@@ -32,7 +32,14 @@ namespace LuxandFaceLib
         [XmlElement(ElementName = "Age")]
         public float Age { get; set; }
 
-        [XmlElement("Gender")]
+        public float ConfidenceMale
+        {
+            get => _confidenceMale;
+            set => _confidenceMale = value;
+        }
+
+
+        [XmlIgnore]
         public Gender Gender
         {
             get
@@ -152,9 +159,9 @@ namespace LuxandFaceLib
         public void Serialize(TextWriter writer)
         {
             var xw = XmlWriter.Create(writer,
-                new XmlWriterSettings {OmitXmlDeclaration = true, CheckCharacters = false, Indent = true});
+                new XmlWriterSettings {OmitXmlDeclaration = true, CheckCharacters = false, Indent = false});
             XmlSerializer x = new XmlSerializer(typeof(LuxandFaceInfo));
-            x.Serialize(xw,this);
+            x.Serialize(xw, this);
         }
 
         public IFaceInfo<byte[]> Deserialize(Stream stream)
@@ -167,7 +174,7 @@ namespace LuxandFaceLib
 
         public IFaceInfo<byte[]> Deserialize(TextReader reader)
         {
-            var xr = XmlReader.Create(reader, new XmlReaderSettings {CheckCharacters = false});
+            var xr = XmlReader.Create(reader, new XmlReaderSettings {CheckCharacters = false, IgnoreWhitespace = false});
             var x = new XmlSerializer(typeof(LuxandFaceInfo));
             var ret = (LuxandFaceInfo) x.Deserialize(xr);
             return ret;
@@ -178,9 +185,9 @@ namespace LuxandFaceLib
 
         [XmlArrayItem("Template")]
         [XmlArray("Templates")]
-        public List<string> XmlFaceTemplates
+        public string[] XmlFaceTemplates
         {
-            get => _faceTemplates.Select(x => Encoding.Default.GetString(x)).ToList();
+            get => _faceTemplates.Select(x => Encoding.Default.GetString(x)).ToArray();
             set => _faceTemplates = value.Select(x => Encoding.Default.GetBytes(x)).ToList();
         }
 
