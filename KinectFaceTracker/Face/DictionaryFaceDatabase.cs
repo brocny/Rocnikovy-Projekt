@@ -14,15 +14,17 @@ namespace Face
     /// Thread-safe 
     /// </remarks>
     /// <typeparam name="T">Type of face templates</typeparam>
-    public partial class FaceDatabase<T> : ICloneable, IFaceDatabase<T>
+    public partial class DictionaryFaceDatabase<T> : IFaceDatabase<T>
     {
         private ConcurrentDictionary<int, IFaceInfo<T>> _storedFaces;
-        private IFaceInfo<T> _baseInstance;
+        private readonly IFaceInfo<T> _baseInstance;
+
+        public IEnumerable<KeyValuePair<int, IFaceInfo<T>>> Pairs => _storedFaces.Select(x => x);
 
         public int NextId { get; private set; }
         public string SerializePath { get; set; } = null;
 
-        public FaceDatabase(IFaceInfo<T> baseInstance = null, IEnumerable<KeyValuePair<int, IFaceInfo<T>>> initialDb = null)
+        public DictionaryFaceDatabase(IFaceInfo<T> baseInstance = null, IEnumerable<KeyValuePair<int, IFaceInfo<T>>> initialDb = null)
         {
             if (baseInstance == null)
             {
@@ -58,6 +60,7 @@ namespace Face
         public IFaceInfo<T> this[int index] => _storedFaces[index];
 
         public IEnumerable<int> Keys => _storedFaces.Keys;
+        public IEnumerable<IFaceInfo<T>> Values => _storedFaces.Values;
         public bool ContainsKey(int key) => _storedFaces.ContainsKey(key);
 
         public string GetName(int id)
@@ -248,15 +251,21 @@ namespace Face
             deserializer.Deserialize(stream);
         }
 
-        public object Clone()
+        public IFaceDatabase<T> Backup()
         {
-            var ret = new FaceDatabase<T>(_baseInstance, _storedFaces)
+            var ret = new DictionaryFaceDatabase<T>(_baseInstance, _storedFaces)
             {
                 SerializePath = this.SerializePath,
                 NextId = this.NextId
             };
 
             return ret;
+        }
+
+        public void Restore(IFaceDatabase<T> restoreDb)
+        {
+            this._storedFaces = new ConcurrentDictionary<int, IFaceInfo<T>>(restoreDb.Pairs);
+            this.NextId = restoreDb.NextId;
         }
     }
 }

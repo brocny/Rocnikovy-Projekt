@@ -5,14 +5,14 @@ using System.Xml;
 
 namespace Face
 {
-    public partial class FaceDatabase<T>
+    public partial class DictionaryFaceDatabase<T>
     {
         public class FaceDatabaseDeserializer
         {
             private readonly IFaceInfo<T> _faceInfoBaseInstance;
-            private readonly FaceDatabase<T> _db;
+            private readonly DictionaryFaceDatabase<T> _db;
 
-            public FaceDatabaseDeserializer(IFaceInfo<T> faceInfoBaseInstance, FaceDatabase<T> db)
+            public FaceDatabaseDeserializer(IFaceInfo<T> faceInfoBaseInstance, DictionaryFaceDatabase<T> db)
             {
                 _faceInfoBaseInstance = faceInfoBaseInstance;
                 _db = db;

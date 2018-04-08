@@ -71,7 +71,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FaceDatabase.cs" />
+    <Compile Include="DictionaryFaceDatabase.cs" />
     <Compile Include="FaceDatabaseDeserializer.cs" />
     <Compile Include="FaceDatabaseSerializer.cs" />
     <Compile Include="IFaceDatabase.cs" />

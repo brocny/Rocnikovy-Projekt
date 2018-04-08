@@ -40,6 +40,8 @@ namespace KinectFaceTracker
         private int _imageHeight;
         private int _imageWidth;
 
+        private string _dbSerializePath;
+
         private readonly KinectFaceTracker _kft;
 
         private Rectangle[] _lastFaceRects;
@@ -251,7 +253,7 @@ namespace KinectFaceTracker
 
             var result = dialog.STAShowDialog();
             // make a backup of the current database in case something goes wrong
-            var copy = _kft.FaceDatabase.Clone();
+            var backup = _kft.FaceDatabase.Backup();
             if (result == DialogResult.OK)
                 try
                 {
@@ -265,10 +267,10 @@ namespace KinectFaceTracker
                     MessageBox.Show(
                         $"Error: An error occured while loading the database from {dialog.FileName}: {Environment.NewLine}{exc}");
                     // something went wrong -> revert
-                    _kft.FaceDatabase = (DictionaryFaceDatabase<byte[]>) copy;
+                    _kft.FaceDatabase.Restore(backup);
                 }
 
-            _kft.FaceDatabase.SerializePath = dialog.FileName;
+            _dbSerializePath = dialog.FileName;
             if (originalState == ProgramState.Running) UnPause();
         }
 
@@ -302,7 +304,7 @@ namespace KinectFaceTracker
                         $"Error: An error occured while saving the database to {dialog.FileName}:{Environment.NewLine}{exc}");
                 }
 
-                _kft.FaceDatabase.SerializePath = dialog.FileName;
+                _dbSerializePath = dialog.FileName;
             }
 
             if (originalState == ProgramState.Running) UnPause();
@@ -310,7 +312,7 @@ namespace KinectFaceTracker
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(_kft.FaceDatabase.SerializePath))
+            if (string.IsNullOrEmpty(_dbSerializePath))
             {
                 saveAsToolStripMenuItem_Click(sender, e);
                 return;
@@ -321,7 +323,7 @@ namespace KinectFaceTracker
 
             try
             {
-                using (var fs = File.OpenWrite(_kft.FaceDatabase.SerializePath))
+                using (var fs = File.OpenWrite(_dbSerializePath))
                 {
                     _kft.FaceDatabase.Serialize(fs);
                 }
@@ -329,7 +331,7 @@ namespace KinectFaceTracker
             catch (Exception exc)
             {
                 MessageBox.Show(
-                    $"Error: An error occured while saving the database to {_kft.FaceDatabase.SerializePath}:{Environment.NewLine}{exc}");
+                    $"Error: An error occured while saving the database to {_dbSerializePath}:{Environment.NewLine}{exc}");
             }
 
             if (originalState == ProgramState.Running) UnPause();
