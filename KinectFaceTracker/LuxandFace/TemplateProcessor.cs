@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Face;
+using KinectUnifier;
 using LuxandFaceLib;
 
 namespace LuxandFace
@@ -33,8 +34,9 @@ namespace LuxandFace
 
         public Match ProcessTemplate(FaceTemplate t)
         {
-            long trackingId = t.TrackingId;
-            if (_addTemplates.TryTake(out trackingId))
+            // TODO: Implement trackedFaces (cache) clearing, it is a memory leak in its current state
+
+            if (_addTemplates.Remove(t.TrackingId))
             {
                 Capture(t);
                 return null;
@@ -179,7 +181,7 @@ namespace LuxandFace
         private ConcurrentDictionary<long, TrackingStatus> _trackedFaces;
         private IFaceDatabase<byte[]> _faceDb;
 
-        private ConcurrentBag<long> _addTemplates = new ConcurrentBag<long>();
+        private ConcurrentHashSet<long> _addTemplates = new ConcurrentHashSet<long>();
     }
 
     public class Match

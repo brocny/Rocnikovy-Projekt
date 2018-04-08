@@ -78,6 +78,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConcurrentHashSet.cs" />
     <Compile Include="ICoordinateMapper.cs" />
     <Compile Include="IMultiManager.cs" />
     <Compile Include="Util.cs" />
