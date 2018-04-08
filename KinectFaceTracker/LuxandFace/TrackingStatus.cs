@@ -15,7 +15,7 @@ namespace LuxandFace
         }
 
         public IList<CandidateStatus> Candidates => _candidates;
-
+        public bool WasSeen { get; set; } = true;
         public CandidateStatus TopCandidate
         {
             get => _candidates[0];
@@ -28,13 +28,12 @@ namespace LuxandFace
         }
 
         private List<CandidateStatus> _candidates;
-        public uint UnseenCounter { get; set; }
     }
 
     public class CandidateStatus
     {
         public float Confirmations;
-        public uint SkippedFrames;
+        public ushort SkippedFrames;
         public int FaceId;
     }
 }

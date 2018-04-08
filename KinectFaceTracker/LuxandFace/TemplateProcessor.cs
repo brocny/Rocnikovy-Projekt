@@ -34,8 +34,6 @@ namespace LuxandFace
 
         public Match ProcessTemplate(FaceTemplate t)
         {
-            // TODO: Implement trackedFaces (cache) clearing, it is a memory leak in its current state
-
             if (_addTemplates.Remove(t.TrackingId))
             {
                 Capture(t);
@@ -44,7 +42,8 @@ namespace LuxandFace
 
             if (_trackedFaces.TryGetValue(t.TrackingId, out var trackingStatus))
             {
-                var topCandidate = trackingStatus.Candidates[0];
+                trackingStatus.WasSeen = true;
+                var topCandidate = trackingStatus.TopCandidate;
                 var topCondidateFaceInfo = _faceDb[topCandidate.FaceId];
                 float topCandidateSim = topCondidateFaceInfo.GetSimilarity(t);
 
@@ -174,10 +173,21 @@ namespace LuxandFace
                 }
             }
 
+            if (_cacheClearingCounter++ > ClearCacheIterationsLimit)
+            {
+                foreach (var ts in _trackedFaces.Where(t => !t.Value.WasSeen).ToList())
+                {
+                    _trackedFaces.TryRemove(ts.Key, out _);
+                }
+
+                _cacheClearingCounter = 0;
+            }
+
             return list;
         }
 
-
+        private ushort _cacheClearingCounter = ClearCacheIterationsLimit;
+        private const ushort ClearCacheIterationsLimit = 0;
         private ConcurrentDictionary<long, TrackingStatus> _trackedFaces;
         private IFaceDatabase<byte[]> _faceDb;
 
