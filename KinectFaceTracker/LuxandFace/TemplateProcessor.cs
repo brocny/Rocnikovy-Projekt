@@ -8,7 +8,7 @@ namespace LuxandFace
 {
     class TemplateProcessor
     {
-        public TemplateProcessor(FaceDatabase<byte[]> faceDb, IReadOnlyDictionary<long, TrackingStatus> trackedFaces = null)
+        public TemplateProcessor(IFaceDatabase<byte[]> faceDb, IReadOnlyDictionary<long, TrackingStatus> trackedFaces = null)
         {
             _faceDb = faceDb;
             _trackedFaces = trackedFaces == null
@@ -166,9 +166,9 @@ namespace LuxandFace
 
 
         private ConcurrentDictionary<long, TrackingStatus> _trackedFaces;
-        private FaceDatabase<byte[]> _faceDb;
+        private IFaceDatabase<byte[]> _faceDb;
 
-        private HashSet<long> _addTemplates = new HashSet<long>();
+        private ConcurrentBag<long> _addTemplates = new ConcurrentBag<long>();
     }
 
     public class Match

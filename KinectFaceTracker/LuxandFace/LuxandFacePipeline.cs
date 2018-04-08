@@ -59,7 +59,7 @@ namespace LuxandFaceLib
             }
         }
 
-        public FaceDatabase<byte[]> FaceDb { get; set; }
+        public IFaceDatabase<byte[]> FaceDb { get; set; }
 
         internal const string ActivationKey =
             @"ocrTzAn1FVrzPDhjCSvECux7/jSDBHkqOxLbfDbYTJKjRkLhxUicRk5jpJOxvPAsKkfDHdvwJAD+PoTPoXhDDw55/AdPWagMzbbabtbDQQ4UbeeeN9IIqS09o78440AGXSmzUCfJHBBjwY1dIy5vL5DJgrOm27RTPd1kbGpOFFY=";

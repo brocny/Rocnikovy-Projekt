@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Xml.Serialization;
 
 namespace Face
 {
@@ -16,7 +14,7 @@ namespace Face
     /// Thread-safe 
     /// </remarks>
     /// <typeparam name="T">Type of face templates</typeparam>
-    public partial class FaceDatabase<T> : ICloneable
+    public partial class FaceDatabase<T> : ICloneable, IFaceDatabase<T>
     {
         private ConcurrentDictionary<int, IFaceInfo<T>> _storedFaces;
         private IFaceInfo<T> _baseInstance;
@@ -59,10 +57,8 @@ namespace Face
 
         public IFaceInfo<T> this[int index] => _storedFaces[index];
 
-        public IEnumerable<int> GetAllIDs()
-        {
-            return _storedFaces.Keys;
-        }
+        public IEnumerable<int> Keys => _storedFaces.Keys;
+        public bool ContainsKey(int key) => _storedFaces.ContainsKey(key);
 
         public string GetName(int id)
         {
@@ -72,13 +68,18 @@ namespace Face
         /// <summary>
         /// Will do nothing if a face the same <code>name</code> is already in the database
         /// </summary>
-        /// <param name="name"></param>
         /// <param name="info"></param>
+        /// <param name="id"></param>
         /// <returns><code>true</code> if successful</returns>
-        public bool TryAddNewFace(int id, IFaceInfo<T> info, string name = "")
+        public bool TryAddNewFace(int id, IFaceInfo<T> info)
         {
-            UpdateNextId(id);
-            return _storedFaces.TryAdd(id, info);
+            bool ret = _storedFaces.TryAdd(id, info);
+            if (ret)
+            {
+                UpdateNextId(id);
+            }
+
+            return ret;
         }
 
         public bool TryAddNewFace(int id, T template, string name = "")
@@ -144,7 +145,7 @@ namespace Face
         }
 
         /// <summary>
-        /// Add another template to existing face -- for example a different angle, with/out glasses, ...
+        /// Add another faceInfo to existing face -- for example a different angle, with/out glasses, ...
         /// </summary>
         /// <param name="id"></param>
         /// <param name="faceTemplate"></param>
@@ -205,21 +206,21 @@ namespace Face
             }
         }
 
-        public void Add(int id, IFaceInfo<T> template)
+        public void Add(int id, IFaceInfo<T> faceInfo)
         {
-            if (_storedFaces.TryGetValue(id, out var faceInfo))
+            if (_storedFaces.TryGetValue(id, out var targetFaceInfo))
             {
-                faceInfo.Merge(template);
+                targetFaceInfo.Merge(faceInfo);
             }
             else
             {
-                _storedFaces[id] = template;
+                _storedFaces[id] = faceInfo;
                 UpdateNextId(id);
             }
         }
 
         /// <summary>
-        /// Face with <code>id1</code> gets all the face template <code>id2</code> has, face with <code>id2</code> is removed
+        /// Face with <code>id1</code> gets all the face faceInfo <code>id2</code> has, face with <code>id2</code> is removed
         /// </summary>
         /// <param name="id1">Face to be merged into</param>
         /// <param name="id2">Face to be consumed</param>

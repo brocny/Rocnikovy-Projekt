@@ -12,7 +12,7 @@ namespace KinectFaceTracker
         public LuxandFacePipeline FacePipeline => _facePipeline;
         public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _facePipeline.TrackedFaces;
 
-        public FaceDatabase<byte[]> FaceDatabase
+        public IFaceDatabase<byte[]> FaceDatabase
         {
             get => _facePipeline.FaceDb;
             set => _facePipeline.FaceDb = value;

@@ -1,15 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Face
 {
-    interface IFaceDatabase<T>
+    public interface IFaceDatabase<T>
     {
-        T GetFaceInfo(int id);
         string GetName(int id);
-
+        bool TryGetValue(int id, out IFaceInfo<T> faceInfo);
+        IFaceInfo<T> this[int index] { get; }
+        IEnumerable<int> Keys { get; }
+        int NextId { get; }
+        bool ContainsKey(int key);
+        bool TryAddNewFace(int id, IFaceInfo<T> faceInfo);
+        (int id, float confidence) GetBestMatch(IFaceTemplate<T> template);
+        (int id, float confidence) GetBestMatch(T template);
+        void AddOrUpdate(int id, IFaceTemplate<T> template);
+        void AddOrUpdate(int id, T template);
+        bool MergeFaces(int id1, int id2);
     }
 }
