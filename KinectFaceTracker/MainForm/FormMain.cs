@@ -61,7 +61,7 @@ namespace KinectFaceTracker
 
             _synchContext = TaskScheduler.FromCurrentSynchronizationContext();
 
-            var facePipeline = new LuxandFacePipeline(new FaceDatabase<byte[]>(new LuxandFaceInfo()));
+            var facePipeline = new LuxandFacePipeline(new DictionaryFaceDatabase<byte[]>(new LuxandFaceInfo()));
             facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
             facePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
 
@@ -265,7 +265,7 @@ namespace KinectFaceTracker
                     MessageBox.Show(
                         $"Error: An error occured while loading the database from {dialog.FileName}: {Environment.NewLine}{exc}");
                     // something went wrong -> revert
-                    _kft.FaceDatabase = (FaceDatabase<byte[]>) copy;
+                    _kft.FaceDatabase = (DictionaryFaceDatabase<byte[]>) copy;
                 }
 
             _kft.FaceDatabase.SerializePath = dialog.FileName;

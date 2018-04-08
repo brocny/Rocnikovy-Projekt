@@ -6,11 +6,11 @@ using System.Xml;
 
 namespace Face
 {
-    public partial class FaceDatabase<T>
+    public partial class DictionaryFaceDatabase<T>
     {
         public class FaceDatabaseSerializer
         {
-            public FaceDatabaseSerializer(FaceDatabase<T> faceDatabase)
+            public FaceDatabaseSerializer(DictionaryFaceDatabase<T> faceDatabase)
             {
                 _faceDatabase = faceDatabase;
             }
@@ -39,7 +39,7 @@ namespace Face
                 }
             }
 
-            private readonly FaceDatabase<T> _faceDatabase;
+            private readonly DictionaryFaceDatabase<T> _faceDatabase;
         }
     }
 }
