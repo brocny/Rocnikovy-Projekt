@@ -33,9 +33,9 @@ namespace LuxandFace
 
         public Match ProcessTemplate(FaceTemplate t)
         {
-            if (_addTemplates.Contains(t.TrackingId))
+            long trackingId = t.TrackingId;
+            if (_addTemplates.TryTake(out trackingId))
             {
-                _addTemplates.Remove(t.TrackingId);
                 Capture(t);
                 return null;
             }
@@ -128,7 +128,13 @@ namespace LuxandFace
             _faceDb.AddOrUpdate(ts.FaceId, t);
         }
 
-        private (CandidateStatus status, float confidence) GetBestOfTheRest(TrackingStatus ts, FaceTemplate template)
+        /// <summary>
+        /// Gets the best-matching candidate in <paramref name="ts"/> excluding the <see cref="TrackingStatus.TopCandidate"/>
+        /// </summary>
+        /// <param name="ts">Where to look for candidates</param>
+        /// <param name="template">What to match candidates to</param>
+        /// <returns>The best-maching <see cref="CandidateStatus"/> and match confidence (between 0 and 1).</returns>
+        private (CandidateStatus status, float confidence) GetBestOfTheRest(TrackingStatus ts, IFaceTemplate<byte[]> template)
         {
             float maxConfidence = 0f;
             CandidateStatus status = null;
@@ -148,6 +154,11 @@ namespace LuxandFace
             return (status, maxConfidence);
         }
 
+        /// <summary>
+        /// Process multiple templates at once
+        /// </summary>
+        /// <param name="templates">Templates to be processed</param>
+        /// <returns>Any matches that might be found</returns>
         public IEnumerable<Match> ProcessTemplates(IEnumerable<FaceTemplate> templates)
         {
             var list = new List<Match>();
