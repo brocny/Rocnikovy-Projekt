@@ -1,6 +1,8 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Face;
 using KinectUnifier;
 using LuxandFaceLib;
@@ -20,9 +22,11 @@ namespace LuxandFace
 
         public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _trackedFaces;
 
-        public void AddTemplate(long trackingId)
+        public Task<TrackingStatus> AddTemplate(long trackingId)
         {
-            _addTemplates.Add(trackingId);
+            var tsc = new TaskCompletionSource<TrackingStatus>();
+            _addTemplates[trackingId] = tsc;
+            return tsc.Task;
         }
 
         public MatchingParameters MatchingParameters
@@ -34,9 +38,9 @@ namespace LuxandFace
 
         public Match ProcessTemplate(FaceTemplate t)
         {
-            if (_addTemplates.Remove(t.TrackingId))
+            if (_addTemplates.TryRemove(t.TrackingId, out var tsc))
             {
-                Capture(t);
+                tsc.SetResult(Capture(t));
                 return null;
             }
 
@@ -107,7 +111,7 @@ namespace LuxandFace
             return new Match {Confidence =  bestMatch.confidence, FaceId = bestMatch.id, TrackingId = t.TrackingId};
         }
 
-        public void Capture(FaceTemplate t)
+        public TrackingStatus Capture(FaceTemplate t)
         {
             if (!_trackedFaces.TryGetValue(t.TrackingId, out var ts))
             {
@@ -115,6 +119,8 @@ namespace LuxandFace
             }
 
             NewTemplate(t, ts.TopCandidate);
+
+            return ts;
 
         }
 
@@ -191,7 +197,8 @@ namespace LuxandFace
         private ConcurrentDictionary<long, TrackingStatus> _trackedFaces;
         private IFaceDatabase<byte[]> _faceDb;
 
-        private ConcurrentHashSet<long> _addTemplates = new ConcurrentHashSet<long>();
+        private ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>> _addTemplates = 
+            new ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>>();
     }
 
     public class Match

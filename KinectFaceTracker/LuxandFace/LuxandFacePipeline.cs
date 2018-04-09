@@ -24,7 +24,7 @@ namespace LuxandFaceLib
         public event EventHandler<Match[]> TemplateProcessingComplete;
         public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _templateProc.TrackedFaces;
         public Task<Task> Completion;
-        public void Capture(long trakckingId) { _templateProc.AddTemplate(trakckingId);}
+        public Task<TrackingStatus> Capture(long trakckingId) { return _templateProc.AddTemplate(trakckingId);}
 
         public TaskScheduler SynchContext { get; set; }
         public CancellationToken CancellationToken { get; set; }

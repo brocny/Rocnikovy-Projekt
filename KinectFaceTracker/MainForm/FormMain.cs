@@ -373,23 +373,25 @@ namespace KinectFaceTracker
             }
         }
 
-        private void CaptureFace(long trackingId)
+        private Task<TrackingStatus> CaptureFace(long trackingId)
         {
-            _kft.FacePipeline.Capture(trackingId);
+            return _kft.FacePipeline.Capture(trackingId);
         }
 
-        private void NameFace(long trackingId)
+        private async void NameFace(long trackingId)
         {
-            if (_kft.TrackedFaces.TryGetValue(trackingId, out var status))
-            {
-                string name = Interaction.InputBox("Enter person's name", "Person name dialog", null);
-                if (name == null) return;
-                CaptureFace(trackingId);
-                if (!_kft.FaceDatabase.TryGetValue(status.TopCandidate.FaceId, out var faceInfo))
-                    return;
+            string name = Interaction.InputBox("Enter person's name", "Person name dialog", null);
+            if (string.IsNullOrWhiteSpace(name)) return;
 
-                faceInfo.Name = name;
+            if (!_kft.TrackedFaces.TryGetValue(trackingId, out var status))
+            {
+                status = await CaptureFace(trackingId);
             }
+
+            if (!_kft.FaceDatabase.TryGetValue(status.TopCandidate.FaceId, out var faceInfo))
+                return;
+
+            faceInfo.Name = name;
         }
 
         private void pictureBox1_SizeChanged(object sender, EventArgs e)
