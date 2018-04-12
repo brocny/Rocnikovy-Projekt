@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using KinectUnifier;
 using Luxand;
 
 namespace LuxandFaceLib
@@ -43,6 +44,26 @@ namespace LuxandFaceLib
         public static Point ToPoint(this FSDK.TPoint point)
         {
             return new Point(point.x, point.y);
+        }
+    }
+
+
+    public static class BufferImageExtensions
+    {
+        /// <summary>
+        /// Make and FSDK FaceImage from a <see cref="ImmutableImage"/>
+        /// </summary>
+        /// <param name="immutableImage"></param>
+        /// <param name="imageHandle"></param>
+        /// <returns>Handle to newly created FSDK FaceImage</returns>
+        public static int ToFsdkImage(this ImmutableImage immutableImage, out int imageHandle)
+        {
+            imageHandle = -1;
+            var buffer = immutableImage.Buffer;
+            int ret =  FSDK.LoadImageFromBuffer(ref imageHandle, buffer, immutableImage.Width, immutableImage.Height, immutableImage.Width * immutableImage.BytesPerPixel,
+                LuxandUtil.ImageModeFromBytesPerPixel(immutableImage.BytesPerPixel));
+
+            return ret;
         }
     }
 }

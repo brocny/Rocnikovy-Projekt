@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
+using KinectUnifier;
 
 namespace Face
 {
@@ -34,12 +36,14 @@ namespace Face
         /// Add a new template to this face
         /// </summary>
         /// <param name="template">Template to be added</param>
-        void AddTemplate(T template);
+        /// <param name="image"> Optionally add an image, from which the template was generated </param>
+        void AddTemplate(T template, ImmutableImage image = null);
 
         /// <summary>
         /// Add a new template including additional information included in FaceTemplate<typeparamref name="T"/> besides the actual template
         /// </summary>
         /// <param name="faceTemplate">Template to be added</param>
+        /// <param name="image"> Optionally add an image, from which the template was generated </param>
         void AddTemplate(IFaceTemplate<T> faceTemplate);
         
         /// <summary>
@@ -75,7 +79,11 @@ namespace Face
         /// </summary>
         float GenderConfidence { get; }
 
-        IReadOnlyCollection<T> Templates { get; }
+        IEnumerable<FaceSnapshot<T>> Snapshots { get; }
+
+        IEnumerable<T> Templates { get; }
+
+        IEnumerable<ImmutableImage> Images { get; }
         
         /// <summary>
         /// Serialize this into a <c>Stream</c>

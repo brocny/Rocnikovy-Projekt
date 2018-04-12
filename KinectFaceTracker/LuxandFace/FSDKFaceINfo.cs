@@ -174,16 +174,17 @@ namespace LuxandFaceLib
 
         public IFaceInfo<byte[]> Deserialize(Stream stream)
         {
-            var x = new XmlSerializer(typeof(FSDKFaceInfo));
-            var ret = (FSDKFaceInfo) x.Deserialize(stream);
+            var xr = XmlReader.Create(stream, new XmlReaderSettings {IgnoreWhitespace = true});
+            var xs = new XmlSerializer(typeof(FSDKFaceInfo), new [] {typeof(FaceSnapshotByteArray)});
+            var ret = (FSDKFaceInfo) xs.Deserialize(stream);
             return ret;
         }
         
 
         public IFaceInfo<byte[]> Deserialize(TextReader reader)
         {
-            var xr = XmlReader.Create(reader, new XmlReaderSettings {IgnoreWhitespace = false});
-            var xs = new XmlSerializer(typeof(FSDKFaceInfo));
+            var xr = XmlReader.Create(reader, new XmlReaderSettings {IgnoreWhitespace = true});
+            var xs = new XmlSerializer(typeof(FSDKFaceInfo), new [] {typeof(FaceSnapshotByteArray)});
             var ret = (FSDKFaceInfo) xs.Deserialize(xr);
             return ret;
         }

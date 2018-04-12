@@ -63,11 +63,11 @@ namespace KinectFaceTracker
 
             _synchContext = TaskScheduler.FromCurrentSynchronizationContext();
 
-            var facePipeline = new LuxandFacePipeline(new DictionaryFaceDatabase<byte[]>(new LuxandFaceInfo()));
+            var facePipeline = new FSDKFacePipeline(new DictionaryFaceDatabase<byte[]>(new FSDKFaceInfo()));
             facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
             facePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
 
-            LuxandFacePipeline.InitializeLibrary();
+            FSDKFacePipeline.InitializeLibrary();
             _kinectFrameWidth = kinect.ColorManager.HeightPixels;
             _kinectFrameHeight = kinect.ColorManager.WidthPixels;
             _coordinateMapper = kinect.CoordinateMapper;
@@ -193,8 +193,7 @@ namespace KinectFaceTracker
             if (faceCutouts != null && faceCutouts.Length != 0)
             {
                 var fco = faceCutouts[0];
-                facePictureBox.InvokeIfRequired(f =>
-                    f.Image = fco.PixelBuffer.BytesToBitmap(fco.Width, fco.Height, fco.BytesPerPixel));
+                facePictureBox.InvokeIfRequired(f => f.Image = fco.Image.ToBitmap());
                 _displayedFaceTrackingId = faceCutouts[0].TrackingId;
             }
         }

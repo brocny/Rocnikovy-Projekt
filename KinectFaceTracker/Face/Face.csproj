@@ -74,6 +74,7 @@
     <Compile Include="DictionaryFaceDatabase.cs" />
     <Compile Include="FaceDatabaseDeserializer.cs" />
     <Compile Include="FaceDatabaseSerializer.cs" />
+    <Compile Include="FaceSnapshot.cs" />
     <Compile Include="IFaceDatabase.cs" />
     <Compile Include="IFaceInfo.cs" />
     <Compile Include="IFaceTemplate.cs" />
