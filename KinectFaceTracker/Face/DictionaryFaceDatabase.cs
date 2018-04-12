@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Xml.Serialization;
 
 namespace Face
 {
@@ -14,6 +15,7 @@ namespace Face
     /// Thread-safe 
     /// </remarks>
     /// <typeparam name="T">Type of face templates</typeparam>
+    [Serializable]
     public partial class DictionaryFaceDatabase<T> : IFaceDatabase<T>
     {
         private ConcurrentDictionary<int, IFaceInfo<T>> _storedFaces;
@@ -58,8 +60,9 @@ namespace Face
         }
 
         public IFaceInfo<T> this[int index] => _storedFaces[index];
-
+        [XmlIgnore]
         public IEnumerable<int> Keys => _storedFaces.Keys;
+        [XmlIgnore]
         public IEnumerable<IFaceInfo<T>> Values => _storedFaces.Values;
         public bool ContainsKey(int key) => _storedFaces.ContainsKey(key);
 

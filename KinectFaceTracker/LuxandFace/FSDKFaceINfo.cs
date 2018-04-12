@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Net.Mime;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
@@ -12,9 +9,11 @@ using Face;
 using KinectUnifier;
 using Luxand;
 
+
 namespace LuxandFaceLib
 {
     [Serializable]
+    [XmlRoot("IFaceInfo")]
     public class FSDKFaceInfo : IFaceInfo<byte[]>
     {
         [XmlIgnore]

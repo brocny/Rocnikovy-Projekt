@@ -26,8 +26,8 @@ namespace Face
                     while (xr.ReadToFollowing("Id"))
                     {
 
-                        var id = xr.ReadElementContentAsInt();
-                        xr.ReadToFollowing("FSDKFaceInfo");
+                        int id = xr.ReadElementContentAsInt();
+                        xr.ReadToFollowing("IFaceInfo");
                         var sr = new StringReader(xr.ReadOuterXml());
                         _db._storedFaces[id] = _faceInfoBaseInstance.Deserialize(sr);
                         _db.UpdateNextId(id);

@@ -29,7 +29,7 @@ namespace Face
                         xw.Flush();
                         sw.WriteLine();
                         sw.Flush();
-                        face.Value.Serialize(stream);
+                        face.Value.Serialize(sw);
                         xw.WriteEndElement();
                     }
                     xw.WriteEndElement();
