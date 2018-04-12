@@ -23,7 +23,7 @@ namespace LuxandFaceLib
         public event EventHandler<FaceTemplate[]> FaceTemplateExtractionComplete;
         public event EventHandler<Match[]> TemplateProcessingComplete;
         public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _templateProc.TrackedFaces;
-        public Task<Task> Completion;
+        public Task<Task> Completion { get; }
         public Task<TrackingStatus> Capture(long trakckingId) { return _templateProc.AddTemplate(trakckingId);}
 
         public TaskScheduler SynchContext { get; set; }
