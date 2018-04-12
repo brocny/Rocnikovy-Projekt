@@ -1,19 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing.Text;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Net.Mime;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 using Face;
+using KinectUnifier;
 using Luxand;
 
 namespace LuxandFaceLib
 {
     [Serializable]
-    public class LuxandFaceInfo : IFaceInfo<byte[]>
+    public class FSDKFaceInfo : IFaceInfo<byte[]>
     {
         [XmlIgnore]
         public float GenderConfidence
@@ -25,10 +27,16 @@ namespace LuxandFaceLib
                 return 0;
             }
         }
+
         [XmlIgnore]
-        public IReadOnlyCollection<byte[]> Templates => _faceTemplates;
+        public IEnumerable<byte[]> Templates => Snapshots.Select(x => x.Template);
+
+        [XmlIgnore]
+        public IEnumerable<ImmutableImage> Images => Snapshots.Select(x => x.FaceImage);
+
         [XmlElement(ElementName = "Name")]
         public string Name { get; set; }
+
         [XmlElement(ElementName = "Age")]
         public float Age { get; set; }
 
@@ -46,8 +54,8 @@ namespace LuxandFaceLib
             {
                 const float minTotalConf = 0.95f, confPerTemplate = 0.05f;
 
-                if (_confidenceMale + confPerTemplate * _faceTemplates.Count < minTotalConf 
-                    && 1f - _confidenceMale + confPerTemplate * _faceTemplates.Count < minTotalConf)
+                if (_confidenceMale + confPerTemplate * Snapshots.Count < minTotalConf 
+                    && 1f - _confidenceMale + confPerTemplate * Snapshots.Count < minTotalConf)
                     return Gender.Unknown;
                 if (_confidenceMale > GenderMinConfidence) return Gender.Male;
                 if (_confidenceMale < 1f - GenderMinConfidence) return Gender.Female;
@@ -55,24 +63,24 @@ namespace LuxandFaceLib
             }
         }
 
-        public LuxandFaceInfo()
+        public FSDKFaceInfo()
         {
 
         }
 
-        public LuxandFaceInfo(byte[] faceTemplate)
+        public FSDKFaceInfo(byte[] faceTemplate)
         {
-            if(faceTemplate != null) _faceTemplates.Add(faceTemplate);
+            if(faceTemplate != null) Snapshots.Add(new FaceSnapshotByteArray(faceTemplate, null));
         }
 
         public void Merge(IFaceInfo<byte[]> info)
         {
-            _faceTemplates.AddRange(info.Templates);
+            Snapshots.AddRange(info.Snapshots);
         }
 
         public float GetSimilarity(IFaceInfo<byte[]> faceInfo)
         {
-            return _faceTemplates.Max(x => faceInfo.GetSimilarity(x));
+            return Snapshots.Max(x => faceInfo.GetSimilarity(x.Template));
         }
 
         public float GetSimilarity(IFaceTemplate<byte[]> faceTemplate)
@@ -96,14 +104,14 @@ namespace LuxandFaceLib
             return baseSim;
         }
 
-        public void AddTemplate(byte[] faceTemplate)
+        public void AddTemplate(byte[] faceTemplate, ImmutableImage image = null)
         {
-            _faceTemplates.Add(faceTemplate);
+            Snapshots.Add(new FaceSnapshotByteArray(faceTemplate, image));
         }
 
         public void AddTemplate(IFaceTemplate<byte[]> faceTemplate)
         {
-            int ftCount = _faceTemplates.Count;
+            int ftCount = Snapshots.Count;
 
             // Age is the average of observed ages
             Age = (Age * ftCount + faceTemplate.Age) / (ftCount + 1);
@@ -115,12 +123,12 @@ namespace LuxandFaceLib
                                   + (faceTemplate.Gender == Gender.Male ? faceTemplate.GenderConfidence: 1 - faceTemplate.GenderConfidence)) 
                                   / (ftCount + 1);
             }
-            _faceTemplates.Add(faceTemplate.Template);
+            Snapshots.Add(new FaceSnapshotByteArray(faceTemplate.Template, faceTemplate.FaceImage));
         }
 
         public void AddTemplates(IEnumerable<byte[]> faceTemplates)
         {
-            _faceTemplates.AddRange(faceTemplates);
+            Snapshots.AddRange(faceTemplates.Select(x => new FaceSnapshotByteArray(x, null)));
         }
 
         public bool IsValid(byte[] template)
@@ -130,11 +138,11 @@ namespace LuxandFaceLib
 
         public float GetSimilarity(byte[] faceTemplate)
         {
-            if (faceTemplate == null || _faceTemplates.Count == 0) return 0;
-            float[] similarities = new float[_faceTemplates.Count];
-            Parallel.For(0, _faceTemplates.Count, i =>
+            if (faceTemplate == null || Snapshots.Count == 0) return 0;
+            float[] similarities = new float[Snapshots.Count];
+            Parallel.For(0, Snapshots.Count, i =>
             {
-                var ithTemplate = _faceTemplates[i];
+                var ithTemplate = Snapshots[i].Template;
                 if (FSDK.FSDKE_OK != FSDK.MatchFaces(ref faceTemplate, ref ithTemplate, ref similarities[i]))
                 {
                     similarities[i] = 0;
@@ -146,53 +154,65 @@ namespace LuxandFaceLib
 
         public IFaceInfo<byte[]> NewInstance()
         {
-            return new LuxandFaceInfo();
+            return new FSDKFaceInfo();
         }
 
         public void Serialize(Stream stream)
         {
-            var xw = XmlWriter.Create(stream, new XmlWriterSettings {OmitXmlDeclaration = true, CheckCharacters = false, Indent = true});
-            XmlSerializer x = new XmlSerializer(typeof(LuxandFaceInfo));
-            x.Serialize(xw, this);
+            var xw = XmlWriter.Create(stream, new XmlWriterSettings {OmitXmlDeclaration = true, Indent = true});
+            var xs = new XmlSerializer(typeof(FSDKFaceInfo), new[] { typeof(FaceSnapshotByteArray)});
+            xs.Serialize(xw, this);
         }
 
         public void Serialize(TextWriter writer)
         {
             var xw = XmlWriter.Create(writer,
-                new XmlWriterSettings {OmitXmlDeclaration = true, CheckCharacters = false, Indent = false});
-            XmlSerializer x = new XmlSerializer(typeof(LuxandFaceInfo));
-            x.Serialize(xw, this);
+                new XmlWriterSettings {OmitXmlDeclaration = true, Indent = true});
+            var xs = new XmlSerializer(typeof(FSDKFaceInfo), new [] {typeof(FaceSnapshotByteArray)});
+            xs.Serialize(xw, this);
         }
 
         public IFaceInfo<byte[]> Deserialize(Stream stream)
         {
-            var x = new XmlSerializer(typeof(LuxandFaceInfo));
-            var ret = (LuxandFaceInfo) x.Deserialize(stream);
+            var x = new XmlSerializer(typeof(FSDKFaceInfo));
+            var ret = (FSDKFaceInfo) x.Deserialize(stream);
             return ret;
         }
         
 
         public IFaceInfo<byte[]> Deserialize(TextReader reader)
         {
-            var xr = XmlReader.Create(reader, new XmlReaderSettings {CheckCharacters = false, IgnoreWhitespace = false});
-            var x = new XmlSerializer(typeof(LuxandFaceInfo));
-            var ret = (LuxandFaceInfo) x.Deserialize(xr);
+            var xr = XmlReader.Create(reader, new XmlReaderSettings {IgnoreWhitespace = false});
+            var xs = new XmlSerializer(typeof(FSDKFaceInfo));
+            var ret = (FSDKFaceInfo) xs.Deserialize(xr);
             return ret;
         }
+        
+        [XmlArray("Snapshots")]
+        public List<FaceSnapshot<byte[]>> Snapshots { get; set; } = new List<FaceSnapshot<byte[]>>();
 
         [XmlIgnore]
-        private List<byte[]> _faceTemplates = new List<byte[]>();
+        IEnumerable<FaceSnapshot<byte[]>> IFaceInfo<byte[]>.Snapshots => Snapshots;
 
-        [XmlArrayItem("Template")]
-        [XmlArray("Templates")]
-        public string[] XmlFaceTemplates
-        {
-            get => _faceTemplates.Select(x => Encoding.Default.GetString(x)).ToArray();
-            set => _faceTemplates = value.Select(x => Encoding.Default.GetBytes(x)).ToList();
-        }
 
         private float _confidenceMale;
 
         private const float GenderMinConfidence = 0.75f;
+    }
+
+    
+    [Serializable]
+    public class FaceSnapshotByteArray : FaceSnapshot<byte[]>
+    {
+        public FaceSnapshotByteArray() { }
+
+        public FaceSnapshotByteArray(byte[] template, ImmutableImage image) : base(template, image) { }
+
+        [XmlElement("Template")]
+        public override string XmlTemplate
+        {
+            get => Convert.ToBase64String(Template);
+            set => Template = Convert.FromBase64String(value);
+        }
     }
 }

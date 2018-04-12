@@ -9,7 +9,7 @@ namespace KinectFaceTracker
 {
     public class KinectFaceTracker : IDisposable
     {
-        public LuxandFacePipeline FacePipeline => _facePipeline;
+        public FSDKFacePipeline FacePipeline => _facePipeline;
         public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _facePipeline.TrackedFaces;
 
         public IFaceDatabase<byte[]> FaceDatabase
@@ -23,11 +23,11 @@ namespace KinectFaceTracker
         private IMultiManager _multiManager;
         private readonly ICoordinateMapper _coordinateMapper;
 
-        private readonly LuxandFacePipeline _facePipeline;
+        private readonly FSDKFacePipeline _facePipeline;
 
         public event EventHandler<FrameArrivedEventArgs> FrameArrived;
 
-        public KinectFaceTracker(LuxandFacePipeline facePipeline, IKinect kinect)
+        public KinectFaceTracker(FSDKFacePipeline facePipeline, IKinect kinect)
         {
             _kinect = kinect;
             _facePipeline = facePipeline;

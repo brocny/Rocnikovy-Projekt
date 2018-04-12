@@ -191,9 +191,9 @@
       <Name>KinectUnifier</Name>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\LuxandFace\LuxandFaceLib.csproj">
+    <ProjectReference Include="..\LuxandFace\FSDKFaceLib.csproj">
       <Project>{8d843bc1-7761-4369-856b-f5631fece665}</Project>
-      <Name>LuxandFaceLib</Name>
+      <Name>FSDKFaceLib</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Linq;
 using Face;
+using KinectUnifier;
 using Luxand;
 
 namespace LuxandFaceLib
@@ -9,8 +10,10 @@ namespace LuxandFaceLib
     public class FSDKFaceImage
     {
         public int ImageHandle;
-        public int Width;
-        public int Height;
+
+
+        public ImmutableImage Image;
+
         /// <summary>
         /// Location of the top-left of face rectangle in the original frame
         /// </summary>

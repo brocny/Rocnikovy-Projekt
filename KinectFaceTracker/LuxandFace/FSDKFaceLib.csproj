@@ -90,8 +90,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FSDKFaceImage.cs" />
-    <Compile Include="LuxandFaceInfo.cs" />
-    <Compile Include="LuxandFacePipeline.cs" />
+    <Compile Include="FSDKFaceInfo.cs" />
+    <Compile Include="FSDKFacePipeline.cs" />
     <Compile Include="LuxandUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TemplateProcessor.cs" />
