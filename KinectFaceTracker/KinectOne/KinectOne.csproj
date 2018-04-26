@@ -79,7 +79,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KinectUnifier\Core.csproj">
+    <ProjectReference Include="..\Core\Core.csproj">
       <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
       <Name>Core</Name>
     </ProjectReference>

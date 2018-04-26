@@ -19,17 +19,13 @@ namespace KinectFaceTracker
         private static readonly string DefaultDbPath =
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\KFT\FaceDb";
         
-
-        private readonly Pen[] _bodyPens;
         private readonly ICoordinateMapper _coordinateMapper;
 
         private readonly FpsCounter _fpsCounter = new FpsCounter();
 
         private readonly KinectFaceTracker _kft;
         private readonly int _kinectFrameHeight;
-
         private readonly int _kinectFrameWidth;
-
 
         private readonly Renderer _renderer;
 

@@ -10,6 +10,7 @@ namespace KinectFaceTracker
     public class Renderer
     {
         public Font NameFont { get; set; }
+        public StringFormat NameFormat { get; set; } = new StringFormat{ Alignment = StringAlignment.Center };
 
         public IList<Brush> BodyBrushes { get; set; } = new List<Brush>
             { Brushes.LimeGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink, Brushes.Red};
@@ -156,7 +157,7 @@ namespace KinectFaceTracker
         public void DrawName(string name, int xPos, int yPos, Brush brush)
         {
             if (name != null)
-                _gr.DrawString(name, NameFont, brush, xPos, yPos);
+                _gr.DrawString(name, NameFont, brush, xPos, yPos, NameFormat);
         }
 
         public void DrawName(string name, Point location, Brush brush)

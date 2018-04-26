@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="KinetcFaceTracker.cs" />
+    <Compile Include="KinectFaceTracker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -49,7 +49,7 @@
       <Project>{67644ffe-d3e4-4670-94a7-b12f076857c4}</Project>
       <Name>KinectFactory</Name>
     </ProjectReference>
-    <ProjectReference Include="..\KinectUnifier\Core.csproj">
+    <ProjectReference Include="..\Core\Core.csproj">
       <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
       <Name>Core</Name>
     </ProjectReference>

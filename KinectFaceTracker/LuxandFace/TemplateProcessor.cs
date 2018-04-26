@@ -182,7 +182,7 @@ namespace LuxandFace
                 _cacheClearingCounter = 0;
             }
 
-            return templates.Select(ProcessTemplate).Where(match => match != null && match.Similarity > MatchingParameters.MatchThreshold);
+            return templates.Select(ProcessTemplate).Where(match => match != null && match.Similarity > MatchingParameters.MatchThreshold).ToArray();
         }
     }
 

@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "MainForm\Application.csproj", "{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "KinectUnifier\Core.csproj", "{A103B1BD-322F-4A8F-B0EB-58393DE5D453}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{A103B1BD-322F-4A8F-B0EB-58393DE5D453}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectFactory", "KinectFactory\KinectFactory.csproj", "{67644FFE-D3E4-4670-94A7-B12F076857C4}"
 EndProject

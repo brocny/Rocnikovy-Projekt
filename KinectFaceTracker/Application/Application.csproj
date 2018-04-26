@@ -207,7 +207,7 @@
       <Name>KinectFactory</Name>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\KinectUnifier\Core.csproj">
+    <ProjectReference Include="..\Core\Core.csproj">
       <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
       <Name>Core</Name>
       <Private>True</Private>
