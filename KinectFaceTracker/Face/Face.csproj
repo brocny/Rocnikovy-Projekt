@@ -71,13 +71,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DictionaryFaceDatabase.cs" />
-    <Compile Include="FaceDatabaseDeserializer.cs" />
-    <Compile Include="FaceDatabaseSerializer.cs" />
-    <Compile Include="FaceSnapshot.cs" />
-    <Compile Include="IFaceDatabase.cs" />
-    <Compile Include="IFaceInfo.cs" />
-    <Compile Include="IFaceTemplate.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -85,9 +78,9 @@
       <Project>{67644ffe-d3e4-4670-94a7-b12f076857c4}</Project>
       <Name>KinectFactory</Name>
     </ProjectReference>
-    <ProjectReference Include="..\KinectUnifier\KinectUnifier.csproj">
+    <ProjectReference Include="..\KinectUnifier\Core.csproj">
       <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
-      <Name>KinectUnifier</Name>
+      <Name>Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

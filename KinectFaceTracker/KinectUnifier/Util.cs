@@ -4,25 +4,37 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Runtime.Remoting.Channels;
 
 namespace KinectUnifier
 {
     public static class Util
     {
+        /// <summary>
+        ///     The factor by which the distance from a body's neck to its head is multiplied to obtain the width of its face
+        /// </summary>
+        private const float FaceWidth = 1.45f;
+
+        /// <summary>
+        ///     The factor by which the distance from a body's neck to its neck is multiplied to obtain the height of its face
+        /// </summary>
+        private const float FaceHeight = 1.9f;
+
         public static IDictionary<JointType, Vector2> MapJointsToColorSpace(IBody body, ICoordinateMapper mapper)
         {
             var ret = new Dictionary<JointType, Vector2>();
 
             foreach (var joint in body.Joints)
             {
-                Vector3 cameraPoint = joint.Value.Position;
+                var cameraPoint = joint.Value.Position;
                 if (cameraPoint.Z < 0)
                 {
                     cameraPoint.Z = 0.1f;
                 }
 
-                Vector2 colorPoint =
-                       mapper.MapCameraPointToColorSpace(joint.Value.Position);
+                var colorPoint =
+                    mapper.MapCameraPointToColorSpace(joint.Value.Position);
 
                 ret.Add(joint.Key, colorPoint);
             }
@@ -30,16 +42,8 @@ namespace KinectUnifier
             return ret;
         }
 
-        /// <summary>
-        /// The factor by which the distance from a body's neck to its head is multiplied to obtain the width of its face
-        /// </summary>
-        const float FaceWidth = 1.6f;
-        /// <summary>
-        /// The factor by which the distance from a body's neck to its neck is multiplied to obtain the height of its face
-        /// </summary>
-        const float FaceHeight = 2.1f;
-
-        public static bool TryGetHeadRectangleAndYawAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect, out double rotationAngle)
+        public static bool TryGetHeadRectangleAndYawAngle(IBody body, ICoordinateMapper mapper, out Rectangle faceRect,
+            out double rotationAngle)
         {
             faceRect = Rectangle.Empty;
             rotationAngle = 0;
@@ -53,19 +57,19 @@ namespace KinectUnifier
             float headNeckDistance = headJointColorPos.DistanceTo(neckJointColorPos);
             rotationAngle = Math.Asin((headJointColorPos.X - neckJointColorPos.X) / headNeckDistance) * 180 / Math.PI;
             bool isFaceVertical = Math.Abs(rotationAngle) < 45;
-            var width =  isFaceVertical ? headNeckDistance * FaceWidth : headNeckDistance * FaceHeight;
-            var height = isFaceVertical ? headNeckDistance * FaceHeight : headNeckDistance * FaceWidth;
-            faceRect =  new Rectangle(
-                (int)(headJointColorPos.X - width / 2), 
-                (int)(headJointColorPos.Y - height / 2), 
-                (int)width, 
-                (int)height);
+            float width = isFaceVertical ? headNeckDistance * FaceWidth : headNeckDistance * FaceHeight;
+            float height = isFaceVertical ? headNeckDistance * FaceHeight : headNeckDistance * FaceWidth;
+            faceRect = new Rectangle(
+                (int) (headJointColorPos.X - width / 2),
+                (int) (headJointColorPos.Y - height / 2),
+                (int) width,
+                (int) height);
 
             return true;
         }
 
         /// <summary>
-        /// Get a rectangle containing a body's face based on the position of its neck and head
+        ///     Get a rectangle containing a body's face based on the position of its neck and head
         /// </summary>
         /// <param name="body">The body of which we want the face rectangle</param>
         /// <param name="mapper">A coordinate mapper, used for mapping body's joints' positions to color space</param>
@@ -75,8 +79,8 @@ namespace KinectUnifier
         {
             faceRect = Rectangle.Empty;
 
-            if (!body.Joints.TryGetValue(JointType.Head, out IJoint headJoint) ||
-                !body.Joints.TryGetValue(JointType.Neck, out IJoint neckJoint)) return false;
+            if (!body.Joints.TryGetValue(JointType.Head, out var headJoint) ||
+                !body.Joints.TryGetValue(JointType.Neck, out var neckJoint)) return false;
             if (!headJoint.IsTracked || !neckJoint.IsTracked) return false;
 
             var headJointColorPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
@@ -86,13 +90,13 @@ namespace KinectUnifier
             bool isFaceVertical = Math.Abs(headJointColorPos.Y - neckJointColorPos.Y) >
                                   Math.Abs(headJointColorPos.X - neckJointColorPos.X);
 
-            var width = isFaceVertical ? headNeckDistance * FaceWidth : headNeckDistance * FaceHeight;
-            var height = isFaceVertical ? headNeckDistance * FaceHeight : headNeckDistance * FaceWidth;
+            float width = isFaceVertical ? headNeckDistance * FaceWidth : headNeckDistance * FaceHeight;
+            float height = isFaceVertical ? headNeckDistance * FaceHeight : headNeckDistance * FaceWidth;
             faceRect = new Rectangle(
-                (int)(headJointColorPos.X - width / 2),
-                (int)(headJointColorPos.Y - height / 2),
-                (int)width,
-                (int)height);
+                (int) (headJointColorPos.X - width / 2),
+                (int) (headJointColorPos.Y - height / 2),
+                (int) width,
+                (int) height);
 
             return true;
         }
@@ -100,33 +104,67 @@ namespace KinectUnifier
         public static Bitmap BytesToBitmap(this byte[] buffer, int width, int height, int bytesPerPixel)
         {
             if (buffer == null) return null;
-            var bmp = new Bitmap(width, height, PixelFormat.Format32bppRgb);
-            var bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly,
-                PixelFormat.Format32bppArgb);
+            PixelFormat pf = default;
 
-            Marshal.Copy(buffer, 0, bmpData.Scan0, width * height * bytesPerPixel);
-            
+            if (bytesPerPixel == 3)
+                pf = PixelFormat.Format24bppRgb;
+            else if (bytesPerPixel == 4)   
+                pf = PixelFormat.Format32bppArgb;
+            else if (bytesPerPixel == 2)
+                pf = PixelFormat.Format16bppRgb565;
+
+            return buffer.BytesToBitmap(width, height, pf);
+        }
+
+        public static Bitmap BytesToBitmap(this byte[] buffer, int width, int height, PixelFormat pf)
+        {
+            if(buffer == null)
+                throw new ArgumentNullException(nameof(buffer));
+
+            var bmp = new Bitmap(width, height, pf);
+            var bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly,
+                bmp.PixelFormat);
+
+            Marshal.Copy(buffer, 0, bmpData.Scan0, width * height * pf.BytesPerPixel());
+
             bmp.UnlockBits(bmpData);
             return bmp;
         }
-        
-        public static Rectangle Rescale(this Rectangle origRect, int origWidth, int origHeight, int newWidth, int newHeight)
-        {
-            float xRatio = newWidth / (float)origWidth;
-            float yRatio = newHeight / (float)origHeight;
-            return new Rectangle((int)(origRect.X * xRatio), (int)(origRect.Y * yRatio), (int)(origRect.Width * xRatio), (int)(origRect.Height * yRatio));
 
+
+        public static int BytesPerPixel(this PixelFormat pf)
+        {
+            switch (pf)
+            {
+                case PixelFormat.Format16bppArgb1555: case PixelFormat.Format16bppGrayScale: case PixelFormat.Format16bppRgb565: case PixelFormat.Format16bppRgb555:
+                    return 2;
+                case PixelFormat.Format24bppRgb:
+                    return 3;
+                case PixelFormat.Format32bppArgb: case PixelFormat.Format32bppPArgb: case PixelFormat.Format32bppRgb:
+                    return 4;
+                default:
+                    return 0;
+            }
+        }
+
+        public static Rectangle Rescale(this Rectangle origRect, int origWidth, int origHeight, int newWidth,
+            int newHeight)
+        {
+            float xRatio = newWidth / (float) origWidth;
+            float yRatio = newHeight / (float) origHeight;
+            return new Rectangle((int) (origRect.X * xRatio), (int) (origRect.Y * yRatio),
+                (int) (origRect.Width * xRatio), (int) (origRect.Height * yRatio));
         }
 
         public static Point Rescale(this Point origPoint, int origWidth, int origHeight, int newWidth, int newHeight)
         {
-            float xRatio = newWidth / (float)origWidth;
-            float yRatio = newHeight / (float)origHeight;
-            return new Point((int)(origPoint.X * xRatio), (int)(origPoint.Y * yRatio));
+            float xRatio = newWidth / (float) origWidth;
+            float yRatio = newHeight / (float) origHeight;
+            return new Point((int) (origPoint.X * xRatio), (int) (origPoint.Y * yRatio));
         }
 
         /// <summary>
-        /// Get a rectangular cutout from a pixel buffer
+        ///     Get a rectangular cutout from a pixel buffer
         /// </summary>
         /// <param name="buffer">The original pixel buffer</param>
         /// <param name="bufferWidth">Width of the image stored in <code>buffer</code></param>
@@ -158,7 +196,7 @@ namespace KinectUnifier
             {
                 for (int x = left; x < right; x++)
                 {
-                    var index = (y * bufferWidth + x) * bytesPerPixel;
+                    int index = (y * bufferWidth + x) * bytesPerPixel;
                     for (int i = index; i < index + bytesPerPixel; i++)
                     {
                         ret[targetI++] = buffer[i];
@@ -191,7 +229,7 @@ namespace KinectUnifier
     {
         public static float DistanceTo(this Vector2 v, Vector2 w)
         {
-            return (float)Math.Sqrt((v.X - w.X) * (v.X - w.X) + (v.Y - w.Y) * (v.Y - w.Y));
+            return (float) Math.Sqrt((v.X - w.X) * (v.X - w.X) + (v.Y - w.Y) * (v.Y - w.Y));
         }
     }
 }

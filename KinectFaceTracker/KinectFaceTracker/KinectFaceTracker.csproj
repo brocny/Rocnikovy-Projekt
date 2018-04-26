@@ -45,17 +45,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Face\Face.csproj">
-      <Project>{c5c7b973-a73c-4f44-8dfc-3c741f4b28a6}</Project>
-      <Name>Face</Name>
-    </ProjectReference>
     <ProjectReference Include="..\KinectFactory\KinectFactory.csproj">
       <Project>{67644ffe-d3e4-4670-94a7-b12f076857c4}</Project>
       <Name>KinectFactory</Name>
     </ProjectReference>
-    <ProjectReference Include="..\KinectUnifier\KinectUnifier.csproj">
+    <ProjectReference Include="..\KinectUnifier\Core.csproj">
       <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
-      <Name>KinectUnifier</Name>
+      <Name>Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\LuxandFace\FSDKFaceLib.csproj">
       <Project>{8d843bc1-7761-4369-856b-f5631fece665}</Project>

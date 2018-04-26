@@ -9,6 +9,7 @@ namespace KinectUnifier
         event EventHandler<BodyFrameReadyEventArgs> BodyFrameReady;
         void Open();
         void Close();
+        IBodyFrame GetNextFrame();
         int BodyCount { get; }
     }
 
@@ -54,7 +55,7 @@ namespace KinectUnifier
     public interface IBody
     {
         IReadOnlyDictionary<JointType, IJoint> Joints { get; }
-        IReadOnlyList<ValueTuple<JointType, JointType>> Bones { get; }
+        IReadOnlyList<(JointType joint1, JointType joint2)> Bones { get; }
         bool IsTracked { get; }
         long TrackingId { get; }
     }

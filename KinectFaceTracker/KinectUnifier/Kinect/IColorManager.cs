@@ -10,9 +10,12 @@ namespace KinectUnifier
     public interface IColorManager
     {
         event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady;
-        int WidthPixels { get; }
-        int HeightPixels { get; }
+        int FrameWidth { get; }
+        int FrameHeight { get; }
         int BytesPerPixel { get; }
+        int FrameDataSize { get; }
+        IColorFrame GetNextFrame();
+
 
         void Open(bool preferResolutionOverFps);
         void Close();

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
+using System.Linq;
 using KinectUnifier;
 using System.Numerics;
 
@@ -10,6 +10,10 @@ namespace KinectFaceTracker
     public class Renderer
     {
         public Font NameFont { get; set; }
+
+        public IList<Brush> BodyBrushes { get; set; } = new List<Brush>
+            { Brushes.LimeGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink, Brushes.Red};
+        public IList<Pen> BodyPens { get; set; } 
 
         public Bitmap Image
         {
@@ -26,7 +30,8 @@ namespace KinectFaceTracker
             _colorWidth = colorFrameWidth;
             _colorHeight = colorFrameHeight;
             NameFont = new Font(FontFamily.GenericSansSerif, _colorWidth / 60);
-
+            
+            BodyPens = BodyBrushes.Select(br => new Pen(br, 2.5f)).ToArray();
             _bmp = new Bitmap(_colorWidth, _colorHeight);
         }
         
@@ -40,19 +45,16 @@ namespace KinectFaceTracker
 
         private Graphics _gr;
 
-
         public void Clear()
         {
             if (_bmp == null)
             {
                 Image = new Bitmap(_colorWidth, _colorHeight);
-                
             }
             else
             {
-                _gr.FillRectangle(Brushes.Black, 0, 0, _bmp.Width, _bmp.Height);
+                _gr.Clear(Color.Black);
             }
-            
         }
 
         public void DrawBody(IBody body, Brush brush, Pen pen, ICoordinateMapper mapper)
@@ -63,45 +65,39 @@ namespace KinectFaceTracker
                 DrawJoint(jointColorSpacePoints[jointType], brush);
             }
 
-            foreach (var bone in body.Bones)
+            foreach (var (joint1, joint2) in body.Bones)
             {
-                DrawBone(body.Joints, jointColorSpacePoints, bone.Item1, bone.Item2, pen);
+                DrawBone(body.Joints, jointColorSpacePoints, joint1, joint2, pen);
             }
         }
 
-        public void DrawRectangles(Rectangle[] rects, Pen[] pens)
+        public void DrawRectangles(Rectangle[] rects, long[] trackingIds = null)
         {
-            for (int i = 0; i < rects.Length; i++)
+            if (trackingIds == null || trackingIds.Length != rects.Length)
             {
-                _gr.DrawRectangle(pens[i], rects[i]);
-            }
-        }
-
-        public void DrawBodyWithFaceBox(IBody body, byte[] colorBuffer, int colorFrameBpp, Brush brush, Pen pen, ICoordinateMapper mapper)
-        {
-            if (Util.TryGetHeadRectangleAndYawAngle(body, mapper, out var faceRect, out var _))
-            {
-                DrawColorBox(faceRect, colorBuffer, colorFrameBpp);
-            }
-
-            DrawBody(body, brush, pen, mapper);
-        }
-
-        public void DrawBodiesWithFaceBoxes(IBody[] bodies, byte[] colorBuffer, int colorFrameBpp, Brush[] brushes, Pen[] pens, ICoordinateMapper mapper)
-        {
-            for (int i = 0; i < bodies.Length; i++)
-            {
-                DrawBodyWithFaceBox(bodies[i], colorBuffer, colorFrameBpp, brushes[i% brushes.Length], pens[i % pens.Length], mapper);
-            }
-        }
-
-        public void DrawBodies(IBody[] bodies, Brush[] brushes, Pen[] pens, ICoordinateMapper mapper)
-        {
-            for (int i = 0; i < bodies.Length; i++)
-            {
-                if (bodies[i].IsTracked)
+                for (int i = 0; i < rects.Length; i++)
                 {
-                    DrawBody(bodies[i], brushes[i % brushes.Length], pens[i % pens.Length], mapper);
+                    _gr.DrawRectangle(BodyPens[i % BodyPens.Count], rects[i]);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < rects.Length; i++)
+                {
+                    _gr.DrawRectangle(BodyPens[(int)trackingIds[i] % BodyPens.Count], rects[i]);
+                }
+            }
+
+            
+        }
+
+        public void DrawBodies(IBody[] bodies, ICoordinateMapper mapper)
+        {
+            foreach (var body in bodies)
+            {
+                if (body.IsTracked)
+                {
+                    DrawBody(body, BodyBrushes[(int)(body.TrackingId % BodyBrushes.Count)], BodyPens[(int)(body.TrackingId % BodyPens.Count)], mapper);
                 }
             }
         }
@@ -150,8 +146,8 @@ namespace KinectFaceTracker
                 return;
             foreach (var f in features)
             {
-                var bmpX = f.X;
-                var bmpY = f.Y;
+                int bmpX = f.X;
+                int bmpY = f.Y;
 
                 _gr.FillEllipse(brush, bmpX, bmpY, size, size);
             }
@@ -163,65 +159,29 @@ namespace KinectFaceTracker
                 _gr.DrawString(name, NameFont, brush, xPos, yPos);
         }
 
-        public void DrawNames(string[] names, Point[] positions, Brush[] brushes)
+        public void DrawName(string name, Point location, Brush brush)
         {
-            for (int i = 0; i < names.Length; i++)
-            {
-                _gr.DrawString(names[i], NameFont, brushes[i], positions[i]);
-            }
+            DrawName(name, location.X, location.Y, brush);
         }
 
-        public void DrawColorBox(Rectangle rect, byte[] colorFrameBuffer, int colorFrameBpp)
+        public void DrawNames(string[] names, Point[] positions, long[] trackingIds = null)
         {
-            if (rect.Width == 0 || rect.Height == 0 || colorFrameBuffer == null)
-                return;
-
-            var x = rect.X;
-            if (x < 0) x = 0;
-            if (x > _colorWidth) x = _colorWidth;
-
-            var y = rect.Y;
-            if (y < 0) y = 0;
-            if (y > _colorWidth) y = _colorWidth;
-
-            var height = rect.Height;
-            var width = rect.Width;
-            if (x + width > _colorWidth) width = _colorWidth - x;
-            if (y + height > _colorHeight) height = _colorHeight - y;
-
-            var buffer = colorFrameBuffer;
-
-            var bmpX = x;
-            var bmpY = y;
-            var bmpWidth = rect.Width;
-            var bmpHeight = rect.Height;
-
-            if (bmpWidth == 0 || bmpHeight == 0 || bmpX + bmpWidth > _bmp.Width || bmpY + bmpHeight > _bmp.Height)
-                return;
-
-            var bmpData = _bmp.LockBits(new Rectangle(bmpX, bmpY, bmpWidth, bmpHeight),
-                ImageLockMode.WriteOnly,
-                _bmp.PixelFormat);
-
-            unsafe
+            if (trackingIds == null || trackingIds.Length != names.Length)
             {
-                byte* bmpPointer = (byte*)bmpData.Scan0;
-                for (int i = 0; i < height; ++i)
+                for (int i = 0; i < names.Length; i++)
                 {
-                    int bufAddr = colorFrameBpp * ((y + i) * _colorWidth + x);
-                    int bmpLineAddr = i * bmpData.Stride;
-                    for (int j = 0; j < width; ++j)
-                    {
-                        var bmpAddr = bmpLineAddr + j * 4;
-                        bmpPointer[bmpAddr + 2] = buffer[bufAddr];
-                        bmpPointer[bmpAddr + 1] = buffer[bufAddr + 1];
-                        bmpPointer[bmpAddr] = buffer[bufAddr + 2];
-
-                        bufAddr += colorFrameBpp;
-                    }
+                    _gr.DrawString(names[i], NameFont, BodyBrushes[i % BodyBrushes.Count], positions[i]);
                 }
             }
-            _bmp.UnlockBits(bmpData);
+            else
+            {
+                for (int i = 0; i < names.Length; i++)
+                {
+                    _gr.DrawString(names[i], NameFont, BodyBrushes[(int)trackingIds[i] % BodyBrushes.Count], positions[i]);
+                }
+            }
+
+            
         }
 
     }

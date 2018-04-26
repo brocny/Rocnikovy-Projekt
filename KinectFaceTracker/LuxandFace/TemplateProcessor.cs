@@ -1,17 +1,25 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Face;
-using KinectUnifier;
 using LuxandFaceLib;
 
 namespace LuxandFace
 {
-    class TemplateProcessor
+    internal class TemplateProcessor
     {
-        public TemplateProcessor(IFaceDatabase<byte[]> faceDb, IReadOnlyDictionary<long, TrackingStatus> trackedFaces = null)
+        private const ushort ClearCacheIterationsLimit = 10;
+
+        private readonly ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>> _addTemplates =
+            new ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>>();
+
+        private ushort _cacheClearingCounter;
+        private readonly IFaceDatabase<byte[]> _faceDb;
+        private readonly ConcurrentDictionary<long, TrackingStatus> _trackedFaces;
+
+        public TemplateProcessor(IFaceDatabase<byte[]> faceDb,
+            IReadOnlyDictionary<long, TrackingStatus> trackedFaces = null)
         {
             _faceDb = faceDb;
             _trackedFaces = trackedFaces == null
@@ -22,6 +30,8 @@ namespace LuxandFace
 
         public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _trackedFaces;
 
+        public MatchingParameters MatchingParameters { get; set; } = MatchingParameters.Default;
+
         public Task<TrackingStatus> AddTemplate(long trackingId)
         {
             var tsc = new TaskCompletionSource<TrackingStatus>();
@@ -29,14 +39,7 @@ namespace LuxandFace
             return tsc.Task;
         }
 
-        public MatchingParameters MatchingParameters
-        {
-            get => _mp;
-            set => _mp = value;
-        }
-        private MatchingParameters _mp = MatchingParameters.Default;
-
-        public Match ProcessTemplate(FaceTemplate t)
+        public Match<byte[]> ProcessTemplate(FaceTemplate t)
         {
             if (_addTemplates.TryRemove(t.TrackingId, out var tsc))
             {
@@ -49,85 +52,86 @@ namespace LuxandFace
                 trackingStatus.WasSeen = true;
                 var topCandidate = trackingStatus.TopCandidate;
                 var topCondidateFaceInfo = _faceDb[topCandidate.FaceId];
-                float topCandidateSim = topCondidateFaceInfo.GetSimilarity(t);
+                var topCandidateMatch = topCondidateFaceInfo.GetSimilarity(t);
 
-                if (topCandidateSim > _mp.TrackedInstantMatchThreshold)
+                if (topCandidateMatch.similarity > MatchingParameters.TrackedInstantMatchThreshold)
                 {
-                    return Matched(t, topCandidate, topCandidateSim);
+                    return Matched(t, topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, topCondidateFaceInfo);
                 }
 
                 if (trackingStatus.Candidates.Count > 1)
                 {
                     var bestOfTheRest = GetBestOfTheRest(trackingStatus, t);
-                    if (bestOfTheRest.confidence > _mp.TrackedInstantMatchThreshold)
+                    if (bestOfTheRest.similarity > MatchingParameters.TrackedInstantMatchThreshold)
                     {
-                        var match = Matched(t, bestOfTheRest.status, bestOfTheRest.confidence);
-                        if (bestOfTheRest.status.Confirmations > topCandidate.Confirmations)
+                        var match = Matched(t, bestOfTheRest.candidate, bestOfTheRest.similarity, bestOfTheRest.snapshot, _faceDb[bestOfTheRest.candidate.FaceId]);
+                        if (bestOfTheRest.candidate.Confirmations > topCandidate.Confirmations)
                         {
-                            trackingStatus.TopCandidate = bestOfTheRest.status;
+                            trackingStatus.TopCandidate = bestOfTheRest.candidate;
                         }
+
                         return match;
                     }
 
-                    if (bestOfTheRest.confidence > topCandidateSim)
+                    if (bestOfTheRest.similarity > topCandidateMatch.similarity)
                     {
-                        topCandidate = bestOfTheRest.status;
-                        topCandidateSim = bestOfTheRest.confidence;
+                        topCandidate = bestOfTheRest.candidate;
+                        topCandidateMatch = (bestOfTheRest.similarity, bestOfTheRest.snapshot);
                     }
                 }
 
-                if (topCandidateSim > _mp.TrackedNewTemplateThreshold)
+                if (topCandidateMatch.similarity > MatchingParameters.TrackedNewTemplateThreshold)
                 {
                     NewTemplate(t, topCandidate);
-                    return Matched(t, topCandidate, topCandidateSim);
                 }
 
-                if (topCandidateSim > _mp.MatchThreshold)
+                if (topCandidateMatch.similarity > MatchingParameters.MatchThreshold)
                 {
-                    return Matched(t, topCandidate, topCandidateSim);
+                    return Matched(t, topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, _faceDb[topCandidate.FaceId]);
                 }
             }
-            
+
             return ProcessUntracked(t);
         }
 
-        private Match ProcessUntracked(FaceTemplate t)
+        private Match<byte[]> ProcessUntracked(FaceTemplate t)
         {
-            
             var bestMatch = _faceDb.GetBestMatch(t);
-            if (bestMatch.confidence <= _mp.MatchThreshold)
+            if (bestMatch == null) return null;
+            bestMatch.TrackingId = t.TrackingId;
+            if (bestMatch.Similarity <= MatchingParameters.MatchThreshold)
             {
                 return null;
             }
 
-            _trackedFaces[t.TrackingId] = new TrackingStatus(new CandidateStatus { Confirmations = bestMatch.confidence, FaceId = bestMatch.id });
+            _trackedFaces[t.TrackingId] =
+                new TrackingStatus(new CandidateStatus {Confirmations = bestMatch.Similarity, FaceId = bestMatch.FaceId});
 
-            if (bestMatch.confidence > _mp.UntrackedNewTemplateThreshold &&
-                bestMatch.confidence < _mp.UntrackedInstantMatchThreshold)
+            if (bestMatch.Similarity > MatchingParameters.UntrackedNewTemplateThreshold &&
+                bestMatch.Similarity < MatchingParameters.UntrackedInstantMatchThreshold)
             {
-                _faceDb[bestMatch.id].AddTemplate(t);
+                _faceDb[bestMatch.FaceId].AddTemplate(t);
             }
 
-            return new Match {Confidence =  bestMatch.confidence, FaceId = bestMatch.id, TrackingId = t.TrackingId};
+            return bestMatch;
         }
 
         public TrackingStatus Capture(FaceTemplate t)
         {
             if (!_trackedFaces.TryGetValue(t.TrackingId, out var ts))
             {
-                ts = _trackedFaces[t.TrackingId] = new TrackingStatus(new CandidateStatus{FaceId = _faceDb.NextId});
+                ts = _trackedFaces[t.TrackingId] = new TrackingStatus(new CandidateStatus {FaceId = _faceDb.NextId});
             }
 
             NewTemplate(t, ts.TopCandidate);
 
             return ts;
-
         }
 
-        private Match Matched(FaceTemplate t, CandidateStatus cs, float confidence)
+        private Match<byte[]> Matched(FaceTemplate t, CandidateStatus cs, float confidence, FaceSnapshot<byte[]> snapshot, IFaceInfo<byte[]> faceInfo)
         {
             cs.Confirmations += confidence;
-            return new Match {Confidence = confidence, FaceId = cs.FaceId, TrackingId = t.TrackingId};
+            return new Match<byte[]>(cs.FaceId, confidence, snapshot, faceInfo, t.TrackingId);
         }
 
         private void NewTemplate(FaceTemplate t, CandidateStatus ts)
@@ -136,49 +140,38 @@ namespace LuxandFace
         }
 
         /// <summary>
-        /// Gets the best-matching candidate in <paramref name="ts"/> excluding the <see cref="TrackingStatus.TopCandidate"/>
+        ///     Gets the best-matching candidate in <paramref name="ts" /> excluding the <see cref="TrackingStatus.TopCandidate" />
         /// </summary>
         /// <param name="ts">Where to look for candidates</param>
         /// <param name="template">What to match candidates to</param>
-        /// <returns>The best-maching <see cref="CandidateStatus"/> and match confidence (between 0 and 1).</returns>
-        private (CandidateStatus status, float confidence) GetBestOfTheRest(TrackingStatus ts, IFaceTemplate<byte[]> template)
+        /// <returns>The best-maching <see cref="CandidateStatus" /> and match confidence (between 0 and 1).</returns>
+        private (CandidateStatus candidate, float similarity, FaceSnapshot<byte[]> snapshot) 
+        GetBestOfTheRest(TrackingStatus ts, IFaceTemplate<byte[]> template)
         {
-            float maxConfidence = 0f;
-            CandidateStatus status = null;
+            (float sim, FaceSnapshot<byte[]> snapshot) bestMatch = default;
+            CandidateStatus bestCand = default;
             var candidates = ts.Candidates;
             for (int i = 1; i < candidates.Count; i++)
             {
-
                 var cand = candidates[i];
-                float conf = _faceDb[cand.FaceId].GetSimilarity(template);
-                if (conf > maxConfidence)
+                var match = _faceDb[cand.FaceId].GetSimilarity(template);
+                if (match.similarity > bestMatch.sim)
                 {
-                    maxConfidence = conf;
-                    status = cand;
+                    bestMatch = match;
+                    bestCand = cand;
                 }
             }
 
-            return (status, maxConfidence);
+            return (bestCand, bestMatch.sim, bestMatch.snapshot);
         }
 
         /// <summary>
-        /// Process multiple templates at once
+        ///     Process multiple templates at once
         /// </summary>
         /// <param name="templates">Templates to be processed</param>
         /// <returns>Any matches that might be found</returns>
-        public IEnumerable<Match> ProcessTemplates(IEnumerable<FaceTemplate> templates)
+        public IEnumerable<Match<byte[]>> ProcessTemplates(IEnumerable<FaceTemplate> templates)
         {
-            var list = new List<Match>();
-
-            foreach (var template in templates)
-            {
-                var match = ProcessTemplate(template);
-                if (match != null && match.Confidence > _mp.MatchThreshold)
-                {
-                    list.Add(match);
-                }
-            }
-
             if (_cacheClearingCounter++ > ClearCacheIterationsLimit)
             {
                 foreach (var ts in _trackedFaces.Where(t => !t.Value.WasSeen).ToList())
@@ -189,28 +182,20 @@ namespace LuxandFace
                 _cacheClearingCounter = 0;
             }
 
-            return list;
+            return templates.Select(ProcessTemplate).Where(match => match != null && match.Similarity > MatchingParameters.MatchThreshold);
         }
-
-        private ushort _cacheClearingCounter = ClearCacheIterationsLimit;
-        private const ushort ClearCacheIterationsLimit = 0;
-        private ConcurrentDictionary<long, TrackingStatus> _trackedFaces;
-        private IFaceDatabase<byte[]> _faceDb;
-
-        private ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>> _addTemplates = 
-            new ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>>();
-    }
-
-    public class Match
-    {
-        public long TrackingId;
-        public int FaceId;
-        public float Confidence;
     }
 
     public class MatchingParameters
     {
-        public float TrackedInstantMatchThreshold { get; set; } 
+        private const float
+            DefaultTrackedInstantMatchThreshold = 0.92f,
+            DefaultUntrackedInstantMatchThreshold = 0.75f,
+            DefaultTrackedNewTemplateThreshold = 0.4f,
+            DefaultMatchThreshold = 0.5f,
+            DefaultUntrackedNewTemplateThreshold = 0.6f;
+
+        public float TrackedInstantMatchThreshold { get; set; }
         public float UntrackedInstantMatchThreshold { get; set; }
         public float TrackedNewTemplateThreshold { get; set; }
         public float MatchThreshold { get; set; }
@@ -224,12 +209,5 @@ namespace LuxandFace
             MatchThreshold = DefaultMatchThreshold,
             UntrackedNewTemplateThreshold = DefaultUntrackedNewTemplateThreshold
         };
-
-        private const float
-            DefaultTrackedInstantMatchThreshold = 0.92f,
-            DefaultUntrackedInstantMatchThreshold = 0.75f,
-            DefaultTrackedNewTemplateThreshold = 0.4f,
-            DefaultMatchThreshold = 0.5f,
-            DefaultUntrackedNewTemplateThreshold = 0.6f;
     }
 }

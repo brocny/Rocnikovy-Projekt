@@ -5,15 +5,22 @@ using Microsoft.Kinect;
 namespace KinectOne
 {
     public class ColorManagerOne : IColorManager
-    {
-
-        public int WidthPixels => _colorFrameSource.FrameDescription.Width;
-        public int HeightPixels => _colorFrameSource.FrameDescription.Height;
-        public int BytesPerPixel => (int) _colorFrameSource.FrameDescription.BytesPerPixel;
+    { 
+        public int FrameWidth => _frameDescription.Width;
+        public int FrameHeight => _frameDescription.Height;
+        public int BytesPerPixel => (int) _frameDescription.BytesPerPixel;
+        public int FrameDataSize => (int) _frameDescription.LengthInPixels * BytesPerPixel;
 
         public ColorManagerOne(KinectOne kinectOne)
         {
             _colorFrameSource = kinectOne.KinectSensor.ColorFrameSource;
+            _frameDescription = _colorFrameSource.CreateFrameDescription(ColorImageFormat.Bgra);
+        }
+
+        public IColorFrame GetNextFrame()
+        {
+            var frame = _colorFrameReader.AcquireLatestFrame();
+            return frame == null ? null : new ColorFrameOne(frame);
         }
 
         public void Open(bool preferResolutionOverFps)
@@ -29,6 +36,8 @@ namespace KinectOne
 
         private ColorFrameReader _colorFrameReader;
         private readonly ColorFrameSource _colorFrameSource;
+        private readonly FrameDescription _frameDescription;
+
 
         private void ColorFrameReader_FrameArrived(object sender, ColorFrameArrivedEventArgs e)
         {

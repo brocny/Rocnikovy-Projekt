@@ -18,11 +18,11 @@ namespace Kinect360
             _colorStream = _kinect360.KinectSensor.ColorStream;
         }
 
-        public int WidthPixels => ColorImageFormat == ColorImageFormat.RgbResolution640x480Fps30 ? 640 : 1280;
-        public int HeightPixels => ColorImageFormat == ColorImageFormat.RgbResolution640x480Fps30 ? 480 : 960;
+        public int FrameWidth => ColorImageFormat == ColorImageFormat.RgbResolution640x480Fps30 ? 640 : 1280;
+        public int FrameHeight => ColorImageFormat == ColorImageFormat.RgbResolution640x480Fps30 ? 480 : 960;
         public int BytesPerPixel => _colorStream.FrameBytesPerPixel;
+        public int FrameDataSize => _colorStream.FramePixelDataLength;
 
-        
 
         private void KinectSensor_ColorFrameReady(object sender, ColorImageFrameReadyEventArgs e)
         {
@@ -34,6 +34,11 @@ namespace Kinect360
         }
 
         public event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady;
+
+        public IColorFrame GetNextFrame()
+        {
+            return new ColorFrame360(_colorStream.OpenNextFrame(30));
+        }
 
         public void Open(bool preferResolutionOverFps)
         {

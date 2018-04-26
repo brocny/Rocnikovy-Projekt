@@ -5,10 +5,10 @@ using System.Windows.Forms;
 
 namespace KinectFaceTracker
 {
-    class DialogState
+    internal class DialogState
     {
-        public DialogResult Result;
         public CommonDialog Dialog;
+        public DialogResult Result;
 
         public void ThreadProcShowDialog()
         {
@@ -16,11 +16,11 @@ namespace KinectFaceTracker
         }
     }
 
-    static class DialogHelpers
+    internal static class DialogHelpers
     {
         internal static DialogResult STAShowDialog(this CommonDialog dialog)
         {
-            var state = new DialogState { Dialog = dialog };
+            var state = new DialogState {Dialog = dialog};
             var thread = new Thread(state.ThreadProcShowDialog);
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();

@@ -18,6 +18,11 @@ namespace KinectOne
         private BodyFrameReader _bodyFrameReader;
         private readonly BodyFrameSource _bodyFrameSource;
 
+        public IBodyFrame GetNextFrame()
+        {
+            return new BodyFrameOne(_bodyFrameReader.AcquireLatestFrame());
+        }
+
         public int BodyCount => _bodyFrameSource.BodyCount;
 
         public BodyManagerOne(KinectOne kinectOne)

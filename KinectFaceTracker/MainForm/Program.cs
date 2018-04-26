@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
+using FSDKTracker;
+using Kinect_Test;
 
 namespace KinectFaceTracker
 {
-    static class Program
+    public static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
         [MTAThread]
-        static void Main()
+        public static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FormMain());
+            Application.Run(new ChooseModeForm());
         }
     }
 }

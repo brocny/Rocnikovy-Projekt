@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +17,7 @@ namespace Face
     /// </remarks>
     /// <typeparam name="T">Type of face templates</typeparam>
     [Serializable]
-    public partial class DictionaryFaceDatabase<T> : IFaceDatabase<T>
+    public partial class DictionaryFaceDatabase<T> : IFaceDatabase<T>, IEnumerable<KeyValuePair<int, IFaceInfo<T>>>
     {
         private ConcurrentDictionary<int, IFaceInfo<T>> _storedFaces;
         private readonly IFaceInfo<T> _baseInstance;
@@ -24,7 +25,7 @@ namespace Face
         public IEnumerable<KeyValuePair<int, IFaceInfo<T>>> Pairs => _storedFaces.Select(x => x);
 
         public int NextId { get; private set; }
-        public string SerializePath { get; set; } = null;
+        public string SerializePath { get; set; }
 
         public DictionaryFaceDatabase(IFaceInfo<T> baseInstance = null, IEnumerable<KeyValuePair<int, IFaceInfo<T>>> initialDb = null)
         {
@@ -72,11 +73,11 @@ namespace Face
         }
 
         /// <summary>
-        /// Will do nothing if a face the same <code>name</code> is already in the database
+        /// Will do nothing if a face the same <paramref name="id"/> is already in the database
         /// </summary>
         /// <param name="info"></param>
         /// <param name="id"></param>
-        /// <returns><code>true</code> if successful</returns>
+        /// <returns><c>true</c> if successful</returns>
         public bool TryAddNewFace(int id, IFaceInfo<T> info)
         {
             bool ret = _storedFaces.TryAdd(id, info);
@@ -112,51 +113,36 @@ namespace Face
         /// Get the the <c>id</c> of the face matching <paramref name="template"/> the closest and the <c>confidence</c> of the match
         /// </summary>
         /// <param name="template"></param>
-        /// <returns><c>id</c> of the best matching face and <code>confidence</code> value [0, 1]</returns>
-        public (int id, float confidence) GetBestMatch(T template)
+        /// <returns><c>id</c> of the best matching face and <c>confidence</c> value [0, 1]</returns>
+        public Match<T> GetBestMatch(T template)
         {
-            (int, float) retValue = (-1, 0);
+            var matches = from f in _storedFaces.AsParallel()
+                let faceInfo = f.Value
+                let match = faceInfo.GetSimilarity(template)
+                select new Match<T>(f.Key, match.similarity, match.snapshot, faceInfo);
 
-            var matches = from storedFace in _storedFaces.AsParallel()
-                select (storedFace.Key, storedFace.Value.GetSimilarity(template));
-            foreach (var match in matches.AsSequential())
-            {
-                if (match.Item2 > retValue.Item2)
-                {
-                    retValue = match;
-                }
-            }
-
-            return retValue;
+            return matches.Max();
         }
 
-        public (int id, float confidence) GetBestMatch(IFaceTemplate<T> template)
+        public Match<T> GetBestMatch(IFaceTemplate<T> template)
         {
-            (int, float) ret = (-1, 0);
             var matches = from f in _storedFaces.AsParallel()
-                let fv = f.Value
-                where fv.Age == 0f || (fv.Age / template.Age > 0.75f && fv.Age / template.Age < 1.33f)
-                where fv.Gender == template.Gender || fv.Gender == Gender.Unknown
-                select (f.Key, fv.GetSimilarity(template));
+                let faceInfo = f.Value
+                where faceInfo.Age == 0 || (faceInfo.Age / template.Age > 0.75f && faceInfo.Age / template.Age < 1.33f)
+                where faceInfo.Gender == template.Gender || faceInfo.Gender == Gender.Unknown
+                let match = faceInfo.GetSimilarity(template)
+                select new Match<T>(f.Key, match.similarity, match.snapshot, faceInfo, template.TrackingId);
 
-            foreach (var match in matches.AsSequential())
-            {
-                if (match.Item2 > ret.Item2)
-                {
-                    ret = match;
-                }
-            }
-
-            return ret;
+            return matches.Max();
         }
 
         /// <summary>
-        /// Add another faceInfo to existing face -- for example a different angle, with/out glasses, ...
+        /// Add another template to an existing face -- for example a different angle, with/out glasses, ...
         /// </summary>
         /// <param name="id"></param>
         /// <param name="faceTemplate"></param>
-        /// <returns><code>true</code>if succesful</returns>
-        /// <exception cref="ArgumentException"> thrown if <code>faceTemplate</code> has incorrect length</exception>
+        /// <returns><c>true</c>if succesful</returns>
+        /// <exception cref="ArgumentException"> thrown if <paramref name="faceTemplate"/> has incorrect length</exception>
         public bool TryAddFaceTemplateToExistingFace(int id, T faceTemplate)
         {
             if (_storedFaces.TryGetValue(id, out var faceInfo))
@@ -212,6 +198,11 @@ namespace Face
             }
         }
 
+        public void Clear()
+        {
+            _storedFaces.Clear();
+        }
+
         public void Add(int id, IFaceInfo<T> faceInfo)
         {
             if (_storedFaces.TryGetValue(id, out var targetFaceInfo))
@@ -233,13 +224,11 @@ namespace Face
         /// <returns><code>true</code> if succesful</returns>
         public bool MergeFaces(int id1, int id2)
         {
-            if (_storedFaces.TryGetValue(id1, out var info1) && _storedFaces.TryGetValue(id1, out var info2))
-            {
-                info1.Merge(info2);
-                return _storedFaces.TryRemove(id2, out var _);
-            }
+            if (!_storedFaces.TryGetValue(id1, out var info1) || !_storedFaces.TryGetValue(id1, out var info2))
+                return false;
 
-            return false;
+            info1.Merge(info2);
+            return _storedFaces.TryRemove(id2, out var _);
         }
 
         public void Serialize(Stream stream)
@@ -256,19 +245,27 @@ namespace Face
 
         public IFaceDatabase<T> Backup()
         {
-            var ret = new DictionaryFaceDatabase<T>(_baseInstance, _storedFaces)
+            return new DictionaryFaceDatabase<T>(_baseInstance, _storedFaces)
             {
-                SerializePath = this.SerializePath,
-                NextId = this.NextId
+                SerializePath = SerializePath,
+                NextId = NextId
             };
-
-            return ret;
         }
 
-        public void Restore(IFaceDatabase<T> restoreDb)
+        public void Restore(IFaceDatabase<T> backup)
         {
-            this._storedFaces = new ConcurrentDictionary<int, IFaceInfo<T>>(restoreDb.Pairs);
-            this.NextId = restoreDb.NextId;
+            _storedFaces = new ConcurrentDictionary<int, IFaceInfo<T>>(backup.Pairs);
+            NextId = backup.NextId;
+        }
+
+        public IEnumerator<KeyValuePair<int, IFaceInfo<T>>> GetEnumerator()
+        {
+            return _storedFaces.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

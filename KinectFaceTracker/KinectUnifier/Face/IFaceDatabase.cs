@@ -14,13 +14,14 @@ namespace Face
         int NextId { get; }
         bool ContainsKey(int key);
         bool TryAddNewFace(int id, IFaceInfo<T> faceInfo);
-        (int id, float confidence) GetBestMatch(IFaceTemplate<T> template);
-        (int id, float confidence) GetBestMatch(T template);
+        Match<T> GetBestMatch(IFaceTemplate<T> template);
+        Match<T> GetBestMatch(T template);
         void AddOrUpdate(int id, IFaceTemplate<T> template);
         void AddOrUpdate(int id, T template);
+        void Clear();
         bool MergeFaces(int id1, int id2);
         IFaceDatabase<T> Backup();
-        void Restore(IFaceDatabase<T> restoreDb);
+        void Restore(IFaceDatabase<T> backup);
         void Serialize(Stream stream);
         void Deserialize(Stream stream);
     }

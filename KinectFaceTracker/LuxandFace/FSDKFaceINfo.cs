@@ -8,6 +8,7 @@ using System.Xml.Serialization;
 using Face;
 using KinectUnifier;
 using Luxand;
+using MoreLinq;
 
 
 namespace LuxandFaceLib
@@ -31,7 +32,7 @@ namespace LuxandFaceLib
         public IEnumerable<byte[]> Templates => Snapshots.Select(x => x.Template);
 
         [XmlIgnore]
-        public IEnumerable<ImmutableImage> Images => Snapshots.Select(x => x.FaceImage);
+        public IEnumerable<KinectUnifier.ImageBuffer> Images => Snapshots.Select(x => x.FaceImageBuffer);
 
         [XmlElement(ElementName = "Name")]
         public string Name { get; set; }
@@ -77,35 +78,35 @@ namespace LuxandFaceLib
             Snapshots.AddRange(info.Snapshots);
         }
 
-        public float GetSimilarity(IFaceInfo<byte[]> faceInfo)
+        public (float similarity, FaceSnapshot<byte[]> snapshot) GetSimilarity(IFaceInfo<byte[]> faceInfo)
         {
             return Snapshots.Max(x => faceInfo.GetSimilarity(x.Template));
         }
 
-        public float GetSimilarity(IFaceTemplate<byte[]> faceTemplate)
+        public (float similarity, FaceSnapshot<byte[]> snapshot) GetSimilarity(IFaceTemplate<byte[]> faceTemplate)
         {
             const float wrongGenderPenalty = 0.75f,
                 maxAgeRatioWithoutPenalty = 1.25f,
                 minAgeRatioWithoutPenalty = 1f / maxAgeRatioWithoutPenalty;
 
-            float baseSim = GetSimilarity(faceTemplate.Template);
+            var baseMatch = GetSimilarity(faceTemplate.Template);
             
             float ageRatio = Age / faceTemplate.Age;
-            if (ageRatio > maxAgeRatioWithoutPenalty) baseSim /= ageRatio;
-            if (ageRatio < minAgeRatioWithoutPenalty) baseSim *= ageRatio;
+            if (ageRatio > maxAgeRatioWithoutPenalty) baseMatch.similarity /= ageRatio;
+            if (ageRatio < minAgeRatioWithoutPenalty) baseMatch.similarity *= ageRatio;
 
 
             if (faceTemplate.Gender != Gender.Unknown && faceTemplate.Gender != Gender)
             {
-                baseSim *= wrongGenderPenalty;
+                baseMatch.similarity *= wrongGenderPenalty;
             }
 
-            return baseSim;
+            return baseMatch;
         }
 
-        public void AddTemplate(byte[] faceTemplate, ImmutableImage image = null)
+        public void AddTemplate(byte[] faceTemplate, KinectUnifier.ImageBuffer imageBuffer = null)
         {
-            Snapshots.Add(new FaceSnapshotByteArray(faceTemplate, image));
+            Snapshots.Add(new FaceSnapshotByteArray(faceTemplate, imageBuffer));
         }
 
         public void AddTemplate(IFaceTemplate<byte[]> faceTemplate)
@@ -122,7 +123,7 @@ namespace LuxandFaceLib
                                   + (faceTemplate.Gender == Gender.Male ? faceTemplate.GenderConfidence: 1 - faceTemplate.GenderConfidence)) 
                                   / (ftCount + 1);
             }
-            Snapshots.Add(new FaceSnapshotByteArray(faceTemplate.Template, faceTemplate.FaceImage));
+            Snapshots.Add(new FaceSnapshotByteArray(faceTemplate.Template, faceTemplate.FaceImageBuffer));
         }
 
         public void AddTemplates(IEnumerable<byte[]> faceTemplates)
@@ -135,20 +136,20 @@ namespace LuxandFaceLib
             return template != null && template.Length == FSDK.TemplateSize;
         }
 
-        public float GetSimilarity(byte[] faceTemplate)
+        public (float similarity, FaceSnapshot<byte[]> snapshot) GetSimilarity(byte[] faceTemplate)
         {
-            if (faceTemplate == null || Snapshots.Count == 0) return 0;
-            float[] similarities = new float[Snapshots.Count];
+            if (faceTemplate == null || Snapshots.Count == 0) return default;
+            var similarities = new (float similarity, FaceSnapshotByteArray faceSnapshot)[Snapshots.Count];
             Parallel.For(0, Snapshots.Count, i =>
             {
                 var ithTemplate = Snapshots[i].Template;
-                if (FSDK.FSDKE_OK != FSDK.MatchFaces(ref faceTemplate, ref ithTemplate, ref similarities[i]))
+                if (FSDK.FSDKE_OK != FSDK.MatchFaces(ref faceTemplate, ref ithTemplate, ref similarities[i].similarity))
                 {
-                    similarities[i] = 0;
+                    similarities[i] = default;
                 }
             });
 
-            return similarities.Max();
+            return similarities.MaxBy(x => x.similarity);
         }
 
         public IFaceInfo<byte[]> NewInstance()
@@ -206,7 +207,7 @@ namespace LuxandFaceLib
     {
         public FaceSnapshotByteArray() { }
 
-        public FaceSnapshotByteArray(byte[] template, ImmutableImage image) : base(template, image) { }
+        public FaceSnapshotByteArray(byte[] template, KinectUnifier.ImageBuffer imageBuffer) : base(template, imageBuffer) { }
 
         [XmlElement("Template")]
         public override string XmlTemplate

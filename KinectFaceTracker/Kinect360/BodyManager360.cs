@@ -16,6 +16,11 @@ namespace Kinect360
     {
         private readonly Kinect360 _kinect360; 
         private readonly SkeletonStream _skeletonStream;
+        public IBodyFrame GetNextFrame()
+        {
+            return new BodyFrame360(_skeletonStream.OpenNextFrame(30));
+        }
+
         public int BodyCount => _skeletonStream.FrameSkeletonArrayLength;
 
         public BodyManager360(Kinect360 kinect360)
@@ -106,9 +111,8 @@ namespace Kinect360
 
         public class Body360 : IBody
         {
-           
             public IReadOnlyDictionary<MyJointType, IJoint> Joints => _joints ?? (_joints = MakeJointDictionary());
-            public IReadOnlyList<ValueTuple<MyJointType, MyJointType>> Bones => bones;
+            public IReadOnlyList<(MyJointType joint1, MyJointType joint2)> Bones => bones;
             public bool IsTracked => _body.TrackingState == SkeletonTrackingState.Tracked;
             public long TrackingId => _body.TrackingId;
 

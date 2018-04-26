@@ -22,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,6 +32,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '360|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -41,6 +43,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'One|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -51,6 +54,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == '360Release|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -61,9 +65,11 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'OneRelease|AnyCPU'">
     <OutputPath>bin\OneRelease\</OutputPath>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -78,15 +84,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ImmutableImage.cs" />
+    <Compile Include="Face\DictionaryFaceDatabase.cs" />
+    <Compile Include="Face\FaceDatabaseDeserializer.cs" />
+    <Compile Include="Face\FaceDatabaseSerializer.cs" />
+    <Compile Include="Face\FaceSnapshot.cs" />
+    <Compile Include="Face\IFaceDatabase.cs" />
+    <Compile Include="Face\IFaceInfo.cs" />
+    <Compile Include="Face\IFaceTemplate.cs" />
+    <Compile Include="Face\Match.cs" />
+    <Compile Include="ImageBuffer.cs" />
     <Compile Include="ConcurrentHashSet.cs" />
-    <Compile Include="ICoordinateMapper.cs" />
-    <Compile Include="IMultiManager.cs" />
+    <Compile Include="Kinect\ICoordinateMapper.cs" />
+    <Compile Include="Kinect\IMultiManager.cs" />
     <Compile Include="Util.cs" />
-    <Compile Include="IBodyManager.cs" />
-    <Compile Include="IColorManager.cs" />
-    <Compile Include="IKinect.cs" />
+    <Compile Include="Kinect\IBodyManager.cs" />
+    <Compile Include="Kinect\IColorManager.cs" />
+    <Compile Include="Kinect\IKinect.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

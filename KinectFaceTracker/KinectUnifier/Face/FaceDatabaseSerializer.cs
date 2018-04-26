@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.IO;
 using System.Xml;
 
 namespace Face
@@ -10,6 +7,8 @@ namespace Face
     {
         public class FaceDatabaseSerializer
         {
+            private readonly DictionaryFaceDatabase<T> _faceDatabase;
+
             public FaceDatabaseSerializer(DictionaryFaceDatabase<T> faceDatabase)
             {
                 _faceDatabase = faceDatabase;
@@ -32,15 +31,13 @@ namespace Face
                         face.Value.Serialize(sw);
                         xw.WriteEndElement();
                     }
+
                     xw.WriteEndElement();
                     xw.WriteEndDocument();
                     xw.Flush();
                     sw.Flush();
                 }
             }
-
-            private readonly DictionaryFaceDatabase<T> _faceDatabase;
         }
     }
 }
-

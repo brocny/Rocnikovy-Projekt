@@ -85,9 +85,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KinectUnifier\KinectUnifier.csproj">
+    <ProjectReference Include="..\KinectUnifier\Core.csproj">
       <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
-      <Name>KinectUnifier</Name>
+      <Name>Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

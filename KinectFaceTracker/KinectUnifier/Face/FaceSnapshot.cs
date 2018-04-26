@@ -10,31 +10,31 @@ namespace Face
     [Serializable]
     public abstract class FaceSnapshot<T>
     {
-        [XmlIgnore]
-        public T Template { get; protected set; }
+        protected const string NoImage = "NO_IMAGE";
 
-        [XmlIgnore]
-        public ImmutableImage FaceImage { get; protected set; }
-
-        protected FaceSnapshot() { }
-
-        protected FaceSnapshot(T template, ImmutableImage image)
+        protected FaceSnapshot()
         {
-            FaceImage = image;
+        }
+
+        protected FaceSnapshot(T template, ImageBuffer imageBuffer)
+        {
+            FaceImageBuffer = imageBuffer;
             Template = template;
         }
 
-        protected const string NoImage = "NO_IMAGE";
+        [XmlIgnore] public T Template { get; protected set; }
+
+        [XmlIgnore] public ImageBuffer FaceImageBuffer { get; protected set; }
 
         [XmlElement("Image")]
         public string XmlImage
         {
             get
             {
-                if (FaceImage == null) return NoImage;
+                if (FaceImageBuffer == null) return NoImage;
                 using (var ms = new MemoryStream())
                 {
-                    FaceImage.ToBitmap().Save(ms, ImageFormat.Png);
+                    FaceImageBuffer.ToBitmap().Save(ms, ImageFormat.Png);
                     return Convert.ToBase64String(ms.ToArray());
                 }
             }
@@ -43,7 +43,7 @@ namespace Face
             {
                 if (value == NoImage)
                 {
-                    FaceImage = null;
+                    FaceImageBuffer = null;
                     return;
                 }
 
@@ -51,13 +51,11 @@ namespace Face
                 using (var ms = new MemoryStream(bytes))
                 {
                     var image = new Bitmap(ms);
-                    FaceImage = new ImmutableImage(image);
+                    FaceImageBuffer = new ImageBuffer(image);
                 }
-
             }
         }
 
-        [XmlIgnore]
-        public abstract string XmlTemplate { get; set; }
+        [XmlIgnore] public abstract string XmlTemplate { get; set; }
     }
 }

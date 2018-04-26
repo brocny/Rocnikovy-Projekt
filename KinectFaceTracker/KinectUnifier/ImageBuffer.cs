@@ -1,49 +1,52 @@
 ﻿using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
 using System.Runtime.InteropServices;
 
 namespace KinectUnifier
 {
-    public class ImmutableImage
+    public class ImageBuffer
     {
-        public ImmutableImage()
+        public ImageBuffer()
         {
-            
         }
 
-        public ImmutableImage(byte[] buffer, int width, int height, int bytesPerPixel)
+        public ImageBuffer(byte[] buffer, int width, int height, int bytesPerPixel)
         {
             Width = width;
             Height = height;
             BytesPerPixel = bytesPerPixel;
-            _buffer = buffer;
+            Buffer = buffer;
         }
 
-        public ImmutableImage(Bitmap bmp)
+        public ImageBuffer(Bitmap bmp)
         {
             int bufLength = bmp.Height * bmp.Width * 4;
-            _buffer = new byte[bufLength];
+            Buffer = new byte[bufLength];
             BytesPerPixel = 4;
             Width = bmp.Width;
             Height = bmp.Height;
             var bits = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly,
                 PixelFormat.Format32bppArgb);
-            Marshal.Copy(bits.Scan0, _buffer, 0, bufLength);
-            
+            Marshal.Copy(bits.Scan0, Buffer, 0, bufLength);
         }
 
-        private readonly byte[] _buffer;
-
-        public byte[] Buffer => (byte[]) _buffer.Clone();
+        /// <summary>
+        /// Returns a copy of the pixel buffer
+        /// </summary>
+        public byte[] Buffer { get; }
 
         public int Width { get; }
         public int Height { get; }
         public int BytesPerPixel { get; }
 
+        public ImageBuffer GetRectangle(Rectangle rect)
+        {
+            return new ImageBuffer(Buffer.GetBufferRect(Width, rect, BytesPerPixel), rect.Width, rect.Height, BytesPerPixel);
+        }
+
         public Bitmap ToBitmap()
         {
-            return _buffer.BytesToBitmap(Width, Height, BytesPerPixel);
+            return Buffer.BytesToBitmap(Width, Height, BytesPerPixel);
         }
     }
 }

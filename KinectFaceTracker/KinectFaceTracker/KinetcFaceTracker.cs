@@ -9,30 +9,36 @@ namespace KinectFaceTracker
 {
     public class KinectFaceTracker : IDisposable
     {
-        public FSDKFacePipeline FacePipeline => _facePipeline;
-        public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _facePipeline.TrackedFaces;
-
-        public IFaceDatabase<byte[]> FaceDatabase
-        {
-            get => _facePipeline.FaceDb;
-            set => _facePipeline.FaceDb = value;
-        }
-        public bool IsRunning => _kinect.IsRunning;
+        private readonly ICoordinateMapper _coordinateMapper;
 
         private readonly IKinect _kinect;
         private IMultiManager _multiManager;
-        private readonly ICoordinateMapper _coordinateMapper;
-
-        private readonly FSDKFacePipeline _facePipeline;
-
-        public event EventHandler<FrameArrivedEventArgs> FrameArrived;
 
         public KinectFaceTracker(FSDKFacePipeline facePipeline, IKinect kinect)
         {
             _kinect = kinect;
-            _facePipeline = facePipeline;
+            FacePipeline = facePipeline;
             _coordinateMapper = _kinect.CoordinateMapper;
         }
+
+        public FSDKFacePipeline FacePipeline { get; }
+
+        public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => FacePipeline.TrackedFaces;
+
+        public IFaceDatabase<byte[]> FaceDatabase
+        {
+            get => FacePipeline.FaceDb;
+            set => FacePipeline.FaceDb = value;
+        }
+
+        public bool IsRunning => _kinect.IsRunning;
+
+        public void Dispose()
+        {
+            _multiManager.Dispose();
+        }
+
+        public event EventHandler<FrameArrivedEventArgs> FrameArrived;
 
         public void Start()
         {
@@ -41,6 +47,7 @@ namespace KinectFaceTracker
                 _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color, true);
                 _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
             }
+
             _kinect.Open();
         }
 
@@ -60,27 +67,21 @@ namespace KinectFaceTracker
             using (var bodyFrame = multiFrame.BodyFrame)
             {
                 if (colorFrame == null || bodyFrame == null) return;
-                var faceLocations = await _facePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
+                var faceLocations = await FacePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
                 FrameArrived?.Invoke(this, new FrameArrivedEventArgs(faceLocations));
             }
-            multiFrame.Dispose();
-        }
 
-        public void Dispose()
-        {
-            _multiManager.Dispose();
+            multiFrame.Dispose();
         }
     }
 
     public class FrameArrivedEventArgs : EventArgs
     {
-        public FaceLocationResult FaceLocationResult { get; }
-
         public FrameArrivedEventArgs(FaceLocationResult flr)
         {
             FaceLocationResult = flr;
         }
+
+        public FaceLocationResult FaceLocationResult { get; }
     }
 }
-
-    

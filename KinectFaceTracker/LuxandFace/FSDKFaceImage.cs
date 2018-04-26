@@ -10,9 +10,7 @@ namespace LuxandFaceLib
     public class FSDKFaceImage
     {
         public int ImageHandle;
-
-
-        public ImmutableImage Image;
+        public ImageBuffer ImageBuffer;
 
         /// <summary>
         /// Location of the top-left of face rectangle in the original frame
@@ -20,9 +18,10 @@ namespace LuxandFaceLib
         public Point OrigLocation;
         public FSDK.TFacePosition FacePosition;
         public FSDK.TPoint[] Features;
-        public Point[] GetFacialFeatures() => Features.Select(x => x.ToPoint() + new Size(OrigLocation)).ToArray();
+        public Point[] GetFacialFeatures() => _facialFeatures ?? (_facialFeatures = Features.Select(x => x.ToPoint() + new Size(OrigLocation)).ToArray());
         public long TrackingId;
 
+        private Point[] _facialFeatures;
         public byte[] GetFaceTemplate()
         {
             byte[] retValue;
@@ -53,7 +52,7 @@ namespace LuxandFaceLib
             if (Features == null) return null;
 
             if (FSDK.FSDKE_OK !=
-                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Age", out var response, 256))
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Age", out string response, 256))
             {
                 return null;
             }
@@ -77,7 +76,7 @@ namespace LuxandFaceLib
             if (Features == null) return null;
 
             if (FSDK.FSDKE_OK !=
-                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Gender", out var response, 128))
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Gender", out string response, 128))
             {
                 return null;
             }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Xml;
 
 namespace Face
@@ -9,14 +7,13 @@ namespace Face
     {
         public class FaceDatabaseDeserializer
         {
-            private readonly IFaceInfo<T> _faceInfoBaseInstance;
             private readonly DictionaryFaceDatabase<T> _db;
+            private readonly IFaceInfo<T> _faceInfoBaseInstance;
 
             public FaceDatabaseDeserializer(IFaceInfo<T> faceInfoBaseInstance, DictionaryFaceDatabase<T> db)
             {
                 _faceInfoBaseInstance = faceInfoBaseInstance;
                 _db = db;
-
             }
 
             public void Deserialize(Stream stream)
@@ -25,7 +22,6 @@ namespace Face
                 {
                     while (xr.ReadToFollowing("Id"))
                     {
-
                         int id = xr.ReadElementContentAsInt();
                         xr.ReadToFollowing("IFaceInfo");
                         var sr = new StringReader(xr.ReadOuterXml());
@@ -34,8 +30,6 @@ namespace Face
                     }
                 }
             }
-
         }
     }
 }
-
