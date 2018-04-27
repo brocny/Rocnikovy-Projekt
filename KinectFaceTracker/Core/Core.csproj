@@ -93,7 +93,6 @@
     <Compile Include="Face\IFaceTemplate.cs" />
     <Compile Include="Face\Match.cs" />
     <Compile Include="ImageBuffer.cs" />
-    <Compile Include="ConcurrentHashSet.cs" />
     <Compile Include="Kinect\ICoordinateMapper.cs" />
     <Compile Include="Kinect\IMultiManager.cs" />
     <Compile Include="Util.cs" />
