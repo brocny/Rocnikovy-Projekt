@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace KinectFaceTracker.Properties {
+namespace App.KinectTracked.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace KinectFaceTracker
+namespace App.KinectTracked
 {
     class FpsCounter
     {

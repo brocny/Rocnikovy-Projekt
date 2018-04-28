@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
-using Face;
-using KinectUnifier;
+using Core.Face;
+using Core;
 using Luxand;
 using MoreLinq;
 
 
-namespace LuxandFaceLib
+namespace FsdkFaceLib
 {
     [Serializable]
     [XmlRoot("IFaceInfo")]
@@ -32,7 +33,7 @@ namespace LuxandFaceLib
         public IEnumerable<byte[]> Templates => Snapshots.Select(x => x.Template);
 
         [XmlIgnore]
-        public IEnumerable<KinectUnifier.ImageBuffer> Images => Snapshots.Select(x => x.FaceImageBuffer);
+        public IEnumerable<Core.ImageBuffer> Images => Snapshots.Select(x => x.FaceImageBuffer);
 
         [XmlElement(ElementName = "Name")]
         public string Name { get; set; }
@@ -104,7 +105,7 @@ namespace LuxandFaceLib
             return baseMatch;
         }
 
-        public void AddTemplate(byte[] faceTemplate, KinectUnifier.ImageBuffer imageBuffer = null)
+        public void AddTemplate(byte[] faceTemplate, Core.ImageBuffer imageBuffer = null)
         {
             Snapshots.Add(new FaceSnapshotByteArray(faceTemplate, imageBuffer));
         }
@@ -123,7 +124,7 @@ namespace LuxandFaceLib
                                   + (faceTemplate.Gender == Gender.Male ? faceTemplate.GenderConfidence: 1 - faceTemplate.GenderConfidence)) 
                                   / (ftCount + 1);
             }
-            Snapshots.Add(new FaceSnapshotByteArray(faceTemplate.Template, faceTemplate.FaceImageBuffer));
+            Snapshots.Add(new FaceSnapshotByteArray(faceTemplate.Template, faceTemplate.FaceImage));
         }
 
         public void AddTemplates(IEnumerable<byte[]> faceTemplates)
@@ -139,7 +140,7 @@ namespace LuxandFaceLib
         public (float similarity, FaceSnapshot<byte[]> snapshot) GetSimilarity(byte[] faceTemplate)
         {
             if (faceTemplate == null || Snapshots.Count == 0) return default;
-            var similarities = new (float similarity, FaceSnapshotByteArray faceSnapshot)[Snapshots.Count];
+            var similarities = new (float similarity, FaceSnapshot<byte[]> faceSnapshot)[Snapshots.Count];
             Parallel.For(0, Snapshots.Count, i =>
             {
                 var ithTemplate = Snapshots[i].Template;
@@ -147,6 +148,8 @@ namespace LuxandFaceLib
                 {
                     similarities[i] = default;
                 }
+
+                similarities[i].faceSnapshot = Snapshots[i];
             });
 
             return similarities.MaxBy(x => x.similarity);
@@ -207,8 +210,9 @@ namespace LuxandFaceLib
     {
         public FaceSnapshotByteArray() { }
 
-        public FaceSnapshotByteArray(byte[] template, KinectUnifier.ImageBuffer imageBuffer) : base(template, imageBuffer) { }
+        public FaceSnapshotByteArray(byte[] template, Core.ImageBuffer imageBuffer) : base(template, imageBuffer) { }
 
+        [Browsable(false)]
         [XmlElement("Template")]
         public override string XmlTemplate
         {

@@ -136,7 +136,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FaceSDK.NET, Version=6.4.0.0, Culture=neutral, processorArchitecture=AMD64">
+    <Reference Include="FaceSDK.NET, Version=6.4.0.0, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Luxand\FaceSDK\bin\win32\FaceSDK.NET.dll</HintPath>
     </Reference>

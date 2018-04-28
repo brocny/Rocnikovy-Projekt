@@ -1,18 +1,17 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Face;
-using KinectUnifier;
+using Core.Face;
+using Core;
 using Luxand;
 using System.Threading.Tasks.Dataflow;
 using System.Buffers;
 using LuxandFace;
 
-namespace LuxandFaceLib
+namespace FsdkFaceLib
 {
     public class FSDKFacePipeline
     {
@@ -33,7 +32,7 @@ namespace LuxandFaceLib
         /// <returns>
         /// A Task, containing <see cref="TrackingStatus"/> of the face, Task will compelete once saving face's template is completed.
         /// </returns>
-        public Task<TrackingStatus> Capture(long trakckingId) { return _templateProc.AddTemplate(trakckingId);}
+        public Task<TrackingStatus> Capture(long trakckingId) { return _templateProc.Capture(trakckingId);}
 
         public TaskScheduler TaskScheduler { get; set; }
         public CancellationToken CancellationToken { get; set; }
@@ -230,9 +229,9 @@ namespace LuxandFaceLib
                     TrackingId = faceLocations.TrackingIds[i],
                     ImageBuffer = new ImageBuffer(pixelBuffer, rect.Width, rect.Height, faceLocations.ImageBytesPerPixel)
                 };
+
                 _bufferPool.Return(faceLocations.ColorBuffer);
             }
-            
 
             FaceCuttingComplete?.Invoke(this, result);
             return result;
@@ -309,7 +308,7 @@ namespace LuxandFaceLib
                     {
                         TrackingId = x.TrackingId,
                         Template = x.GetFaceTemplate(),
-                        FaceImageBuffer = x.ImageBuffer,
+                        FaceImage = x.ImageBuffer,
                         Age = x.GetAge() ?? 0,
                         Gender = gender.gender,
                         GenderConfidence = gender.confidence,
@@ -331,10 +330,10 @@ namespace LuxandFaceLib
             FSDK.SetFaceDetectionParameters(_handleArbitrayRot, _determineRotAngle, _internalResizeWidth);
         }
 
-        private int _internalResizeWidth = 50;
+        private int _internalResizeWidth = 25;
         private bool _handleArbitrayRot = false;
         private bool _determineRotAngle = false;
-        private int _faceDetectionThreshold = 3;
+        private int _faceDetectionThreshold = 4;
 
         private readonly TemplateProcessor _templateProc;
 
@@ -347,8 +346,6 @@ namespace LuxandFaceLib
 
         private readonly ArrayPool<byte> _bufferPool;
     }
-
-
 
     public class FaceLocationResult
     {
@@ -378,7 +375,7 @@ namespace LuxandFaceLib
     public class FaceTemplate : IFaceTemplate<byte[]>
     {
         public byte[] Template { get; internal set; }
-        public ImageBuffer FaceImageBuffer { get; internal set; }
+        public ImageBuffer FaceImage { get; internal set; }
         public float Age { get; internal set; }
         public Gender Gender { get; internal set; }
         public float GenderConfidence { get; internal set; }

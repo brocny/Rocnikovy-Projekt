@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.Remoting.Channels;
 
-namespace KinectUnifier
+namespace Core
 {
     public static class Util
     {
@@ -120,7 +120,6 @@ namespace KinectUnifier
         {
             if(buffer == null)
                 throw new ArgumentNullException(nameof(buffer));
-
             var bmp = new Bitmap(width, height, pf);
             var bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly,
                 bmp.PixelFormat);

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
 
-namespace Face
+namespace Core.Face
 {
     /// <summary>
     /// A database for storing information about faces

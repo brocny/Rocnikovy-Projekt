@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Face;
-using LuxandFaceLib;
+using Core.Face;
+using FsdkFaceLib;
 
 namespace LuxandFace
 {
     internal class TemplateProcessor
     {
-        private const ushort ClearCacheIterationsLimit = 10;
+        private const ushort ClearCacheIterationsLimit = 20;
 
         private readonly ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>> _addTemplates =
             new ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>>();
@@ -32,7 +32,7 @@ namespace LuxandFace
 
         public MatchingParameters MatchingParameters { get; set; } = MatchingParameters.Default;
 
-        public Task<TrackingStatus> AddTemplate(long trackingId)
+        public Task<TrackingStatus> Capture(long trackingId)
         {
             var tsc = new TaskCompletionSource<TrackingStatus>();
             _addTemplates[trackingId] = tsc;
@@ -47,48 +47,47 @@ namespace LuxandFace
                 return null;
             }
 
-            if (_trackedFaces.TryGetValue(t.TrackingId, out var trackingStatus))
+            if (!_trackedFaces.TryGetValue(t.TrackingId, out var trackingStatus)) return ProcessUntracked(t);
+
+            trackingStatus.WasSeen = true;
+            var topCandidate = trackingStatus.TopCandidate;
+            var topCondidateFaceInfo = _faceDb[topCandidate.FaceId];
+            var topCandidateMatch = topCondidateFaceInfo.GetSimilarity(t);
+
+            if (topCandidateMatch.similarity > MatchingParameters.TrackedInstantMatchThreshold)
             {
-                trackingStatus.WasSeen = true;
-                var topCandidate = trackingStatus.TopCandidate;
-                var topCondidateFaceInfo = _faceDb[topCandidate.FaceId];
-                var topCandidateMatch = topCondidateFaceInfo.GetSimilarity(t);
+                return Matched(t, topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, topCondidateFaceInfo);
+            }
 
-                if (topCandidateMatch.similarity > MatchingParameters.TrackedInstantMatchThreshold)
+            if (trackingStatus.Candidates.Count > 1)
+            {
+                var bestOfTheRest = GetBestOfTheRest(trackingStatus, t);
+                if (bestOfTheRest.similarity > MatchingParameters.TrackedInstantMatchThreshold)
                 {
-                    return Matched(t, topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, topCondidateFaceInfo);
-                }
-
-                if (trackingStatus.Candidates.Count > 1)
-                {
-                    var bestOfTheRest = GetBestOfTheRest(trackingStatus, t);
-                    if (bestOfTheRest.similarity > MatchingParameters.TrackedInstantMatchThreshold)
+                    var match = Matched(t, bestOfTheRest.candidate, bestOfTheRest.similarity, bestOfTheRest.snapshot, _faceDb[bestOfTheRest.candidate.FaceId]);
+                    if (bestOfTheRest.candidate.Confirmations > topCandidate.Confirmations)
                     {
-                        var match = Matched(t, bestOfTheRest.candidate, bestOfTheRest.similarity, bestOfTheRest.snapshot, _faceDb[bestOfTheRest.candidate.FaceId]);
-                        if (bestOfTheRest.candidate.Confirmations > topCandidate.Confirmations)
-                        {
-                            trackingStatus.TopCandidate = bestOfTheRest.candidate;
-                        }
-
-                        return match;
+                        trackingStatus.TopCandidate = bestOfTheRest.candidate;
                     }
 
-                    if (bestOfTheRest.similarity > topCandidateMatch.similarity)
-                    {
-                        topCandidate = bestOfTheRest.candidate;
-                        topCandidateMatch = (bestOfTheRest.similarity, bestOfTheRest.snapshot);
-                    }
+                    return match;
                 }
 
-                if (topCandidateMatch.similarity > MatchingParameters.TrackedNewTemplateThreshold)
+                if (bestOfTheRest.similarity > topCandidateMatch.similarity)
                 {
-                    NewTemplate(t, topCandidate);
+                    topCandidate = bestOfTheRest.candidate;
+                    topCandidateMatch = (bestOfTheRest.similarity, bestOfTheRest.snapshot);
                 }
+            }
 
-                if (topCandidateMatch.similarity > MatchingParameters.MatchThreshold)
-                {
-                    return Matched(t, topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, _faceDb[topCandidate.FaceId]);
-                }
+            if (topCandidateMatch.similarity > MatchingParameters.TrackedNewTemplateThreshold)
+            {
+                NewTemplate(t, topCandidate);
+            }
+
+            if (topCandidateMatch.similarity > MatchingParameters.MatchThreshold)
+            {
+                return Matched(t, topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, _faceDb[topCandidate.FaceId]);
             }
 
             return ProcessUntracked(t);
@@ -182,18 +181,18 @@ namespace LuxandFace
                 _cacheClearingCounter = 0;
             }
 
-            return templates.Select(ProcessTemplate).Where(match => match != null && match.Similarity > MatchingParameters.MatchThreshold).ToArray();
+            return templates.Select(ProcessTemplate).Where(match => match != null && match.Similarity >= MatchingParameters.MatchThreshold).ToArray();
         }
     }
 
     public class MatchingParameters
     {
         private const float
-            DefaultTrackedInstantMatchThreshold = 0.92f,
-            DefaultUntrackedInstantMatchThreshold = 0.75f,
-            DefaultTrackedNewTemplateThreshold = 0.4f,
-            DefaultMatchThreshold = 0.5f,
-            DefaultUntrackedNewTemplateThreshold = 0.6f;
+            DefaultTrackedInstantMatchThreshold = 0.9f,
+            DefaultUntrackedInstantMatchThreshold = 0.94f,
+            DefaultTrackedNewTemplateThreshold = 0.55f,
+            DefaultUntrackedNewTemplateThreshold = 0.75f,
+            DefaultMatchThreshold = 0.6f;
 
         public float TrackedInstantMatchThreshold { get; set; }
         public float UntrackedInstantMatchThreshold { get; set; }

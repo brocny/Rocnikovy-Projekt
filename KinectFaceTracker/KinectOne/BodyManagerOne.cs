@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Microsoft.Kinect;
-using KinectUnifier;
+using Core;
 
-using MyJointType = KinectUnifier.JointType;
+using MyJointType = Core.JointType;
 using KJointType = Microsoft.Kinect.JointType;
 using Vector4 = System.Numerics.Vector4;
 

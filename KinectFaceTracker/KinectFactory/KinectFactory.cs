@@ -1,4 +1,4 @@
-﻿using KinectUnifier;
+﻿using Core;
 
 namespace KinectFactory
 {

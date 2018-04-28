@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-using KinectUnifier;
+using Core;
 using Microsoft.Kinect;
 using Vector2 = System.Numerics.Vector2;
 using Vector3 = System.Numerics.Vector3;

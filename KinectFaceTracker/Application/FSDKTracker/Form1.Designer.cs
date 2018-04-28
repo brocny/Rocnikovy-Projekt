@@ -1,4 +1,4 @@
-﻿namespace FSDKTracker
+﻿namespace App.FSDKTracked
 {
     partial class Form1
     {

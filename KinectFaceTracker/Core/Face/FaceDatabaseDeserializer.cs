@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Xml;
 
-namespace Face
+namespace Core.Face
 {
     public partial class DictionaryFaceDatabase<T>
     {

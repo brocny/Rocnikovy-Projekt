@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using Face;
-using KinectUnifier;
+using Core.Face;
+using Core;
 using LuxandFace;
-using LuxandFaceLib;
+using FsdkFaceLib;
 
-namespace KinectFaceTracker
+namespace App.KinectTracked
 {
     public class KinectFaceTracker : IDisposable
     {

@@ -1,11 +1,11 @@
-﻿using KinectUnifier;
+﻿using Core;
 
-namespace Face
+namespace Core.Face
 {
     public interface IFaceTemplate<out T>
     {
         T Template { get; }
-        ImageBuffer FaceImageBuffer { get; }
+        ImageBuffer FaceImage { get; }
         float Age { get; }
         Gender Gender { get; }
         float GenderConfidence { get; }

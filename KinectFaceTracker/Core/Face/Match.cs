@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Face
+namespace Core.Face
 {
     public class Match<T> : IComparable<Match<T>>
     {

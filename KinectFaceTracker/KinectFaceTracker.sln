@@ -18,9 +18,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinectFaceTracker", "KinectFaceTracker\KinectFaceTracker.csproj", "{6A321CE4-251C-479F-BD14-A67614256E20}"
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		360|Any CPU = 360|Any CPU
 		360|x64 = 360|x64
@@ -68,8 +65,8 @@ Global
 		{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}.One|x86.Build.0 = One|Any CPU
 		{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}.OneRelease|Any CPU.ActiveCfg = Release|Any CPU
 		{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}.OneRelease|Any CPU.Build.0 = Release|Any CPU
-		{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}.OneRelease|x64.ActiveCfg = Release|Any CPU
-		{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}.OneRelease|x64.Build.0 = Release|Any CPU
+		{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}.OneRelease|x64.ActiveCfg = Release|x64
+		{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}.OneRelease|x64.Build.0 = Release|x64
 		{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}.OneRelease|x86.ActiveCfg = OneRelease|Any CPU
 		{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}.OneRelease|x86.Build.0 = OneRelease|Any CPU
 		{3B71952E-B0F7-43A5-A3EE-F4B7AA278560}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -176,8 +173,8 @@ Global
 		{8D843BC1-7761-4369-856B-F5631FECE665}.One|x86.Build.0 = One|Any CPU
 		{8D843BC1-7761-4369-856B-F5631FECE665}.OneRelease|Any CPU.ActiveCfg = Release|Any CPU
 		{8D843BC1-7761-4369-856B-F5631FECE665}.OneRelease|Any CPU.Build.0 = Release|Any CPU
-		{8D843BC1-7761-4369-856B-F5631FECE665}.OneRelease|x64.ActiveCfg = Release|Any CPU
-		{8D843BC1-7761-4369-856B-F5631FECE665}.OneRelease|x64.Build.0 = Release|Any CPU
+		{8D843BC1-7761-4369-856B-F5631FECE665}.OneRelease|x64.ActiveCfg = Release|x64
+		{8D843BC1-7761-4369-856B-F5631FECE665}.OneRelease|x64.Build.0 = Release|x64
 		{8D843BC1-7761-4369-856B-F5631FECE665}.OneRelease|x86.ActiveCfg = OneRelease|Any CPU
 		{8D843BC1-7761-4369-856B-F5631FECE665}.OneRelease|x86.Build.0 = OneRelease|Any CPU
 		{8D843BC1-7761-4369-856B-F5631FECE665}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -290,6 +287,9 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {58A02EE8-44E8-4735-87E2-0886EE23AEAE}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true

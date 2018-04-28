@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
-using FSDKTracker;
-using KinectFaceTracker;
+using App.FSDKTracked;
+using App.KinectTracked;
 
 namespace Kinect_Test
 {

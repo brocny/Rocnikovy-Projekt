@@ -1,11 +1,11 @@
 ﻿using System.Drawing;
 using System.Globalization;
 using System.Linq;
-using Face;
-using KinectUnifier;
+using Core.Face;
+using Core;
 using Luxand;
 
-namespace LuxandFaceLib
+namespace FsdkFaceLib
 {
     public class FSDKFaceImage
     {

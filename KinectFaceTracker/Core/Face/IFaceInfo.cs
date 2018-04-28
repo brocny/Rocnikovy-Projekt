@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using KinectUnifier;
+using Core;
 
-namespace Face
+namespace Core.Face
 {
     /// <summary>
     ///     Interface for types used for storing multiple face templates of a single face

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
-using FSDKTracker;
+using App.FSDKTracked;
 using Kinect_Test;
 
-namespace KinectFaceTracker
+namespace App.KinectTracked
 {
     public static class Program
     {

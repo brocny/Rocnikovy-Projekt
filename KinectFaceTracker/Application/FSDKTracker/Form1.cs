@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
-using KinectFaceTracker;
-using KinectUnifier;
+using App.KinectTracked;
+using Core;
 using App;
 using Luxand;
-using LuxandFaceLib;
+using FsdkFaceLib;
 
-namespace FSDKTracker
+namespace App.FSDKTracked
 {
     public partial class Form1 : Form
     {
@@ -26,6 +26,8 @@ namespace FSDKTracker
         private int _trackerHandle;
         private Font _nameFont;
         private readonly StringFormat _nameFormat = new StringFormat { Alignment = StringAlignment.Center };
+        private readonly Pen _limeGreenPen = new Pen(Color.LimeGreen, 2.5f);
+        private readonly Pen _bluePen = new Pen(Color.Blue, 2.5f);
 
         private readonly FpsCounter _fpsCounter = new FpsCounter();
         private bool _needClose;
@@ -69,7 +71,7 @@ namespace FSDKTracker
 
             int err = 0; // set realtime face detection parameters
             FSDK.SetTrackerMultipleParameters(_trackerHandle,
-                "HandleArbitraryRotations=false; DetermineFaceRotationAngle=false; InternalResizeWidth=540; FaceDetectionThreshold=4;",
+                "HandleArbitraryRotations=false; DetermineFaceRotationAngle=false; InternalResizeWidth=540; FaceDetectionThreshold=3;",
                 ref err);
 
             TrackingLoop();
@@ -78,8 +80,8 @@ namespace FSDKTracker
         private void TrackingLoop()
         {
             Image bitmap;
-            FSDK.CImage fsdkImage = new FSDK.CImage();
-            int imageHandle = 0;
+            FSDK.CImage fsdkImage;
+            ImageBuffer imageBuffer;
 
             while (!_needClose)
             {
@@ -91,10 +93,12 @@ namespace FSDKTracker
                         continue;
                     }
                     frame.CopyFramePixelDataToArray(_imageBuffer);
-                    bitmap = _imageBuffer.BytesToBitmap(frame.Width, frame.Height, frame.BytesPerPixel);
+                    imageBuffer = new ImageBuffer(_imageBuffer, frame.Width, frame.Height, frame.BytesPerPixel);              
                 }
-                
-                fsdkImage = new FSDK.CImage(bitmap);
+
+                imageBuffer.ToFsdkImage(out int imageHandle);
+                fsdkImage = new FSDK.CImage(imageHandle);
+                bitmap = imageBuffer.ToBitmap();
 
                 long faceCount = 0;
                 FSDK.FeedFrame(_trackerHandle, 0, fsdkImage.ImageHandle, ref faceCount, out var ids,
@@ -124,14 +128,14 @@ namespace FSDKTracker
                             facePosition.xc, top + w + 5, _nameFormat);
                     }
 
-                    Pen pen = Pens.LimeGreen;
+                    var pen = _limeGreenPen;
                     if (ProgramState.Remember == _programState)
                     {
                         int mouseX = (int)(_mouseX * _imageWidthRatio);
                         int mouseY = (int)(_mouseY * _imageHeightRatio);
                         if (mouseX >= left && mouseX <= left + w && mouseY >= top && mouseY <= top + w)
                         {
-                            pen = Pens.Blue;
+                            pen = _bluePen;
                             if (FSDK.FSDKE_OK == FSDK.LockID(_trackerHandle, id))
                             {
                                 // get the user name

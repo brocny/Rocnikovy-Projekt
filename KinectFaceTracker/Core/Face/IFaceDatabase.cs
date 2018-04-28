@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace Face
+namespace Core.Face
 {
     public interface IFaceDatabase<T>
     {

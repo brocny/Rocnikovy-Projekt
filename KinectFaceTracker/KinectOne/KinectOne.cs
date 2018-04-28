@@ -1,4 +1,4 @@
-﻿using KinectUnifier;
+﻿using Core;
 using Microsoft.Kinect;
 
 namespace KinectOne

@@ -1,11 +1,12 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Xml.Serialization;
-using KinectUnifier;
+using Core;
 
-namespace Face
+namespace Core.Face
 {
     [Serializable]
     public abstract class FaceSnapshot<T>
@@ -22,10 +23,13 @@ namespace Face
             Template = template;
         }
 
-        [XmlIgnore] public T Template { get; protected set; }
+        [XmlIgnore]
+        public T Template { get; protected set; }
 
-        [XmlIgnore] public ImageBuffer FaceImageBuffer { get; protected set; }
+        [XmlIgnore]
+        public ImageBuffer FaceImageBuffer { get; protected set; }
 
+        [Browsable(false)]
         [XmlElement("Image")]
         public string XmlImage
         {
@@ -56,6 +60,8 @@ namespace Face
             }
         }
 
-        [XmlIgnore] public abstract string XmlTemplate { get; set; }
+        [Browsable(false)]
+        [XmlIgnore]
+        public abstract string XmlTemplate { get; set; }
     }
 }

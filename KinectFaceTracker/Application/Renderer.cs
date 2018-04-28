@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using KinectUnifier;
+using Core;
 using System.Numerics;
 
-namespace KinectFaceTracker
+namespace App.KinectTracked
 {
     public class Renderer
     {

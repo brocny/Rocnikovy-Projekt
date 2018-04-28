@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
-using KinectUnifier;
+using Core;
 using Luxand;
 
-namespace LuxandFaceLib
+namespace FsdkFaceLib
 {
     public static class FsdkUtil
     {
@@ -77,15 +78,32 @@ namespace LuxandFaceLib
     public static class ImageBufferExtensions
     {
         /// <summary>
-        /// Make and return FSDK FaceImage from a <see cref="KinectUnifier.ImageBuffer"/>
+        /// Make and return FSDK FaceImage from a <see cref="ImageBuffer"/>
         /// </summary>
         /// <param name="imageBuffer"></param>
         /// <param name="imageHandle"></param>
         /// <returns>Handle to newly created FSDK FaceImage</returns>
-        public static int ToFsdkImage(this KinectUnifier.ImageBuffer imageBuffer, out int imageHandle)
+        public static int ToFsdkImage(this ImageBuffer imageBuffer, out int imageHandle)
         {
             imageHandle = -1;
-            var buffer = imageBuffer.Buffer;
+            var buffer = new byte[imageBuffer.Buffer.Length];
+            int bpp = imageBuffer.BytesPerPixel;
+            int bufferLength = imageBuffer.Buffer.Length;
+            unsafe
+            {
+                fixed (byte* ob = imageBuffer.Buffer)
+                fixed (byte* p = buffer)
+                {
+                    for (int i = 0; i < bufferLength; i += bpp)
+                    {
+                        p[i] = ob[i + 2];
+                        p[i + 1] = ob[i + 1];
+                        p[i + 2] = ob[i];
+                        p[i + 3] = ob[i + 3];
+                    }
+                }
+            }
+
             int ret =  FSDK.LoadImageFromBuffer(ref imageHandle, buffer, imageBuffer.Width, imageBuffer.Height, imageBuffer.Width * imageBuffer.BytesPerPixel,
                 FsdkUtil.ImageModeFromBytesPerPixel(imageBuffer.BytesPerPixel));
 

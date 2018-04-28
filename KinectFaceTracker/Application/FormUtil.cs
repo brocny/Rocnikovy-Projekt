@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace KinectFaceTracker
+namespace App.KinectTracked
 {
     internal class DialogState
     {

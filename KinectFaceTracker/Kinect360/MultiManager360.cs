@@ -1,5 +1,5 @@
 ﻿using System;
-using KinectUnifier;
+using Core;
 
 namespace Kinect360
 {
