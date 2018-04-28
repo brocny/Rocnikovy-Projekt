@@ -13,11 +13,11 @@ namespace LuxandFace {
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.6.0.0")]
-    internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
+    internal sealed partial class FsdkSettings : global::System.Configuration.ApplicationSettingsBase {
         
-        private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
+        private static FsdkSettings defaultInstance = ((FsdkSettings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new FsdkSettings())));
         
-        public static Settings Default {
+        public static FsdkSettings Default {
             get {
                 return defaultInstance;
             }
@@ -37,7 +37,7 @@ namespace LuxandFace {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.94")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.86")]
         public float UntrackedInstantMatchThreshold {
             get {
                 return ((float)(this["UntrackedInstantMatchThreshold"]));
@@ -61,7 +61,7 @@ namespace LuxandFace {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.85")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.88")]
         public float UntrackedNewTemplateThreshold {
             get {
                 return ((float)(this["UntrackedNewTemplateThreshold"]));
@@ -73,7 +73,7 @@ namespace LuxandFace {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.6")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.65")]
         public float MatchThreshold {
             get {
                 return ((float)(this["MatchThreshold"]));
@@ -152,6 +152,30 @@ namespace LuxandFace {
             }
             set {
                 this["SkipMaxSkips"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int PipelineParallelism {
+            get {
+                return ((int)(this["PipelineParallelism"]));
+            }
+            set {
+                this["PipelineParallelism"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int PipelineQueueDepth {
+            get {
+                return ((int)(this["PipelineQueueDepth"]));
+            }
+            set {
+                this["PipelineQueueDepth"] = value;
             }
         }
     }

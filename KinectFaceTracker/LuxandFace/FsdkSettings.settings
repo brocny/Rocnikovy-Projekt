@@ -1,21 +1,21 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="LuxandFace" GeneratedClassName="Settings">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="LuxandFace" GeneratedClassName="FsdkSettings">
   <Profiles />
   <Settings>
     <Setting Name="TrackedInstantMatchThreshold" Type="System.Single" Scope="User">
       <Value Profile="(Default)">0.9</Value>
     </Setting>
     <Setting Name="UntrackedInstantMatchThreshold" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">0.94</Value>
+      <Value Profile="(Default)">0.86</Value>
     </Setting>
     <Setting Name="TrackedNewTemplateThreshold" Type="System.Single" Scope="User">
       <Value Profile="(Default)">0.75</Value>
     </Setting>
     <Setting Name="UntrackedNewTemplateThreshold" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">0.85</Value>
+      <Value Profile="(Default)">0.88</Value>
     </Setting>
     <Setting Name="MatchThreshold" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">0.6</Value>
+      <Value Profile="(Default)">0.65</Value>
     </Setting>
     <Setting Name="FsdkInternalResizeWidth" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">30</Value>
@@ -34,6 +34,12 @@
     </Setting>
     <Setting Name="SkipMaxSkips" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="PipelineParallelism" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="PipelineQueueDepth" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
     </Setting>
   </Settings>
 </SettingsFile>

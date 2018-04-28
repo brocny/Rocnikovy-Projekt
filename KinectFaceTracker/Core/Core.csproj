@@ -95,12 +95,24 @@
     <Compile Include="ImageBuffer.cs" />
     <Compile Include="Kinect\ICoordinateMapper.cs" />
     <Compile Include="Kinect\IMultiManager.cs" />
+    <Compile Include="CoreSettings.cs" />
+    <Compile Include="CoreSettings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>CoreSettings.settings</DependentUpon>
+    </Compile>
     <Compile Include="Util.cs" />
     <Compile Include="Kinect\IBodyManager.cs" />
     <Compile Include="Kinect\IColorManager.cs" />
     <Compile Include="Kinect\IKinect.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="CoreSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>CoreSettings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
