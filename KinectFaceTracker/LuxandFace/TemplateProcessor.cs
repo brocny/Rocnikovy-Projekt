@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Core.Face;
-using FsdkFaceLib;
+using LuxandFace;
 
-namespace LuxandFace
+namespace FsdkFaceLib
 {
     internal class TemplateProcessor
     {
@@ -44,7 +44,7 @@ namespace LuxandFace
             if (_addTemplates.TryRemove(t.TrackingId, out var tsc))
             {
                 tsc.SetResult(Capture(t));
-                return null;
+                return new Match<byte[]> { IsValid = false };
             }
 
             if (!_trackedFaces.TryGetValue(t.TrackingId, out var trackingStatus)) return ProcessUntracked(t);
@@ -96,11 +96,12 @@ namespace LuxandFace
         private Match<byte[]> ProcessUntracked(FaceTemplate t)
         {
             var bestMatch = _faceDb.GetBestMatch(t);
-            if (bestMatch == null) return null;
+            if (bestMatch == null) return new Match<byte[]>{ IsValid = false };
             bestMatch.TrackingId = t.TrackingId;
             if (bestMatch.Similarity <= MatchingParameters.MatchThreshold)
             {
-                return null;
+                bestMatch.IsValid = false;
+                return bestMatch;
             }
 
             _trackedFaces[t.TrackingId] =
@@ -181,7 +182,7 @@ namespace LuxandFace
                 _cacheClearingCounter = 0;
             }
 
-            return templates.Select(ProcessTemplate).Where(match => match != null && match.Similarity >= MatchingParameters.MatchThreshold).ToArray();
+            return templates.Select(ProcessTemplate).Where(match => match.IsValid && match.Similarity >= MatchingParameters.MatchThreshold).ToArray();
         }
     }
 
@@ -195,11 +196,11 @@ namespace LuxandFace
 
         public static MatchingParameters Default => new MatchingParameters
         {
-            TrackedInstantMatchThreshold = Settings.Default.TrackedInstantMatchThreshold,
-            UntrackedInstantMatchThreshold = Settings.Default.UntrackedInstantMatchThreshold,
-            TrackedNewTemplateThreshold = Settings.Default.TrackedNewTemplateThreshold,
-            UntrackedNewTemplateThreshold = Settings.Default.TrackedNewTemplateThreshold,
-            MatchThreshold = Settings.Default.MatchThreshold,
+            TrackedInstantMatchThreshold = FsdkSettings.Default.TrackedInstantMatchThreshold,
+            UntrackedInstantMatchThreshold = FsdkSettings.Default.UntrackedInstantMatchThreshold,
+            TrackedNewTemplateThreshold = FsdkSettings.Default.TrackedNewTemplateThreshold,
+            UntrackedNewTemplateThreshold = FsdkSettings.Default.TrackedNewTemplateThreshold,
+            MatchThreshold = FsdkSettings.Default.MatchThreshold,
         };
     }
 }
