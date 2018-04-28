@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using Core.Face;
 using Core;
-using LuxandFace;
 using FsdkFaceLib;
 
-namespace App.KinectTracked
+namespace KinectFaceTracker
 {
     public class KinectFaceTracker : IDisposable
     {
@@ -13,11 +13,13 @@ namespace App.KinectTracked
 
         private readonly IKinect _kinect;
         private IMultiManager _multiManager;
+        private CancellationTokenSource _cancellationTokenSource;
 
-        public KinectFaceTracker(FSDKFacePipeline facePipeline, IKinect kinect)
+        public KinectFaceTracker(FSDKFacePipeline facePipeline, IKinect kinect, CancellationTokenSource cts)
         {
             _kinect = kinect;
             FacePipeline = facePipeline;
+            _cancellationTokenSource = cts;
             _coordinateMapper = _kinect.CoordinateMapper;
         }
 
@@ -48,12 +50,19 @@ namespace App.KinectTracked
                 _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
             }
 
+            if (_cancellationTokenSource != null && _cancellationTokenSource.IsCancellationRequested)
+            {
+                _cancellationTokenSource = new CancellationTokenSource();
+            }
+
+            FacePipeline.Resume(_cancellationTokenSource?.Token ?? CancellationToken.None);
             _kinect.Open();
         }
 
         public void Stop()
         {
             _kinect.Close();
+            _cancellationTokenSource.Cancel();
         }
 
         private async void MultiManagerOnMultiFrameArrived(object sender, MultiFrameReadyEventArgs e)

@@ -22,7 +22,13 @@ namespace FsdkFaceLib
         public event EventHandler<FaceTemplate[]> FaceTemplateExtractionComplete;
         public event EventHandler<Match<byte[]>[]> TemplateProcessingComplete;
         public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _templateProc.TrackedFaces;
-        public Task<Task> Completion { get; }
+        public Task<Task> Completion { get; private set; }
+
+        private readonly ExecutionDataflowBlockOptions _options = new ExecutionDataflowBlockOptions
+        {
+            BoundedCapacity = FsdkSettings.Default.PipelineQueueDepth,
+            MaxDegreeOfParallelism = FsdkSettings.Default.PipelineParallelism
+        };
 
         /// <summary>
         /// Face with tracking ID equal to <paramref name="trakckingId"/> will have its template saved in the next frame,
@@ -32,10 +38,12 @@ namespace FsdkFaceLib
         /// <returns>
         /// A Task, containing <see cref="TrackingStatus"/> of the face, Task will compelete once saving face's template is completed.
         /// </returns>
-        public Task<TrackingStatus> Capture(long trakckingId) { return _templateProc.Capture(trakckingId);}
+        public Task<TrackingStatus> Capture(long trakckingId)
+        {
+            return _templateProc.Capture(trakckingId);
+        }
 
         public TaskScheduler TaskScheduler { get; set; }
-        public CancellationToken CancellationToken { get; set; }
 
         public int FSDKInternalResizeWidth
         {
@@ -94,19 +102,24 @@ namespace FsdkFaceLib
             _isLibraryActivated = true;
         }
 
-        public FSDKFacePipeline(IFaceDatabase<byte[]> db = null, TaskScheduler taskScheduler = null)
+        public FSDKFacePipeline(IFaceDatabase<byte[]> db = null, TaskScheduler taskScheduler = null, CancellationToken cancellationToken = default)
         {
             FaceDb = db ?? new DictionaryFaceDatabase<byte[]>();
             _templateProc = new TemplateProcessor(FaceDb);
 
-            var options = new ExecutionDataflowBlockOptions
-            {
-                BoundedCapacity = 1,
-                TaskScheduler = taskScheduler ?? TaskScheduler.Default,
-                MaxDegreeOfParallelism = 1,
-                CancellationToken = CancellationToken
-            };
+            _options.CancellationToken = cancellationToken;
+            _options.TaskScheduler = taskScheduler ?? TaskScheduler.Default;
 
+            ConstructPipeline(_options);
+            
+
+            _bufferPool = ArrayPool<byte>.Create(1920 * 1080 * 4, 8);
+
+            SetFSDKParams();
+        }
+
+        private void ConstructPipeline(ExecutionDataflowBlockOptions options)
+        {
             _faceCuttingBlock = new TransformBlock<FaceLocationResult, FaceCutout[]>
                 (new Func<FaceLocationResult, FaceCutout[]>(CreateFaceImageCutouts), options);
             _fsdkImageCreatingBlock = new TransformBlock<FaceCutout[], FSDKFaceImage[]>
@@ -120,8 +133,8 @@ namespace FsdkFaceLib
             _templateProcessingBlock = new ActionBlock<FaceTemplate[]>
                 (new Action<FaceTemplate[]>(ProcessTemplates), options);
 
-            var nullBlock = new ActionBlock<object>(o => {});
-            
+            var nullBlock = new ActionBlock<object>(o => { });
+
             _faceCuttingBlock.LinkTo(_fsdkImageCreatingBlock, obj => obj != null);
             _faceCuttingBlock.LinkTo(nullBlock, obj => obj == null);
             _fsdkImageCreatingBlock.LinkTo(_faceDetectionBlock, obj => obj != null);
@@ -133,13 +146,20 @@ namespace FsdkFaceLib
             _templateExtractionBlock.LinkTo(_templateProcessingBlock, obj => obj != null);
             _templateExtractionBlock.LinkTo(nullBlock, obj => obj == null);
 
-            _bufferPool = ArrayPool<byte>.Create(1920 * 1080 * 4, 8);
-
             Completion = Task.WhenAny(
                 _faceCuttingBlock.Completion, _fsdkImageCreatingBlock.Completion, _faceDetectionBlock.Completion,
                 _facialFeaturesBlock.Completion, _templateExtractionBlock.Completion, _templateProcessingBlock.Completion);
+        }
 
-            SetFSDKParams();
+        public void Resume(CancellationToken newCancellationToken = default)
+        {
+            if (!_options.CancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            _options.CancellationToken = newCancellationToken;
+            ConstructPipeline(_options);
         }
 
         /// <summary>
@@ -152,9 +172,10 @@ namespace FsdkFaceLib
         /// <returns>A Task of type <see cref="FaceLocationResult"/> containing processed information
         /// from the <paramref name="bodyFrame"/> and <paramref name="colorFrame"/>
         /// </returns>
-        public async Task<FaceLocationResult> LocateFacesAsync(IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper, bool post = true)
+        public async Task<FaceLocationResult> LocateFacesAsync
+        (IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper, bool post = true)
         {
-            var faces = await Task.Run(() => LocateFaces(colorFrame, bodyFrame, mapper), CancellationToken);
+            var faces = await Task.Run(() => LocateFaces(colorFrame, bodyFrame, mapper), _options.CancellationToken);
             if (post) _faceCuttingBlock.Post(faces);
             return faces;
         }
@@ -172,7 +193,7 @@ namespace FsdkFaceLib
                     }
                 }
                 return buffer;
-            }, CancellationToken);
+            }, _options.CancellationToken);
 
             var bodyTask = Task.Run(() =>
             {
@@ -192,7 +213,7 @@ namespace FsdkFaceLib
                 }
 
                 return (faceRects: faceRects.ToArray(), faceIds: faceIds.ToArray(), bodies);
-            }, CancellationToken);
+            }, _options.CancellationToken);
 
             var bodyResult = await bodyTask;
             var colorResult = await colorTask;
@@ -330,12 +351,12 @@ namespace FsdkFaceLib
             FSDK.SetFaceDetectionParameters(_handleArbitrayRot, _determineRotAngle, _internalResizeWidth);
         }
 
-        private int _internalResizeWidth = Settings.Default.FsdkInternalResizeWidth;
-        private bool _handleArbitrayRot = Settings.Default.FsdkHandleArbitraryRot;
-        private bool _determineRotAngle = Settings.Default.FsdkDetermineRotAngle;
-        private int _faceDetectionThreshold = Settings.Default.FsdkFaceDetectionThreshold;
-        private int _skipMinimumConfirmations = Settings.Default.SkipMinimumConfirmations;
-        private int _skipMaxSkips = Settings.Default.SkipMaxSkips;
+        private int _internalResizeWidth = FsdkSettings.Default.FsdkInternalResizeWidth;
+        private bool _handleArbitrayRot = FsdkSettings.Default.FsdkHandleArbitraryRot;
+        private bool _determineRotAngle = FsdkSettings.Default.FsdkDetermineRotAngle;
+        private int _faceDetectionThreshold = FsdkSettings.Default.FsdkFaceDetectionThreshold;
+        private readonly int _skipMinimumConfirmations = FsdkSettings.Default.SkipMinimumConfirmations;
+        private readonly int _skipMaxSkips = FsdkSettings.Default.SkipMaxSkips;
 
         private readonly TemplateProcessor _templateProc;
 

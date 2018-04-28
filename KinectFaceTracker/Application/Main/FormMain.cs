@@ -3,26 +3,28 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Core.Face;
 using Core;
 using FsdkFaceLib;
+using KinectFaceTracker;
 
 namespace App.KinectTracked
 {
     public partial class FormMain : Form
     {
-        private const string FileFilter = "Xml files| *.xml|All files|*.*";
+        private const string FileFilter = "Xml files|*.xml|All files|*.*";
 
         private static readonly string DefaultDbPath =
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\KFT\FaceDb";
-        
+
         private readonly ICoordinateMapper _coordinateMapper;
 
         private readonly FpsCounter _fpsCounter = new FpsCounter();
 
-        private readonly KinectFaceTracker _kft;
+        private readonly KinectFaceTracker.KinectFaceTracker _kft;
         private readonly int _kinectFrameHeight;
         private readonly int _kinectFrameWidth;
 
@@ -30,7 +32,7 @@ namespace App.KinectTracked
 
         private string _dbSerializePath;
 
-        private long _displayedFaceTrackingId;
+        private long _focusedFaceTrackingId;
         private int _imageHeight;
         private int _imageWidth;
 
@@ -49,7 +51,9 @@ namespace App.KinectTracked
 
             InitializeComponent();
 
-            var facePipeline = new FSDKFacePipeline(new DictionaryFaceDatabase<byte[]>(new FSDKFaceInfo()));
+            var cts = new CancellationTokenSource();
+            var facePipeline = new FSDKFacePipeline(new DictionaryFaceDatabase<byte[]>(new FSDKFaceInfo()), TaskScheduler.Default, cts.Token);
+
             facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
             facePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
             facePipeline.TemplateProcessingComplete += FacePipelineOnTemplateProcessingComplete;
@@ -58,7 +62,7 @@ namespace App.KinectTracked
             _kinectFrameWidth = kinect.ColorManager.FrameHeight;
             _kinectFrameHeight = kinect.ColorManager.FrameWidth;
             _coordinateMapper = kinect.CoordinateMapper;
-            _kft = new KinectFaceTracker(facePipeline, kinect);
+            _kft = new KinectFaceTracker.KinectFaceTracker(facePipeline, kinect, cts);
             _kft.FrameArrived += KftOnFrameArrived;
 
             _kft.FacePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
@@ -75,7 +79,7 @@ namespace App.KinectTracked
 
         private void FacePipelineOnTemplateProcessingComplete(object sender, Match<byte[]>[] matches)
         {
-            var displayedFaceMatch = matches.SingleOrDefault(x => x.TrackingId == _displayedFaceTrackingId);
+            var displayedFaceMatch = matches.SingleOrDefault(x => x.TrackingId == _focusedFaceTrackingId);
             if (displayedFaceMatch?.Snapshot?.FaceImageBuffer != null)
             {
                 pictureBox2.InvokeIfRequired(pb => pb.Image = displayedFaceMatch.Snapshot.FaceImageBuffer.ToBitmap());
@@ -149,7 +153,7 @@ namespace App.KinectTracked
 
         private void FacePipelineOnFeatureDetection(object sender, FSDKFaceImage[] fsdkFaceImages)
         {
-            var fsdkFaceImage = fsdkFaceImages.FirstOrDefault(f => f.TrackingId == _displayedFaceTrackingId);
+            var fsdkFaceImage = fsdkFaceImages.FirstOrDefault(f => f.TrackingId == _focusedFaceTrackingId);
             if (fsdkFaceImage == null)
                 return;
             
@@ -157,7 +161,7 @@ namespace App.KinectTracked
             if (gender == Gender.Unknown) return;
             var expression = fsdkFaceImage.GetExpression();
             var labelBuilder = new StringBuilder();
-            if (_kft.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out var trackingStatus))
+            if (_kft.TrackedFaces.TryGetValue(_focusedFaceTrackingId, out var trackingStatus))
             {
                 if (_kft.FaceDatabase.TryGetValue(trackingStatus.TopCandidate.FaceId, out var faceInfo)
                     && !string.IsNullOrEmpty(faceInfo.Name))
@@ -181,11 +185,11 @@ namespace App.KinectTracked
         {
             if (faceCutouts == null || faceCutouts.Length == 0) return;
 
-            var fco = faceCutouts.SingleOrDefault(x => x.TrackingId == _displayedFaceTrackingId) ?? faceCutouts[0];
+            var fco = faceCutouts.SingleOrDefault(x => x.TrackingId == _focusedFaceTrackingId) ?? faceCutouts[0];
             facePictureBox.InvokeIfRequired(f => f.Image = fco.ImageBuffer.ToBitmap());
-            if (fco.TrackingId != _displayedFaceTrackingId)
+            if (fco.TrackingId != _focusedFaceTrackingId)
             {
-                _displayedFaceTrackingId = fco.TrackingId;
+                _focusedFaceTrackingId = fco.TrackingId;
                 pictureBox2.Image = null;
             }
         }
@@ -356,7 +360,7 @@ namespace App.KinectTracked
                     _kft.FacePipeline.Capture(id);
                     break;
                 case MouseButtons.Middle:
-                    _displayedFaceTrackingId = id;
+                    _focusedFaceTrackingId = id;
                     break;
                 default:
                     return;
@@ -391,10 +395,10 @@ namespace App.KinectTracked
             switch (e.Button)
             {
                 case MouseButtons.Left:
-                    NameFace(_displayedFaceTrackingId);
+                    NameFace(_focusedFaceTrackingId);
                     break;
                 case MouseButtons.Right:
-                    _kft.FacePipeline.Capture(_displayedFaceTrackingId);
+                    _kft.FacePipeline.Capture(_focusedFaceTrackingId);
                     break;
             }
         }
