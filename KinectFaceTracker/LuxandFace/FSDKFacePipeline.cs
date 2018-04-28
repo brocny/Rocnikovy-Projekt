@@ -176,7 +176,7 @@ namespace FsdkFaceLib
 
             var bodyTask = Task.Run(() =>
             {
-                var bodyCount = bodyFrame.BodyCount;
+                int bodyCount = bodyFrame.BodyCount;
                 var faceRects = new List<Rectangle>(bodyCount);
                 var faceIds = new List<long>(bodyCount);
                 var bodies = new IBody[bodyCount];
@@ -247,7 +247,7 @@ namespace FsdkFaceLib
                     var topCand = status.TopCandidate;
                     if (topCand != null)
                     {
-                        if (topCand.Confirmations >= 5 && topCand.SkippedFrames <= 10)
+                        if (topCand.Confirmations >=  _skipMinimumConfirmations && topCand.SkippedFrames <= _skipMaxSkips)
                         {
                             topCand.SkippedFrames++;
                             continue;
@@ -330,10 +330,12 @@ namespace FsdkFaceLib
             FSDK.SetFaceDetectionParameters(_handleArbitrayRot, _determineRotAngle, _internalResizeWidth);
         }
 
-        private int _internalResizeWidth = 25;
-        private bool _handleArbitrayRot = false;
-        private bool _determineRotAngle = false;
-        private int _faceDetectionThreshold = 4;
+        private int _internalResizeWidth = Settings.Default.FsdkInternalResizeWidth;
+        private bool _handleArbitrayRot = Settings.Default.FsdkHandleArbitraryRot;
+        private bool _determineRotAngle = Settings.Default.FsdkDetermineRotAngle;
+        private int _faceDetectionThreshold = Settings.Default.FsdkFaceDetectionThreshold;
+        private int _skipMinimumConfirmations = Settings.Default.SkipMinimumConfirmations;
+        private int _skipMaxSkips = Settings.Default.SkipMaxSkips;
 
         private readonly TemplateProcessor _templateProc;
 

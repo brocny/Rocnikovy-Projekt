@@ -1,0 +1,12 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="KinectUnifier" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="FaceWidthMultiplier" Type="System.Single" Scope="User">
+      <Value Profile="(Default)">1.4</Value>
+    </Setting>
+    <Setting Name="FaceHeightMultiplier" Type="System.Single" Scope="User">
+      <Value Profile="(Default)">1.85</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

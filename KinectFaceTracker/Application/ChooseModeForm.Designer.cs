@@ -1,4 +1,4 @@
-﻿namespace Kinect_Test
+﻿namespace App
 {
     partial class ChooseModeForm
     {

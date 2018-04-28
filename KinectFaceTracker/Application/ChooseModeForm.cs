@@ -3,7 +3,7 @@ using System.Windows.Forms;
 using App.FSDKTracked;
 using App.KinectTracked;
 
-namespace Kinect_Test
+namespace App
 {
     public partial class ChooseModeForm : Form
     {

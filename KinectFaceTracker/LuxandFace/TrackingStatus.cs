@@ -27,7 +27,7 @@ namespace LuxandFace
             }
         }
 
-        private List<CandidateStatus> _candidates;
+        private readonly List<CandidateStatus> _candidates;
     }
 
     public class CandidateStatus

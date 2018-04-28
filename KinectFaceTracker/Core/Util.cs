@@ -4,8 +4,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Runtime.Remoting.Channels;
 
 namespace Core
 {
@@ -14,12 +12,12 @@ namespace Core
         /// <summary>
         ///     The factor by which the distance from a body's neck to its head is multiplied to obtain the width of its face
         /// </summary>
-        private const float FaceWidth = 1.45f;
+        private static readonly float FaceWidthMultiplier = Settings.Default.FaceWidthMultiplier;
 
         /// <summary>
         ///     The factor by which the distance from a body's neck to its neck is multiplied to obtain the height of its face
         /// </summary>
-        private const float FaceHeight = 1.9f;
+        private static readonly float FaceHeightMultiplier = Settings.Default.FaceHeightMultiplier;
 
         public static IDictionary<JointType, Vector2> MapJointsToColorSpace(IBody body, ICoordinateMapper mapper)
         {
@@ -54,11 +52,11 @@ namespace Core
 
             var headJointColorPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
             var neckJointColorPos = mapper.MapCameraPointToColorSpace(neckJoint.Position);
-            float headNeckDistance = headJointColorPos.DistanceTo(neckJointColorPos);
+            float headNeckDistance = headJointColorPos.DistanceFrom(neckJointColorPos);
             rotationAngle = Math.Asin((headJointColorPos.X - neckJointColorPos.X) / headNeckDistance) * 180 / Math.PI;
             bool isFaceVertical = Math.Abs(rotationAngle) < 45;
-            float width = isFaceVertical ? headNeckDistance * FaceWidth : headNeckDistance * FaceHeight;
-            float height = isFaceVertical ? headNeckDistance * FaceHeight : headNeckDistance * FaceWidth;
+            float width = isFaceVertical ? headNeckDistance * FaceWidthMultiplier : headNeckDistance * FaceHeightMultiplier;
+            float height = isFaceVertical ? headNeckDistance * FaceHeightMultiplier : headNeckDistance * FaceWidthMultiplier;
             faceRect = new Rectangle(
                 (int) (headJointColorPos.X - width / 2),
                 (int) (headJointColorPos.Y - height / 2),
@@ -85,13 +83,13 @@ namespace Core
 
             var headJointColorPos = mapper.MapCameraPointToColorSpace(headJoint.Position);
             var neckJointColorPos = mapper.MapCameraPointToColorSpace(neckJoint.Position);
-            float headNeckDistance = headJointColorPos.DistanceTo(neckJointColorPos);
+            float headNeckDistance = headJointColorPos.DistanceFrom(neckJointColorPos);
 
             bool isFaceVertical = Math.Abs(headJointColorPos.Y - neckJointColorPos.Y) >
                                   Math.Abs(headJointColorPos.X - neckJointColorPos.X);
 
-            float width = isFaceVertical ? headNeckDistance * FaceWidth : headNeckDistance * FaceHeight;
-            float height = isFaceVertical ? headNeckDistance * FaceHeight : headNeckDistance * FaceWidth;
+            float width = isFaceVertical ? headNeckDistance * FaceWidthMultiplier : headNeckDistance * FaceHeightMultiplier;
+            float height = isFaceVertical ? headNeckDistance * FaceHeightMultiplier : headNeckDistance * FaceWidthMultiplier;
             faceRect = new Rectangle(
                 (int) (headJointColorPos.X - width / 2),
                 (int) (headJointColorPos.Y - height / 2),
@@ -226,7 +224,7 @@ namespace Core
 
     public static class Vector2Extensions
     {
-        public static float DistanceTo(this Vector2 v, Vector2 w)
+        public static float DistanceFrom(this Vector2 v, Vector2 w)
         {
             return (float) Math.Sqrt((v.X - w.X) * (v.X - w.X) + (v.Y - w.Y) * (v.Y - w.Y));
         }

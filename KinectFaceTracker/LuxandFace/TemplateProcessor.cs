@@ -187,13 +187,6 @@ namespace LuxandFace
 
     public class MatchingParameters
     {
-        private const float
-            DefaultTrackedInstantMatchThreshold = 0.9f,
-            DefaultUntrackedInstantMatchThreshold = 0.94f,
-            DefaultTrackedNewTemplateThreshold = 0.55f,
-            DefaultUntrackedNewTemplateThreshold = 0.75f,
-            DefaultMatchThreshold = 0.6f;
-
         public float TrackedInstantMatchThreshold { get; set; }
         public float UntrackedInstantMatchThreshold { get; set; }
         public float TrackedNewTemplateThreshold { get; set; }
@@ -202,11 +195,11 @@ namespace LuxandFace
 
         public static MatchingParameters Default => new MatchingParameters
         {
-            TrackedInstantMatchThreshold = DefaultTrackedInstantMatchThreshold,
-            UntrackedInstantMatchThreshold = DefaultUntrackedInstantMatchThreshold,
-            TrackedNewTemplateThreshold = DefaultTrackedNewTemplateThreshold,
-            MatchThreshold = DefaultMatchThreshold,
-            UntrackedNewTemplateThreshold = DefaultUntrackedNewTemplateThreshold
+            TrackedInstantMatchThreshold = Settings.Default.TrackedInstantMatchThreshold,
+            UntrackedInstantMatchThreshold = Settings.Default.UntrackedInstantMatchThreshold,
+            TrackedNewTemplateThreshold = Settings.Default.TrackedNewTemplateThreshold,
+            UntrackedNewTemplateThreshold = Settings.Default.TrackedNewTemplateThreshold,
+            MatchThreshold = Settings.Default.MatchThreshold,
         };
     }
 }

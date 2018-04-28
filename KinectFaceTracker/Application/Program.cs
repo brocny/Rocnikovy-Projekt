@@ -2,7 +2,7 @@
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using App.FSDKTracked;
-using Kinect_Test;
+using App;
 
 namespace App.KinectTracked
 {

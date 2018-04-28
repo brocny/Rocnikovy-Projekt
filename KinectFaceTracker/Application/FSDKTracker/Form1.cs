@@ -3,7 +3,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using App.KinectTracked;
 using Core;
-using App;
 using Luxand;
 using FsdkFaceLib;
 
