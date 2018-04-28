@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace LuxandFace
+namespace FsdkFaceLib
 {
     public class TrackingStatus
     {

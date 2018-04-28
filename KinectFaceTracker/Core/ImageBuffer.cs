@@ -29,10 +29,7 @@ namespace Core
                 PixelFormat.Format32bppArgb);
             Marshal.Copy(bits.Scan0, Buffer, 0, bufLength);
         }
-
-        /// <summary>
-        /// Returns a copy of the pixel buffer
-        /// </summary>
+        
         public byte[] Buffer { get; }
 
         public int Width { get; }

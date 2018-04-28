@@ -164,6 +164,11 @@
     <Compile Include="FSDKUtil.cs" />
     <Compile Include="MoreLinq\MoreEnumerable.MaxBy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="FsdkSettings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>FsdkSettings.settings</DependentUpon>
+    </Compile>
     <Compile Include="TemplateProcessor.cs" />
     <Compile Include="TrackingStatus.cs" />
   </ItemGroup>
@@ -178,7 +183,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
+    <None Include="FsdkSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>FsdkSettings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

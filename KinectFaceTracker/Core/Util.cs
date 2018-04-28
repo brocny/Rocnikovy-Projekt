@@ -12,12 +12,12 @@ namespace Core
         /// <summary>
         ///     The factor by which the distance from a body's neck to its head is multiplied to obtain the width of its face
         /// </summary>
-        private static readonly float FaceWidthMultiplier = Settings.Default.FaceWidthMultiplier;
+        private static readonly float FaceWidthMultiplier = CoreSettings.Default.FaceWidthMultiplier;
 
         /// <summary>
         ///     The factor by which the distance from a body's neck to its neck is multiplied to obtain the height of its face
         /// </summary>
-        private static readonly float FaceHeightMultiplier = Settings.Default.FaceHeightMultiplier;
+        private static readonly float FaceHeightMultiplier = CoreSettings.Default.FaceHeightMultiplier;
 
         public static IDictionary<JointType, Vector2> MapJointsToColorSpace(IBody body, ICoordinateMapper mapper)
         {
@@ -147,17 +147,27 @@ namespace Core
         public static Rectangle Rescale(this Rectangle origRect, int origWidth, int origHeight, int newWidth,
             int newHeight)
         {
-            float xRatio = newWidth / (float) origWidth;
-            float yRatio = newHeight / (float) origHeight;
-            return new Rectangle((int) (origRect.X * xRatio), (int) (origRect.Y * yRatio),
-                (int) (origRect.Width * xRatio), (int) (origRect.Height * yRatio));
+            float widthRatio = newWidth / (float) origWidth;
+            float heightRatio = newHeight / (float) origHeight;
+            return origRect.Rescale(widthRatio, heightRatio);
+        }
+
+        public static Rectangle Rescale(this Rectangle origRect, float widthRatio, float heightRatio)
+        {
+            return new Rectangle((int)(origRect.X * widthRatio), (int)(origRect.Y * heightRatio),
+                (int)(origRect.Width * widthRatio), (int)(origRect.Height * heightRatio));
         }
 
         public static Point Rescale(this Point origPoint, int origWidth, int origHeight, int newWidth, int newHeight)
         {
-            float xRatio = newWidth / (float) origWidth;
-            float yRatio = newHeight / (float) origHeight;
-            return new Point((int) (origPoint.X * xRatio), (int) (origPoint.Y * yRatio));
+            float widthRatio = newWidth / (float) origWidth;
+            float heightRatio = newHeight / (float) origHeight;
+            return origPoint.Rescale(widthRatio, heightRatio);
+        }
+
+        public static Point Rescale(this Point origPoint, float widthRatio, float heightRatio)
+        {
+            return new Point((int)(origPoint.X * widthRatio), (int)(origPoint.Y * heightRatio));
         }
 
         /// <summary>
@@ -204,16 +214,16 @@ namespace Core
             return ret;
         }
 
-        public static Rectangle TrimRectangle(this Rectangle rect, int width, int height)
+        public static Rectangle TrimRectangle(this Rectangle rect, int width, int height, bool trimLeft = true, bool trimTop = true)
         {
             int left = rect.Left;
-            if (left < 0) left = 0;
+            if (trimLeft && left < 0) left = 0;
 
             int right = rect.Right;
             if (right > width) right = width;
 
             int top = rect.Top;
-            if (top < 0) top = 0;
+            if (trimTop && top < 0) top = 0;
 
             int bottom = rect.Bottom;
             if (bottom > height) bottom = height;
