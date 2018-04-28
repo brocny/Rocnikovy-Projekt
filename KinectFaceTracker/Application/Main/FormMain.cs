@@ -5,12 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Face;
-using KinectUnifier;
-using LuxandFaceLib;
-using Microsoft.VisualBasic;
+using Core.Face;
+using Core;
+using FsdkFaceLib;
 
-namespace KinectFaceTracker
+namespace App.KinectTracked
 {
     public partial class FormMain : Form
     {
@@ -53,6 +52,7 @@ namespace KinectFaceTracker
             var facePipeline = new FSDKFacePipeline(new DictionaryFaceDatabase<byte[]>(new FSDKFaceInfo()));
             facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
             facePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
+            facePipeline.TemplateProcessingComplete += FacePipelineOnTemplateProcessingComplete;
 
             FSDKFacePipeline.InitializeLibrary();
             _kinectFrameWidth = kinect.ColorManager.FrameHeight;
@@ -71,6 +71,15 @@ namespace KinectFaceTracker
                 _programState == ProgramState.Running ? "Stop (Space)" : "Start (Space)";
 
             _renderer = new Renderer(_kinectFrameHeight, _kinectFrameWidth);
+        }
+
+        private void FacePipelineOnTemplateProcessingComplete(object sender, Match<byte[]>[] matches)
+        {
+            var displayedFaceMatch = matches.SingleOrDefault(x => x.TrackingId == _displayedFaceTrackingId);
+            if (displayedFaceMatch?.Snapshot?.FaceImageBuffer != null)
+            {
+                pictureBox2.InvokeIfRequired(pb => pb.Image = displayedFaceMatch.Snapshot.FaceImageBuffer.ToBitmap());
+            }
         }
 
         private void KftOnFrameArrived(object sender, FrameArrivedEventArgs e)
@@ -141,31 +150,31 @@ namespace KinectFaceTracker
         private void FacePipelineOnFeatureDetection(object sender, FSDKFaceImage[] fsdkFaceImages)
         {
             var fsdkFaceImage = fsdkFaceImages.FirstOrDefault(f => f.TrackingId == _displayedFaceTrackingId);
-            if (fsdkFaceImage != null)
+            if (fsdkFaceImage == null)
+                return;
+            
+            var (gender, confidence) = fsdkFaceImage.GetGender();
+            if (gender == Gender.Unknown) return;
+            var expression = fsdkFaceImage.GetExpression();
+            var labelBuilder = new StringBuilder();
+            if (_kft.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out var trackingStatus))
             {
-                var (gender, confidence) = fsdkFaceImage.GetGender();
-                if (gender == Gender.Unknown) return;
-                var expression = fsdkFaceImage.GetExpression();
-                var labelBuilder = new StringBuilder();
-                if (_kft.TrackedFaces.TryGetValue(_displayedFaceTrackingId, out var trackingStatus))
+                if (_kft.FaceDatabase.TryGetValue(trackingStatus.TopCandidate.FaceId, out var faceInfo)
+                    && !string.IsNullOrEmpty(faceInfo.Name))
                 {
-                    if (_kft.FaceDatabase.TryGetValue(trackingStatus.TopCandidate.FaceId, out var faceInfo)
-                        && !string.IsNullOrEmpty(faceInfo.Name))
-                    {
-                        labelBuilder.AppendLine(faceInfo.Name);
-                    }
-
-                    labelBuilder.Append("ID: ");
-                    labelBuilder.AppendLine(trackingStatus.TopCandidate.FaceId.ToString());
+                    labelBuilder.AppendLine(faceInfo.Name);
                 }
 
-                labelBuilder.AppendLine($"Age: {fsdkFaceImage.GetAge():F2}");
-                labelBuilder.AppendLine($"Smile: {expression.smile * 100:F2}%");
-                labelBuilder.AppendLine($"Eyes Open: {expression.eyesOpen * 100:F2}%");
-                labelBuilder.AppendLine($"{(gender == Gender.Male ? "Male:" : "Female:")} {confidence * 100:F2}%");
-
-                faceLabel.InvokeIfRequired(f => f.Text = labelBuilder.ToString());
+                labelBuilder.Append("ID: ");
+                labelBuilder.AppendLine(trackingStatus.TopCandidate.FaceId.ToString());
             }
+
+            labelBuilder.AppendLine($"Age: {fsdkFaceImage.GetAge():F2}");
+            labelBuilder.AppendLine($"Smile: {expression.smile * 100:F2}%");
+            labelBuilder.AppendLine($"Eyes Open: {expression.eyesOpen * 100:F2}%");
+            labelBuilder.AppendLine($"{(gender == Gender.Male ? "Male:" : "Female:")} {confidence * 100:F2}%");
+
+            faceLabel.InvokeIfRequired(f => f.Text = labelBuilder.ToString());
         }
 
         private void FacePipelineOnFaceCuttingComplete(object sender, FaceCutout[] faceCutouts)
@@ -174,7 +183,11 @@ namespace KinectFaceTracker
 
             var fco = faceCutouts.SingleOrDefault(x => x.TrackingId == _displayedFaceTrackingId) ?? faceCutouts[0];
             facePictureBox.InvokeIfRequired(f => f.Image = fco.ImageBuffer.ToBitmap());
-            _displayedFaceTrackingId = fco.TrackingId;
+            if (fco.TrackingId != _displayedFaceTrackingId)
+            {
+                _displayedFaceTrackingId = fco.TrackingId;
+                pictureBox2.Image = null;
+            }
         }
 
         private void TogglePaused()
@@ -352,8 +365,9 @@ namespace KinectFaceTracker
 
         private async void NameFace(long trackingId)
         {
-            string name = Interaction.InputBox("Enter person's name", "Person name dialog", null);
-            if (string.IsNullOrWhiteSpace(name)) return;
+            var inputNameForm = new InputNameForm();
+            if (inputNameForm.ShowDialog() != DialogResult.OK)
+                return;
 
             if (!_kft.TrackedFaces.TryGetValue(trackingId, out var status))
             {
@@ -363,7 +377,7 @@ namespace KinectFaceTracker
             if (!_kft.FaceDatabase.TryGetValue(status.TopCandidate.FaceId, out var faceInfo))
                 return;
 
-            faceInfo.Name = name;
+            faceInfo.Name = inputNameForm.UserName;
         }
 
         private void pictureBox1_SizeChanged(object sender, EventArgs e)

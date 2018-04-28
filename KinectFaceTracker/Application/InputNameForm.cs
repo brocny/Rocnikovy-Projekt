@@ -3,13 +3,15 @@ using System.Windows.Forms;
 
 namespace App
 {
-    public partial class InputNameForm : Form
+    public sealed partial class InputNameForm : Form
     {
         public string UserName { get; private set; }
 
-        public InputNameForm()
+        public InputNameForm(string caption = null, string text = null)
         {
             InitializeComponent();
+            Text = caption ?? Text;
+            label1.Text = text ?? label1.Text;
         }
 
         private void button1_Click(object sender, EventArgs e)
