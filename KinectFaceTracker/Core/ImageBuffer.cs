@@ -20,16 +20,17 @@ namespace Core
 
         public ImageBuffer(Bitmap bmp)
         {
-            int bufLength = bmp.Height * bmp.Width * 4;
-            Buffer = new byte[bufLength];
-            BytesPerPixel = 4;
+            int bytesPerPixel = bmp.PixelFormat.BytesPerPixel();
+            int bufferLength = bmp.Height * bmp.Width * bytesPerPixel;
+            Buffer = new byte[bufferLength];
+            BytesPerPixel = bytesPerPixel;
             Width = bmp.Width;
             Height = bmp.Height;
             var bits = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly,
-                PixelFormat.Format32bppArgb);
-            Marshal.Copy(bits.Scan0, Buffer, 0, bufLength);
+                bmp.PixelFormat);
+            Marshal.Copy(bits.Scan0, Buffer, 0, bufferLength);
         }
-        
+
         public byte[] Buffer { get; }
 
         public int Width { get; }
