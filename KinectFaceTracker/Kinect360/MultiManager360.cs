@@ -70,7 +70,7 @@ namespace Kinect360
         private IColorFrame _colorFrame;
         private IBodyFrame _bodyFrame;
 
-        private Kinect360 _kinect360;
+        private readonly Kinect360 _kinect360;
 
         public void Dispose()
         {

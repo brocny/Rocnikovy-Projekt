@@ -133,7 +133,7 @@ namespace KinectOne
                 new ValueTuple<MyJointType, MyJointType>(MyJointType.HandRight, MyJointType.ThumbRight)
             };
 
-            public IReadOnlyList<ValueTuple<MyJointType, MyJointType>> Bones => bones;
+            public IReadOnlyList<(MyJointType joint1, MyJointType joint2)> Bones => bones;
 
             public BodyOne(Body body)
             {

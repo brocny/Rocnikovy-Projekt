@@ -12,7 +12,7 @@ using KJointType = Microsoft.Kinect.JointType;
 
 namespace Kinect360
 {
-    class BodyManager360 : IBodyManager
+    public class BodyManager360 : IBodyManager
     {
         private readonly Kinect360 _kinect360; 
         private readonly SkeletonStream _skeletonStream;
@@ -84,20 +84,20 @@ namespace Kinect360
             }
 
             #region IDisposable Support
-            private bool disposedValue = false; // To detect redundant calls
+            private bool _disposedValue = false; // To detect redundant calls
 
             
 
             protected virtual void Dispose(bool disposing)
             {
-                if (!disposedValue)
+                if (!_disposedValue)
                 {
                     if (disposing)
                     {
                         _skeletonFrame.Dispose();
                     }
                     
-                    disposedValue = true;
+                    _disposedValue = true;
                 }
             }
 

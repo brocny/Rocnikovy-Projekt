@@ -5,10 +5,10 @@ using Microsoft.Kinect;
 
 namespace Kinect360
 {
-    internal class CoordinateMapper360 : ICoordinateMapper
+    public class CoordinateMapper360 : ICoordinateMapper
     {
-        private CoordinateMapper _coordinateMapper;
-        private Kinect360 _kinect360;
+        private readonly CoordinateMapper _coordinateMapper;
+        private readonly Kinect360 _kinect360;
 
         public CoordinateMapper360(Kinect360 kinect360)
         {

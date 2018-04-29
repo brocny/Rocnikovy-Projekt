@@ -8,7 +8,7 @@ namespace KinectOne
 {
     public class CoordinateMapperOne : ICoordinateMapper
     {
-        private CoordinateMapper _coordinateMapper;
+        private readonly CoordinateMapper _coordinateMapper;
 
         public CoordinateMapperOne(CoordinateMapper coordinateMapper)
         {

@@ -5,10 +5,10 @@ using Microsoft.Kinect;
 
 namespace Kinect360
 {
-    internal class ColorManager360 : IColorManager
+    public class ColorManager360 : IColorManager
     {
-        private Kinect360 _kinect360;
-        private ColorImageStream _colorStream;
+        private readonly Kinect360 _kinect360;
+        private readonly ColorImageStream _colorStream;
 
         internal ColorImageFormat ColorImageFormat;
 
@@ -55,14 +55,14 @@ namespace Kinect360
             _kinect360.KinectSensor.ColorFrameReady -= KinectSensor_ColorFrameReady;
         }
 
-        internal class ColorFrame360 : IColorFrame
+        public class ColorFrame360 : IColorFrame
         {
             public ColorFrame360(ColorImageFrame colorImageFrame)
             {
                 _colorImageFrame = colorImageFrame;
             }
 
-            private ColorImageFrame _colorImageFrame;
+            private readonly ColorImageFrame _colorImageFrame;
 
             public int BytesPerPixel => _colorImageFrame.BytesPerPixel;
 
@@ -83,18 +83,18 @@ namespace Kinect360
             }
 
             #region IDisposable Support
-            private bool disposedValue = false; 
+            private bool _disposedValue = false; 
 
             protected virtual void Dispose(bool disposing)
             {
-                if (!disposedValue)
+                if (!_disposedValue)
                 {
                     if (disposing)
                     {
                         _colorImageFrame.Dispose();
                     }
 
-                    disposedValue = true;
+                    _disposedValue = true;
                 }
             }
 

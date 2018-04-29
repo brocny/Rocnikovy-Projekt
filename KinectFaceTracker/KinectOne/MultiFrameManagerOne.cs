@@ -35,7 +35,7 @@ namespace KinectOne
         }
 
         private KinectOne _kinectOne;
-        private MultiSourceFrameReader _multiReader;
+        private readonly MultiSourceFrameReader _multiReader;
 
         public void Dispose()
         {
@@ -52,8 +52,8 @@ namespace KinectOne
             _colorFrame = colorFrame;
         }
 
-        private ColorManagerOne.ColorFrameOne _colorFrame;
-        private BodyManagerOne.BodyFrameOne _bodyFrame;
+        private readonly ColorManagerOne.ColorFrameOne _colorFrame;
+        private readonly BodyManagerOne.BodyFrameOne _bodyFrame;
 
         public IColorFrame ColorFrame => _colorFrame;
 
