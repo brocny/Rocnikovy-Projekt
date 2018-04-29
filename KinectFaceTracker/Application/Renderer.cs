@@ -5,7 +5,7 @@ using System.Linq;
 using Core;
 using System.Numerics;
 
-namespace App.KinectTracked
+namespace App
 {
     public class Renderer
     {
@@ -30,7 +30,7 @@ namespace App.KinectTracked
         {
             _colorWidth = colorFrameWidth;
             _colorHeight = colorFrameHeight;
-            NameFont = new Font(FontFamily.GenericSansSerif, _colorWidth / 60);
+            NameFont = new Font(FontFamily.GenericSansSerif, _colorWidth / 60f);
             
             BodyPens = BodyBrushes.Select(br => new Pen(br, 2.5f)).ToArray();
             _bmp = new Bitmap(_colorWidth, _colorHeight);

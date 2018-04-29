@@ -1,7 +1,8 @@
-﻿using System;
+﻿// Based on a sample included in the Luxand Face SDK, modified and adapted to use a Kinect instead of a webcam
+
+using System;
 using System.Drawing;
 using System.Windows.Forms;
-using App.KinectTracked;
 using Core;
 using Luxand;
 using FsdkFaceLib;
@@ -68,11 +69,17 @@ namespace App.FSDKTracked
             ) // try to load saved tracker state
                 FSDK.CreateTracker(ref _trackerHandle); // if could not be loaded, create a new _trackerHandle
 
-            int err = 0; // set realtime face detection parameters
+            int err = 0;
+            // ToString().ToLowerInvariant() needed because false.ToString() == "False", but FSDK expects "false"
             FSDK.SetTrackerMultipleParameters(_trackerHandle,
-                "HandleArbitraryRotations=false; DetermineFaceRotationAngle=false; InternalResizeWidth=540; FaceDetectionThreshold=3;",
+                $"HandleArbitraryRotations={FSDKTrackedAppSettings.Default.FsdkHandleArbitraryRot.ToString().ToLowerInvariant()}; " +
+                $"DetermineFaceRotationAngle={FSDKTrackedAppSettings.Default.FsdkDetermineRotAngle.ToString().ToLowerInvariant()}; " +
+                $"InternalResizeWidth={FSDKTrackedAppSettings.Default.FsdkInternalResizeWidth}; " +
+                $"FaceDetectionThreshold={FSDKTrackedAppSettings.Default.FsdkFaceDetectionThreshold};",
                 ref err);
 
+            startButton.Enabled = false;
+            startButton.Visible = false;
             TrackingLoop();
         }
 
@@ -81,6 +88,7 @@ namespace App.FSDKTracked
             Image bitmap;
             FSDK.CImage fsdkImage;
             ImageBuffer imageBuffer;
+            const int maximumFacesDetected = 32;
 
             while (!_needClose)
             {
@@ -95,13 +103,13 @@ namespace App.FSDKTracked
                     imageBuffer = new ImageBuffer(_imageBuffer, frame.Width, frame.Height, frame.BytesPerPixel);              
                 }
 
-                imageBuffer.ToFsdkImage(out int imageHandle);
-                fsdkImage = new FSDK.CImage(imageHandle);
                 bitmap = imageBuffer.ToBitmap();
+                imageBuffer.CreateFsdkImageHandle(out int fsdkImageHandle);
+                fsdkImage = new FSDK.CImage(fsdkImageHandle);
 
                 long faceCount = 0;
                 FSDK.FeedFrame(_trackerHandle, 0, fsdkImage.ImageHandle, ref faceCount, out var ids,
-                    sizeof(long) * 64); // maximum of 64 faces detected
+                    sizeof(long) * maximumFacesDetected);
                 Array.Resize(ref ids, (int)faceCount);
 
                 // make UI controls accessible (to find if the user clicked on a face)
@@ -160,7 +168,6 @@ namespace App.FSDKTracked
                     }
 
                     graphics.DrawRectangle(pen, left, top, w, w);
-                    //FSDK.FreeImage(imageHandle);
                 }
 
                 pictureBox1.Image = bitmap;

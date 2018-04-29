@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.mainPictureBox = new System.Windows.Forms.PictureBox();
             this.statusLabel = new System.Windows.Forms.Label();
-            this.facePictureBox = new System.Windows.Forms.PictureBox();
+            this.focusedFacePictureBox = new System.Windows.Forms.PictureBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -42,26 +42,26 @@
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.startStopSpaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.faceLabel = new System.Windows.Forms.Label();
-            this.pictureBox2 = new System.Windows.Forms.PictureBox();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.facePictureBox)).BeginInit();
+            this.matchedFacePictureBox = new System.Windows.Forms.PictureBox();
+            ((System.ComponentModel.ISupportInitialize)(this.mainPictureBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.focusedFacePictureBox)).BeginInit();
             this.menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.matchedFacePictureBox)).BeginInit();
             this.SuspendLayout();
             // 
-            // pictureBox1
+            // mainPictureBox
             // 
-            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.mainPictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.pictureBox1.Location = new System.Drawing.Point(0, 32);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(960, 520);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
-            this.pictureBox1.SizeChanged += new System.EventHandler(this.pictureBox1_SizeChanged);
-            this.pictureBox1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseClick);
+            this.mainPictureBox.Location = new System.Drawing.Point(0, 32);
+            this.mainPictureBox.Name = "mainPictureBox";
+            this.mainPictureBox.Size = new System.Drawing.Size(960, 520);
+            this.mainPictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.mainPictureBox.TabIndex = 0;
+            this.mainPictureBox.TabStop = false;
+            this.mainPictureBox.SizeChanged += new System.EventHandler(this.MainPictureBox_SizeChanged);
+            this.mainPictureBox.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MainPictureBox_MouseClick);
             // 
             // statusLabel
             // 
@@ -73,16 +73,16 @@
             this.statusLabel.TabIndex = 1;
             this.statusLabel.Text = "Stop";
             // 
-            // facePictureBox
+            // focusedFacePictureBox
             // 
-            this.facePictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.facePictureBox.Location = new System.Drawing.Point(978, 32);
-            this.facePictureBox.Name = "facePictureBox";
-            this.facePictureBox.Size = new System.Drawing.Size(177, 188);
-            this.facePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.facePictureBox.TabIndex = 4;
-            this.facePictureBox.TabStop = false;
-            this.facePictureBox.MouseClick += new System.Windows.Forms.MouseEventHandler(this.facePictureBox_MouseClick);
+            this.focusedFacePictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.focusedFacePictureBox.Location = new System.Drawing.Point(978, 32);
+            this.focusedFacePictureBox.Name = "focusedFacePictureBox";
+            this.focusedFacePictureBox.Size = new System.Drawing.Size(177, 188);
+            this.focusedFacePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.focusedFacePictureBox.TabIndex = 4;
+            this.focusedFacePictureBox.TabStop = false;
+            this.focusedFacePictureBox.MouseClick += new System.Windows.Forms.MouseEventHandler(this.FocusedFacePictureBox_MouseClick);
             // 
             // menuStrip1
             // 
@@ -115,7 +115,7 @@
             this.openToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
             this.openToolStripMenuItem.Size = new System.Drawing.Size(225, 26);
             this.openToolStripMenuItem.Text = "Open";
-            this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
+            this.openToolStripMenuItem.Click += new System.EventHandler(this.OpenToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
             // 
@@ -124,7 +124,7 @@
             | System.Windows.Forms.Keys.S)));
             this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(225, 26);
             this.saveAsToolStripMenuItem.Text = "Save As";
-            this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
+            this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.SaveAsToolStripMenuItem_Click);
             // 
             // saveToolStripMenuItem
             // 
@@ -132,7 +132,7 @@
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
             this.saveToolStripMenuItem.Size = new System.Drawing.Size(225, 26);
             this.saveToolStripMenuItem.Text = "Save";
-            this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+            this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
             // clearToolStripMenuItem
             // 
@@ -140,7 +140,7 @@
             this.clearToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
             this.clearToolStripMenuItem.Size = new System.Drawing.Size(225, 26);
             this.clearToolStripMenuItem.Text = "Clear";
-            this.clearToolStripMenuItem.Click += new System.EventHandler(this.clearToolStripMenuItem_Click);
+            this.clearToolStripMenuItem.Click += new System.EventHandler(this.ClearToolStripMenuItem_Click);
             // 
             // toolStripMenuItem1
             // 
@@ -159,7 +159,7 @@
             this.startStopSpaceToolStripMenuItem.Name = "startStopSpaceToolStripMenuItem";
             this.startStopSpaceToolStripMenuItem.Size = new System.Drawing.Size(106, 24);
             this.startStopSpaceToolStripMenuItem.Text = "Start (Space)";
-            this.startStopSpaceToolStripMenuItem.Click += new System.EventHandler(this.startStopSpaceToolStripMenuItem_Click);
+            this.startStopSpaceToolStripMenuItem.Click += new System.EventHandler(this.StartStopSpaceToolStripMenuItem_Click);
             // 
             // faceLabel
             // 
@@ -170,25 +170,25 @@
             this.faceLabel.Size = new System.Drawing.Size(0, 17);
             this.faceLabel.TabIndex = 7;
             // 
-            // pictureBox2
+            // matchedFacePictureBox
             // 
-            this.pictureBox2.Location = new System.Drawing.Point(978, 384);
-            this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(177, 168);
-            this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox2.TabIndex = 9;
-            this.pictureBox2.TabStop = false;
+            this.matchedFacePictureBox.Location = new System.Drawing.Point(978, 384);
+            this.matchedFacePictureBox.Name = "matchedFacePictureBox";
+            this.matchedFacePictureBox.Size = new System.Drawing.Size(177, 168);
+            this.matchedFacePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.matchedFacePictureBox.TabIndex = 9;
+            this.matchedFacePictureBox.TabStop = false;
             // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1167, 584);
-            this.Controls.Add(this.pictureBox2);
+            this.Controls.Add(this.matchedFacePictureBox);
             this.Controls.Add(this.faceLabel);
-            this.Controls.Add(this.facePictureBox);
+            this.Controls.Add(this.focusedFacePictureBox);
             this.Controls.Add(this.statusLabel);
-            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.mainPictureBox);
             this.Controls.Add(this.menuStrip1);
             this.DoubleBuffered = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -198,11 +198,11 @@
             this.Text = "Kinect Face Tracker";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);
             this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.FormMain_KeyPress);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.facePictureBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.mainPictureBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.focusedFacePictureBox)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.matchedFacePictureBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -210,9 +210,9 @@
 
         #endregion
 
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox mainPictureBox;
         private System.Windows.Forms.Label statusLabel;
-        private System.Windows.Forms.PictureBox facePictureBox;
+        private System.Windows.Forms.PictureBox focusedFacePictureBox;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
@@ -223,7 +223,7 @@
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.Label faceLabel;
-        private System.Windows.Forms.PictureBox pictureBox2;
+        private System.Windows.Forms.PictureBox matchedFacePictureBox;
     }
 }
 

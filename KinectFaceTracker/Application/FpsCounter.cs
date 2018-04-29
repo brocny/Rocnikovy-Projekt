@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace App.KinectTracked
+namespace App
 {
     class FpsCounter
     {

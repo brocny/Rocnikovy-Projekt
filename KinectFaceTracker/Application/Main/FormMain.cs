@@ -68,8 +68,8 @@ namespace App.KinectTracked
             _kft.FacePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
             _kft.Start();
 
-            _imageHeight = pictureBox1.Height;
-            _imageWidth = pictureBox1.Width;
+            _imageHeight = mainPictureBox.Height;
+            _imageWidth = mainPictureBox.Width;
 
             startStopSpaceToolStripMenuItem.Text =
                 _programState == ProgramState.Running ? "Stop (Space)" : "Start (Space)";
@@ -79,10 +79,10 @@ namespace App.KinectTracked
 
         private void FacePipelineOnTemplateProcessingComplete(object sender, Match<byte[]>[] matches)
         {
-            var displayedFaceMatch = matches.SingleOrDefault(x => x.TrackingId == _focusedFaceTrackingId);
-            if (displayedFaceMatch?.Snapshot?.FaceImageBuffer != null)
+            var focusedFaceMatch = matches.SingleOrDefault(x => x.TrackingId == _focusedFaceTrackingId);
+            if (focusedFaceMatch?.Snapshot?.FaceImageBuffer != null)
             {
-                pictureBox2.InvokeIfRequired(pb => pb.Image = displayedFaceMatch.Snapshot.FaceImageBuffer.ToBitmap());
+                matchedFacePictureBox.InvokeIfRequired(pb => pb.Image = focusedFaceMatch.Snapshot.FaceImageBuffer.ToBitmap());
             }
         }
 
@@ -90,9 +90,7 @@ namespace App.KinectTracked
         {
             var faceLocations = e.FaceLocationResult;
 
-            var bitmapTask = Task.Run(() => faceLocations.ColorBuffer.BytesToBitmap(faceLocations.ImageWidth,
-                faceLocations.ImageHeight,
-                faceLocations.ImageBytesPerPixel));
+            var bitmapTask = Task.Run(() => faceLocations.ImageBuffer.ToBitmap());
 
             var task = Task.Run(async () =>
             {
@@ -105,7 +103,7 @@ namespace App.KinectTracked
                         if (_kft.TrackedFaces.TryGetValue(faceLocations.TrackingIds[i], out var trackingStatus))
                         {
                             labels[i] = _kft.FaceDatabase.GetName(trackingStatus.TopCandidate.FaceId) ??
-                                        trackingStatus.TopCandidate.FaceId.ToString();
+                                        $"ID: {trackingStatus.TopCandidate.FaceId}";
                         }
                     }
 
@@ -123,7 +121,7 @@ namespace App.KinectTracked
             _lastFaceRects = faceLocations.FaceRectangles;
             _lastTrackingIds = faceLocations.TrackingIds;
             statusLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
-            pictureBox1.Image = task.Result;
+            mainPictureBox.Image = task.Result;
         }
 
         private IKinect InitializeKinect()
@@ -173,10 +171,10 @@ namespace App.KinectTracked
                 labelBuilder.AppendLine(trackingStatus.TopCandidate.FaceId.ToString());
             }
 
-            labelBuilder.AppendLine($"Age: {fsdkFaceImage.GetAge():F2}");
-            labelBuilder.AppendLine($"Smile: {expression.smile * 100:F2}%");
-            labelBuilder.AppendLine($"Eyes Open: {expression.eyesOpen * 100:F2}%");
-            labelBuilder.AppendLine($"{(gender == Gender.Male ? "Male:" : "Female:")} {confidence * 100:F2}%");
+            labelBuilder.AppendLine($"Age: {fsdkFaceImage.GetAge():F1}");
+            labelBuilder.AppendLine($"Smile: {expression.smile * 100:F1}%");
+            labelBuilder.AppendLine($"Eyes Open: {expression.eyesOpen * 100:F1}%");
+            labelBuilder.AppendLine($"{(gender == Gender.Male ? "Male:" : "Female:")} {confidence * 100:F1}%");
 
             faceLabel.InvokeIfRequired(f => f.Text = labelBuilder.ToString());
         }
@@ -186,11 +184,11 @@ namespace App.KinectTracked
             if (faceCutouts == null || faceCutouts.Length == 0) return;
 
             var fco = faceCutouts.SingleOrDefault(x => x.TrackingId == _focusedFaceTrackingId) ?? faceCutouts[0];
-            facePictureBox.InvokeIfRequired(f => f.Image = fco.ImageBuffer.ToBitmap());
+            focusedFacePictureBox.InvokeIfRequired(f => f.Image = fco.ImageBuffer.ToBitmap());
             if (fco.TrackingId != _focusedFaceTrackingId)
             {
                 _focusedFaceTrackingId = fco.TrackingId;
-                pictureBox2.Image = null;
+                matchedFacePictureBox.Image = null;
             }
         }
 
@@ -222,14 +220,27 @@ namespace App.KinectTracked
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             _kft.Stop();
+
+            if(string.IsNullOrWhiteSpace(_dbSerializePath))
+                return;
+
+            var dialogResult = MessageBox.Show("Do you wish to save database before exiting?", "Save database", MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
+                using (var stream = File.OpenWrite(_dbSerializePath))
+                {
+                    _kft.FaceDatabase.Serialize(stream);
+                }
+            }
         }
 
         private void FormMain_KeyPress(object sender, KeyPressEventArgs e)
         {
+            // space to start/pause
             if (e.KeyChar == ' ') TogglePaused();
         }
 
-        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var originalState = _programState;
             Pause();
@@ -265,7 +276,7 @@ namespace App.KinectTracked
             if (originalState == ProgramState.Running) UnPause();
         }
 
-        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var originalState = _programState;
             Pause();
@@ -301,11 +312,11 @@ namespace App.KinectTracked
             if (originalState == ProgramState.Running) UnPause();
         }
 
-        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(_dbSerializePath))
             {
-                saveAsToolStripMenuItem_Click(sender, e);
+                SaveAsToolStripMenuItem_Click(sender, e);
                 return;
             }
 
@@ -328,12 +339,12 @@ namespace App.KinectTracked
             if (originalState == ProgramState.Running) UnPause();
         }
 
-        private void startStopSpaceToolStripMenuItem_Click(object sender, EventArgs e)
+        private void StartStopSpaceToolStripMenuItem_Click(object sender, EventArgs e)
         {
             TogglePaused();
         }
 
-        private void pictureBox1_MouseClick(object sender, MouseEventArgs e)
+        private void MainPictureBox_MouseClick(object sender, MouseEventArgs e)
         {
             if (_lastFaceRects == null) return;
             var clickPos = e.Location.Rescale(_imageWidth, _imageHeight, _kinectFrameHeight, _kinectFrameWidth);
@@ -384,13 +395,13 @@ namespace App.KinectTracked
             faceInfo.Name = inputNameForm.UserName;
         }
 
-        private void pictureBox1_SizeChanged(object sender, EventArgs e)
+        private void MainPictureBox_SizeChanged(object sender, EventArgs e)
         {
-            _imageWidth = pictureBox1.Width;
-            _imageHeight = pictureBox1.Height;
+            _imageWidth = mainPictureBox.Width;
+            _imageHeight = mainPictureBox.Height;
         }
 
-        private void facePictureBox_MouseClick(object sender, MouseEventArgs e)
+        private void FocusedFacePictureBox_MouseClick(object sender, MouseEventArgs e)
         {
             switch (e.Button)
             {
@@ -403,7 +414,7 @@ namespace App.KinectTracked
             }
         }
 
-        private void clearToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ClearToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _kft.FaceDatabase.Clear();
         }

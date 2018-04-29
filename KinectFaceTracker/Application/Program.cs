@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
-using App.FSDKTracked;
-using App;
 
-namespace App.KinectTracked
+namespace App
 {
     public static class Program
     {
