@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Core.Face;
 using Core;
 using FsdkFaceLib;
@@ -76,8 +77,15 @@ namespace KinectFaceTracker
             using (var bodyFrame = multiFrame.BodyFrame)
             {
                 if (colorFrame == null || bodyFrame == null) return;
-                var faceLocations = await FacePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
-                FrameArrived?.Invoke(this, new FrameArrivedEventArgs(faceLocations));
+                try
+                {
+                    var faceLocations = await FacePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
+                    FrameArrived?.Invoke(this, new FrameArrivedEventArgs(faceLocations));
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
+                }
             }
 
             multiFrame.Dispose();
