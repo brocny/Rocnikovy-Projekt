@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using Core;
 using System.Numerics;
+using App.Properties;
 
 namespace App
 {
@@ -13,7 +14,7 @@ namespace App
         public StringFormat NameFormat { get; set; } = new StringFormat{ Alignment = StringAlignment.Center };
 
         public IList<Brush> BodyBrushes { get; set; } = new List<Brush>
-            { Brushes.LimeGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink, Brushes.Red};
+            { Brushes.LimeGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink, Brushes.Red, Brushes.MediumPurple, Brushes.OrangeRed};
         public IList<Pen> BodyPens { get; set; } 
 
         public Bitmap Image
@@ -28,21 +29,33 @@ namespace App
 
         public Renderer(int colorFrameWidth, int colorFrameHeight)
         {
-            _colorWidth = colorFrameWidth;
-            _colorHeight = colorFrameHeight;
-            NameFont = new Font(FontFamily.GenericSansSerif, _colorWidth / 60f);
-            
-            BodyPens = BodyBrushes.Select(br => new Pen(br, 2.5f)).ToArray();
-            _bmp = new Bitmap(_colorWidth, _colorHeight);
+            _colorFrameWidth = colorFrameWidth;
+            _colorFrameHeight = colorFrameHeight;
+            NameFont = new Font(Settings.Default.NameFontFamily, Settings.Default.NameFontSize * _colorFrameWidth / 750f);
+            BodyPens = BodyBrushes.Select(br => new Pen(br, BoneThickness)).ToArray();
+            _bmp = new Bitmap(_colorFrameWidth, _colorFrameHeight);
         }
         
         private Bitmap _bmp;
 
-        private readonly int _colorHeight;
-        private readonly int _colorWidth;
+        private readonly int _colorFrameHeight;
+        private readonly int _colorFrameWidth;
 
-        public float JointSize { get; set; } = 7;
-        public float BoneThickness { get; set; } = 1;
+        public float JointSize { get; set; } = Settings.Default.JointSize;
+
+        private float _boneThickness = Settings.Default.BoneThickness;
+        public float BoneThickness
+        {
+            get => _boneThickness;
+            set
+            {
+                _boneThickness = value;
+                foreach (var bodyPen in BodyPens)
+                {
+                    bodyPen.Width = _boneThickness;
+                }
+            }
+        }
 
         private Graphics _gr;
 
@@ -50,7 +63,7 @@ namespace App
         {
             if (_bmp == null)
             {
-                Image = new Bitmap(_colorWidth, _colorHeight);
+                Image = new Bitmap(_colorFrameWidth, _colorFrameHeight);
             }
             else
             {
@@ -105,15 +118,15 @@ namespace App
 
         public void DrawJoint(Vector2 pos, Brush brush)
         {
-            var bmpX = Math.Max(0, Math.Min(pos.X, _bmp.Width));
-            var bmpY = Math.Max(0, Math.Min(pos.Y, _bmp.Height));
+            float bmpX = Math.Max(0, Math.Min(pos.X, _bmp.Width));
+            float bmpY = Math.Max(0, Math.Min(pos.Y, _bmp.Height));
             _gr.FillEllipse(brush, bmpX - JointSize / 2, bmpY - JointSize / 2, JointSize, JointSize);
         }
 
         public void DrawJoint(Vector2 pos, Brush brush, float size)
         {
-            var bmpX = Math.Min(pos.X, _bmp.Width);
-            var bmpY = Math.Min(pos.Y, _bmp.Height);
+            float bmpX = Math.Min(pos.X, _bmp.Width);
+            float bmpY = Math.Min(pos.Y, _bmp.Height);
             _gr.FillEllipse(brush, bmpX - size / 2, bmpY - size / 2, size, size);
         }
 
@@ -156,8 +169,10 @@ namespace App
 
         public void DrawName(string name, int xPos, int yPos, Brush brush)
         {
-            if (name != null)
-                _gr.DrawString(name, NameFont, brush, xPos, yPos, NameFormat);
+            if (string.IsNullOrWhiteSpace(name))
+                return;
+
+            _gr.DrawString(name, NameFont, brush, xPos, yPos, NameFormat);
         }
 
         public void DrawName(string name, Point location, Brush brush)
@@ -167,23 +182,22 @@ namespace App
 
         public void DrawNames(string[] names, Point[] positions, long[] trackingIds = null)
         {
-            if (trackingIds == null || trackingIds.Length != names.Length)
-            {
-                for (int i = 0; i < names.Length; i++)
-                {
-                    _gr.DrawString(names[i], NameFont, BodyBrushes[i % BodyBrushes.Count], positions[i]);
-                }
-            }
-            else
+            // if tracking IDs are provided, choose colors for names on these tracking IDs
+            if (trackingIds != null && trackingIds.Length == names.Length)
             {
                 for (int i = 0; i < names.Length; i++)
                 {
                     _gr.DrawString(names[i], NameFont, BodyBrushes[(int)trackingIds[i] % BodyBrushes.Count], positions[i]);
                 }
             }
-
-            
+            // otherwise choose colors based on their order
+            else
+            {
+                for (int i = 0; i < names.Length; i++)
+                {
+                    _gr.DrawString(names[i], NameFont, BodyBrushes[i % BodyBrushes.Count], positions[i]);
+                }
+            }
         }
-
     }
 }
