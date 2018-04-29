@@ -9,7 +9,8 @@ using Core;
 using Luxand;
 using System.Threading.Tasks.Dataflow;
 using System.Buffers;
-using LuxandFace;
+using FsdkFaceLib.Properties;
+
 
 namespace FsdkFaceLib
 {
@@ -220,11 +221,8 @@ namespace FsdkFaceLib
 
             return new FaceLocationResult
             {
-                ImageBytesPerPixel = colorFrame.BytesPerPixel,
-                ColorBuffer = colorResult,
+                ImageBuffer = new ImageBuffer(colorResult, colorFrame.Width, colorFrame.Height, colorFrame.BytesPerPixel),
                 FaceRectangles = bodyResult.faceRects,
-                ImageHeight = colorFrame.Height,
-                ImageWidth = colorFrame.Width,
                 Bodies = bodyResult.bodies,
                 TrackingIds = bodyResult.faceIds
             };
@@ -241,17 +239,17 @@ namespace FsdkFaceLib
             var result = new FaceCutout[numFaces];
             for (int i = 0; i < numFaces; i++)
             {
-                var pixelBuffer = faceLocations.ColorBuffer.GetBufferRect(faceLocations.ImageWidth,
-                    faceLocations.FaceRectangles[i], faceLocations.ImageBytesPerPixel);
+                var pixelBuffer = faceLocations.ImageBuffer.Buffer.GetBufferRect(faceLocations.ImageBuffer.Width,
+                    faceLocations.FaceRectangles[i], faceLocations.ImageBuffer.BytesPerPixel);
                 var rect = faceLocations.FaceRectangles[i];
                 result[i] = new FaceCutout
                 {
                     OrigLocation = faceLocations.FaceRectangles[i].Location,
                     TrackingId = faceLocations.TrackingIds[i],
-                    ImageBuffer = new ImageBuffer(pixelBuffer, rect.Width, rect.Height, faceLocations.ImageBytesPerPixel)
+                    ImageBuffer = faceLocations.ImageBuffer.GetRectangle(faceLocations.FaceRectangles[i])
                 };
 
-                _bufferPool.Return(faceLocations.ColorBuffer);
+                _bufferPool.Return(faceLocations.ImageBuffer.Buffer);
             }
 
             FaceCuttingComplete?.Invoke(this, result);
@@ -281,7 +279,7 @@ namespace FsdkFaceLib
 
                 var result = new FSDKFaceImage();
 
-                if (FSDK.FSDKE_OK == faceCutout.ImageBuffer.ToFsdkImage(out result.ImageHandle))
+                if (FSDK.FSDKE_OK == faceCutout.ImageBuffer.CreateFsdkImageHandle(out result.ImageHandle))
                 {
                     result.OrigLocation = faceCutout.OrigLocation;
                     result.TrackingId = faceCutout.TrackingId;
@@ -372,10 +370,8 @@ namespace FsdkFaceLib
 
     public class FaceLocationResult
     {
-        public int ImageWidth;
-        public int ImageHeight;
-        public int ImageBytesPerPixel;
-        public byte[] ColorBuffer;
+        public ImageBuffer ImageBuffer;
+
         public Rectangle[] FaceRectangles;
         public long[] TrackingIds;
         public IBody[] Bodies;

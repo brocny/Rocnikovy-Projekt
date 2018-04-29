@@ -83,7 +83,7 @@ namespace FsdkFaceLib
         /// <param name="imageBuffer"></param>
         /// <param name="imageHandle"></param>
         /// <returns>Handle to newly created FSDK FaceImage</returns>
-        public static int ToFsdkImage(this ImageBuffer imageBuffer, out int imageHandle)
+        public static int CreateFsdkImageHandle(this ImageBuffer imageBuffer, out int imageHandle)
         {
             imageHandle = -1;
             var buffer = new byte[imageBuffer.Buffer.Length];

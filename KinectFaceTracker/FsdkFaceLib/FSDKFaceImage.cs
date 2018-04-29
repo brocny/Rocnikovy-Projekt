@@ -25,7 +25,11 @@ namespace FsdkFaceLib
         public byte[] GetFaceTemplate()
         {
             byte[] retValue;
-            if (Features?.Length == FSDK.FSDK_FACIAL_FEATURE_COUNT)
+            if (FacePosition == null)
+            {
+                FSDK.GetFaceTemplate(ImageHandle, out retValue);
+            }
+            else if (Features?.Length == FSDK.FSDK_FACIAL_FEATURE_COUNT)
             {
                 FSDK.GetFaceTemplateUsingFeatures(ImageHandle, ref Features, out retValue);
             }
@@ -39,7 +43,14 @@ namespace FsdkFaceLib
 
         public void DetectFeatures()
         {
-            FSDK.DetectFacialFeaturesInRegion(ImageHandle, ref FacePosition, out Features);
+            if (FacePosition == null)
+            {
+                FSDK.DetectFacialFeatures(ImageHandle, out Features);
+            }
+            else
+            {
+                FSDK.DetectFacialFeaturesInRegion(ImageHandle, ref FacePosition, out Features);
+            }
         }
 
         /// <summary>
@@ -57,7 +68,7 @@ namespace FsdkFaceLib
                 return null;
             }
 
-            var age = response.Split('=', ';')[1];
+            string age = response.Split('=', ';')[1];
             if (float.TryParse(age, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out float ret))
             {
                 return ret;
@@ -117,13 +128,16 @@ namespace FsdkFaceLib
         /// Get how much the face is smiling
         /// </summary>
         /// <returns>A number between 0 and 1 indicating how much the person is smiling, null if failed</returns>
-        /// <remarks>The face's Features need to have been detected beforehand</remarks>
+        /// <remarks>
+        /// The face's Features need to have been detected beforehand using DetectFeatures(), otherwise null will be returned
+        /// Use <see cref="GetExpression"/> if detecting multiple attrbibutes
+        /// </remarks>
         public float? GetSmile()
         {
             if (Features == null) return null;
 
             if (FSDK.FSDKE_OK !=
-                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out var response, 128))
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out string response, 128))
             {
                 return null;
             }
@@ -140,18 +154,21 @@ namespace FsdkFaceLib
         /// Get how much the face's eyes are open
         /// </summary>
         /// <returns>A number between 0 and 1 indicating how much the face's eyes are open, null if failed</returns>
-        /// <remarks>The face's Features need to have been detected beforehand using DetectFeatures()</remarks>
+        /// <remarks>
+        /// The face's Features need to have been detected beforehand using DetectFeatures(), otherwise null will be returned
+        /// Use <see cref="GetExpression"/> if detecting multiple attrbibutes
+        /// </remarks>
         public float? GetEyesOpen()
         {
             if (Features == null) return null;
 
             if (FSDK.FSDKE_OK !=
-                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out var response, 128))
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out string response, 128))
             {
                 return null;
             }
 
-            var eyesOpen = response.Split('=', ';')[3];
+            string eyesOpen = response.Split('=', ';')[3];
             if (float.TryParse(eyesOpen, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out float ret))
             {
                 return ret;
@@ -160,12 +177,17 @@ namespace FsdkFaceLib
             return null;
         }
 
+        /// <summary>
+        /// Get how much the eyes are open, and how the much the person is smiling 
+        /// </summary>
+        /// <returns>A number between 0 and 1 for each of the tuple</returns>
+        /// <remarks>The face's features need to be already detected using DetectFeatures, otherwise (null, null) will be returned</remarks>
         public (float? eyesOpen, float? smile) GetExpression()
         {
-            if (Features == null) return (null,null);
+            if (Features == null) return (null, null);
 
             if (FSDK.FSDKE_OK !=
-                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out var response, 128))
+                FSDK.DetectFacialAttributeUsingFeatures(ImageHandle, ref Features, "Expression", out string response, 128))
             {
                 return (null, null);
             }
@@ -175,13 +197,13 @@ namespace FsdkFaceLib
             float? eyes = null;
             float? smile = null;
 
-            var eyesString = splitResponse[3];
+            string eyesString = splitResponse[3];
             if (float.TryParse(eyesString, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out float eyesTemp))
             {
                 eyes = eyesTemp;
             }
 
-            var smileString = splitResponse[1];
+            string smileString = splitResponse[1];
             if (float.TryParse(smileString, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out float smileTemp))
             {
                 smile = smileTemp;

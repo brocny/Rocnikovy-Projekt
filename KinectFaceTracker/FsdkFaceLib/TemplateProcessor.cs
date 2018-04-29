@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Core.Face;
-using LuxandFace;
+using FsdkFaceLib;
+using FsdkFaceLib.Properties;
 
 namespace FsdkFaceLib
 {

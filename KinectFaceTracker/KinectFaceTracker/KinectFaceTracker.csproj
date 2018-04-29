@@ -53,7 +53,7 @@
       <Project>{a103b1bd-322f-4a8f-b0eb-58393de5d453}</Project>
       <Name>Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\LuxandFace\FSDKFaceLib.csproj">
+    <ProjectReference Include="..\FsdkFaceLib\FSDKFaceLib.csproj">
       <Project>{8d843bc1-7761-4369-856b-f5631fece665}</Project>
       <Name>FSDKFaceLib</Name>
     </ProjectReference>
