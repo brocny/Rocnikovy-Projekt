@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Core.Properties;
 
 namespace Core
 {
@@ -101,13 +102,14 @@ namespace Core
 
         public static Bitmap BytesToBitmap(this byte[] buffer, int width, int height, int bytesPerPixel)
         {
-            if (buffer == null) return null;
+            if (buffer == null)
+                throw new ArgumentNullException(nameof(buffer));
             PixelFormat pf = default;
 
             if (bytesPerPixel == 3)
                 pf = PixelFormat.Format24bppRgb;
             else if (bytesPerPixel == 4)   
-                pf = PixelFormat.Format32bppArgb;
+                pf = PixelFormat.Format32bppPArgb;
             else if (bytesPerPixel == 2)
                 pf = PixelFormat.Format16bppRgb565;
 
@@ -118,6 +120,7 @@ namespace Core
         {
             if(buffer == null)
                 throw new ArgumentNullException(nameof(buffer));
+
             var bmp = new Bitmap(width, height, pf);
             var bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly,
                 bmp.PixelFormat);
@@ -180,6 +183,9 @@ namespace Core
         /// <returns>A buffer containing image data in the region defined by <code>rect</code></returns>
         public static byte[] GetBufferRect(this byte[] buffer, int bufferWidth, Rectangle rect, int bytesPerPixel)
         {
+            if(buffer == null)
+                throw new ArgumentNullException(nameof(buffer));
+
             int left = rect.Left;
             if (left < 0) left = 0;
 
