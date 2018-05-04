@@ -108,8 +108,8 @@ namespace Core
 
             if (bytesPerPixel == 3)
                 pf = PixelFormat.Format24bppRgb;
-            else if (bytesPerPixel == 4)   
-                pf = PixelFormat.Format32bppPArgb;
+            else if (bytesPerPixel == 4)
+                pf = PixelFormat.Format32bppRgb;
             else if (bytesPerPixel == 2)
                 pf = PixelFormat.Format16bppRgb565;
 
