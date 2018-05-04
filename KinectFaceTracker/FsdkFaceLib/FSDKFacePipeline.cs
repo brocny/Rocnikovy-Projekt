@@ -202,9 +202,15 @@ namespace FsdkFaceLib
                 var faceRects = new List<Rectangle>(bodyCount);
                 var faceIds = new List<long>(bodyCount);
                 var bodies = new IBody[bodyCount];
-                bodyFrame.CopyBodiesTo(bodies);
+                try
+                {
+                    bodyFrame.CopyBodiesTo(bodies);
+                }
+                catch (NullReferenceException)
+                {
 
-                foreach (var body in bodies.Where(b => b.IsTracked))
+                }
+                foreach (var body in bodies.Where(b => b != null && b.IsTracked))
                 {
                     if (Util.TryGetHeadRectangleAndYawAngle(body, mapper, out var faceRect, out _))
                     {
@@ -296,6 +302,11 @@ namespace FsdkFaceLib
 
         private FSDKFaceImage[] DetectFaces(FSDKFaceImage[] fsdkFaceImages)
         {
+            if (!_detectFace)
+            {
+                return fsdkFaceImages;
+            }
+
             Parallel.For(0, fsdkFaceImages.Length, i =>
             {
                 FSDK.DetectFace(fsdkFaceImages[i].ImageHandle, ref fsdkFaceImages[i].FacePosition);
@@ -308,6 +319,11 @@ namespace FsdkFaceLib
 
         private FSDKFaceImage[] DetectFacialFeatures(FSDKFaceImage[] fsdkFaceImages)
         {
+            if (!_detectFeatures)
+            {
+                return fsdkFaceImages;
+            }
+
             Parallel.For(0, fsdkFaceImages.Length, i =>
             {
                 fsdkFaceImages[i].DetectFeatures();
@@ -317,23 +333,25 @@ namespace FsdkFaceLib
             return fsdkFaceImages;
         }
         
-        private FaceTemplate[] ExtractTemplates(FSDKFaceImage[] faceImages) 
+        private FaceTemplate[] ExtractTemplates(FSDKFaceImage[] faceImages)
         {
-            var results = faceImages.AsParallel()
-                .Select(x =>
+            var results = new FaceTemplate[faceImages.Length];
+
+            Parallel.For(0,  faceImages.Length, i =>
+            {
+                var faceImage = faceImages[i];
+                var gender = faceImage.GetGender();
+                results[i] = new FaceTemplate
                 {
-                    var gender = x.GetGender();
-                    return new FaceTemplate
-                    {
-                        TrackingId = x.TrackingId,
-                        Template = x.GetFaceTemplate(),
-                        FaceImage = x.ImageBuffer,
-                        Age = x.GetAge() ?? 0,
-                        Gender = gender.gender,
-                        GenderConfidence = gender.confidence,
-                    };
-                })
-                .ToArray();
+                    TrackingId = faceImage.TrackingId,
+                    Template = faceImage.GetFaceTemplate(),
+                    FaceImage = faceImage.ImageBuffer,
+                    Age = faceImage.GetAge() ?? 0,
+                    Gender = gender.gender,
+                    GenderConfidence = gender.confidence,
+                };
+            });
+
             FaceTemplateExtractionComplete?.Invoke(this, results);
             return results;
         }
@@ -352,9 +370,11 @@ namespace FsdkFaceLib
         private int _internalResizeWidth = FsdkSettings.Default.FsdkInternalResizeWidth;
         private bool _handleArbitrayRot = FsdkSettings.Default.FsdkHandleArbitraryRot;
         private bool _determineRotAngle = FsdkSettings.Default.FsdkDetermineRotAngle;
+        private bool _detectFace = FsdkSettings.Default.FsdkDetectFace;
+        private bool _detectFeatures = FsdkSettings.Default.FsdkDetectFeatures;
         private int _faceDetectionThreshold = FsdkSettings.Default.FsdkFaceDetectionThreshold;
         private readonly int _skipMinimumConfirmations = FsdkSettings.Default.SkipMinimumConfirmations;
-        private readonly int _skipMaxSkips = FsdkSettings.Default.SkipMaxSkips;
+        private readonly int _skipMaxSkips = FsdkSettings.Default.MaxSkippedFrames;
 
         private readonly TemplateProcessor _templateProc;
 

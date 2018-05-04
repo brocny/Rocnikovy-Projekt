@@ -25,25 +25,13 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.9")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.94")]
         public float TrackedInstantMatchThreshold {
             get {
                 return ((float)(this["TrackedInstantMatchThreshold"]));
             }
             set {
                 this["TrackedInstantMatchThreshold"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.86")]
-        public float UntrackedInstantMatchThreshold {
-            get {
-                return ((float)(this["UntrackedInstantMatchThreshold"]));
-            }
-            set {
-                this["UntrackedInstantMatchThreshold"] = value;
             }
         }
         
@@ -61,19 +49,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.88")]
-        public float UntrackedNewTemplateThreshold {
-            get {
-                return ((float)(this["UntrackedNewTemplateThreshold"]));
-            }
-            set {
-                this["UntrackedNewTemplateThreshold"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.65")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.68")]
         public float MatchThreshold {
             get {
                 return ((float)(this["MatchThreshold"]));
@@ -85,7 +61,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("30")]
+        [global::System.Configuration.DefaultSettingValueAttribute("40")]
         public int FsdkInternalResizeWidth {
             get {
                 return ((int)(this["FsdkInternalResizeWidth"]));
@@ -146,12 +122,12 @@ namespace FsdkFaceLib.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("10")]
-        public int SkipMaxSkips {
+        public int MaxSkippedFrames {
             get {
-                return ((int)(this["SkipMaxSkips"]));
+                return ((int)(this["MaxSkippedFrames"]));
             }
             set {
-                this["SkipMaxSkips"] = value;
+                this["MaxSkippedFrames"] = value;
             }
         }
         
@@ -176,6 +152,42 @@ namespace FsdkFaceLib.Properties {
             }
             set {
                 this["PipelineQueueDepth"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool FsdkDetectFeatures {
+            get {
+                return ((bool)(this["FsdkDetectFeatures"]));
+            }
+            set {
+                this["FsdkDetectFeatures"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool FsdkDetectFace {
+            get {
+                return ((bool)(this["FsdkDetectFace"]));
+            }
+            set {
+                this["FsdkDetectFace"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool FsdkDetectExpression {
+            get {
+                return ((bool)(this["FsdkDetectExpression"]));
+            }
+            set {
+                this["FsdkDetectExpression"] = value;
             }
         }
     }

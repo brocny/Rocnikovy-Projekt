@@ -108,12 +108,6 @@ namespace FsdkFaceLib
             _trackedFaces[t.TrackingId] =
                 new TrackingStatus(new CandidateStatus {Confirmations = bestMatch.Similarity, FaceId = bestMatch.FaceId});
 
-            if (bestMatch.Similarity > MatchingParameters.UntrackedNewTemplateThreshold &&
-                bestMatch.Similarity < MatchingParameters.UntrackedInstantMatchThreshold)
-            {
-                _faceDb[bestMatch.FaceId].AddTemplate(t);
-            }
-
             return bestMatch;
         }
 
@@ -190,17 +184,13 @@ namespace FsdkFaceLib
     public class MatchingParameters
     {
         public float TrackedInstantMatchThreshold { get; set; }
-        public float UntrackedInstantMatchThreshold { get; set; }
         public float TrackedNewTemplateThreshold { get; set; }
         public float MatchThreshold { get; set; }
-        public float UntrackedNewTemplateThreshold { get; set; }
 
         public static MatchingParameters Default => new MatchingParameters
         {
             TrackedInstantMatchThreshold = FsdkSettings.Default.TrackedInstantMatchThreshold,
-            UntrackedInstantMatchThreshold = FsdkSettings.Default.UntrackedInstantMatchThreshold,
             TrackedNewTemplateThreshold = FsdkSettings.Default.TrackedNewTemplateThreshold,
-            UntrackedNewTemplateThreshold = FsdkSettings.Default.TrackedNewTemplateThreshold,
             MatchThreshold = FsdkSettings.Default.MatchThreshold,
         };
     }
