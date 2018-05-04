@@ -58,7 +58,7 @@ namespace Kinect360
 
             public BodyFrame360(SkeletonFrame skeletonFrame)
             {
-                _skeletonFrame = skeletonFrame;
+                _skeletonFrame = skeletonFrame ?? throw new ArgumentNullException(nameof(skeletonFrame));
             }
 
             public int BodyCount => _skeletonFrame.SkeletonArrayLength;
@@ -76,10 +76,14 @@ namespace Kinect360
             {
                 var skeletonData = new Skeleton[_skeletonFrame.SkeletonArrayLength];
                 _skeletonFrame.CopySkeletonDataTo(skeletonData);
-                for (int i = 0; i < bodies.Length && i < skeletonData.Length; i++)
+                int i = -1;
+                int j = 0;
+                while (++i < skeletonData.Length && j < bodies.Length)
                 {
-                    bodies[i] = new Body360(skeletonData[i]);
-                    
+                    if(skeletonData[i] == null)
+                        continue;
+
+                    bodies[j++] = new Body360(skeletonData[i]);
                 }
             }
 
@@ -94,7 +98,7 @@ namespace Kinect360
                 {
                     if (disposing)
                     {
-                        _skeletonFrame.Dispose();
+                        _skeletonFrame?.Dispose();
                     }
                     
                     _disposedValue = true;
@@ -118,7 +122,7 @@ namespace Kinect360
 
             public Body360(Skeleton body)
             {
-                _body = body;
+                _body = body ?? throw new ArgumentNullException(nameof(body));
             }
             
             private IReadOnlyDictionary<MyJointType, IJoint> _joints;
@@ -126,10 +130,10 @@ namespace Kinect360
             private IReadOnlyDictionary<MyJointType, IJoint> MakeJointDictionary()
             {
                 var dict = _body.Joints.ToDictionary(x => x.JointType.ToMyJointType(), x => (IJoint) new Joint360(x));
-                var headPos = _joints[MyJointType.Head].Position;
-                var shoulderCenterPos = _joints[MyJointType.ShoulderCenter].Position;
-                var neckPos = headPos + shoulderCenterPos / 2;
-                dict[MyJointType.Neck] = new FakeJoint(neckPos, _joints[MyJointType.Head].IsTracked && _joints[MyJointType.ShoulderCenter].IsTracked, MyJointType.Neck);
+                var headPos = dict[MyJointType.Head].Position;
+                var shoulderCenterPos = dict[MyJointType.ShoulderCenter].Position;
+                var neckPos = headPos * 0.35f + shoulderCenterPos * 0.65f;
+                dict[MyJointType.Neck] = new FakeJoint(neckPos, dict[MyJointType.Head].IsTracked && dict[MyJointType.ShoulderCenter].IsTracked, MyJointType.Neck);
                 return dict;
             }
 
@@ -193,7 +197,7 @@ namespace Kinect360
 
         public class Joint360 : IJoint
         {
-            private Joint _joint;
+            private readonly Joint _joint;
 
             public Joint360(Joint joint)
             {

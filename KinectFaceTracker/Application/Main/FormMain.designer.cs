@@ -69,9 +69,9 @@
             this.statusLabel.AutoSize = true;
             this.statusLabel.Location = new System.Drawing.Point(12, 546);
             this.statusLabel.Name = "statusLabel";
-            this.statusLabel.Size = new System.Drawing.Size(37, 17);
+            this.statusLabel.Size = new System.Drawing.Size(131, 17);
             this.statusLabel.TabIndex = 1;
-            this.statusLabel.Text = "Stop";
+            this.statusLabel.Text = "Waiting for Kinect...";
             // 
             // focusedFacePictureBox
             // 

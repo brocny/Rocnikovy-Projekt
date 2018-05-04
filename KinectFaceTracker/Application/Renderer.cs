@@ -109,7 +109,7 @@ namespace App
         {
             foreach (var body in bodies)
             {
-                if (body.IsTracked)
+                if (body != null && body.IsTracked)
                 {
                     DrawBody(body, BodyBrushes[(int)(body.TrackingId % BodyBrushes.Count)], BodyPens[(int)(body.TrackingId % BodyPens.Count)], mapper);
                 }

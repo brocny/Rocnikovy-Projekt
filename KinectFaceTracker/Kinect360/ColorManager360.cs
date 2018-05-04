@@ -10,7 +10,7 @@ namespace Kinect360
         private readonly Kinect360 _kinect360;
         private readonly ColorImageStream _colorStream;
 
-        internal ColorImageFormat ColorImageFormat;
+        internal ColorImageFormat ColorImageFormat = ColorImageFormat.RgbResolution1280x960Fps12;
 
         public ColorManager360(Kinect360 kinect360)
         {
@@ -22,7 +22,6 @@ namespace Kinect360
         public int FrameHeight => ColorImageFormat == ColorImageFormat.RgbResolution640x480Fps30 ? 480 : 960;
         public int BytesPerPixel => _colorStream.FrameBytesPerPixel;
         public int FrameDataSize => _colorStream.FramePixelDataLength;
-
 
         private void KinectSensor_ColorFrameReady(object sender, ColorImageFrameReadyEventArgs e)
         {
@@ -37,7 +36,9 @@ namespace Kinect360
 
         public IColorFrame GetNextFrame()
         {
-            return new ColorFrame360(_colorStream.OpenNextFrame(30));
+            _kinect360.KinectSensor.ColorFrameReady -= KinectSensor_ColorFrameReady;
+            var colorFrame = _colorStream.OpenNextFrame(30);
+            return colorFrame == null ? null : new ColorFrame360(colorFrame);
         }
 
         public void Open(bool preferResolutionOverFps)
@@ -82,30 +83,10 @@ namespace Kinect360
                 _colorImageFrame.CopyPixelDataTo(ptr, pixelDataLength);
             }
 
-            #region IDisposable Support
-            private bool _disposedValue = false; 
-
-            protected virtual void Dispose(bool disposing)
-            {
-                if (!_disposedValue)
-                {
-                    if (disposing)
-                    {
-                        _colorImageFrame.Dispose();
-                    }
-
-                    _disposedValue = true;
-                }
-            }
-
-            
             public void Dispose()
             {
-              
-                Dispose(true);
-                
+                _colorImageFrame?.Dispose();
             }
-            #endregion
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using Core;
+using Microsoft.Kinect;
 
 namespace Kinect360
 {
@@ -8,18 +9,38 @@ namespace Kinect360
         public MultiManager360(Kinect360 kinect, MultiFrameTypes frameTypes, bool preferResolutionOverFps)
         {
             _kinect360 = kinect;
+            var colorImageFormat = preferResolutionOverFps
+                ? ColorImageFormat.RgbResolution1280x960Fps12
+                : ColorImageFormat.RgbResolution640x480Fps30;
+            (_kinect360.ColorManager as ColorManager360).ColorImageFormat = ColorImageFormat.RgbResolution1280x960Fps12;
+            _kinect360.KinectSensor.ColorStream.Enable(colorImageFormat);
+            _kinect360.KinectSensor.SkeletonStream.Enable();
+            _kinect360.Open();
+            _kinect360.KinectSensor.AllFramesReady += KinectSensor_AllFramesReady;
             FrameTypes = frameTypes;
-            if (frameTypes.HasFlag(MultiFrameTypes.Body))
+        }
+
+        private void KinectSensor_AllFramesReady(object sender, AllFramesReadyEventArgs e)
+        {
+            if (FrameTypes.HasFlag(MultiFrameTypes.Color))
             {
-                _kinect360.BodyManager.Open();
-                _kinect360.BodyManager.BodyFrameReady += BodyManagerOnBodyFrameReady;          
+                var colorFrame = e.OpenColorImageFrame();
+                if(colorFrame == null)
+                    return;
+
+                _colorFrame = new ColorManager360.ColorFrame360(colorFrame);
             }
 
-            if (frameTypes.HasFlag(MultiFrameTypes.Color))
+            if (FrameTypes.HasFlag(MultiFrameTypes.Body))
             {
-                _kinect360.ColorManager.Open(preferResolutionOverFps);
-                _kinect360.ColorManager.ColorFrameReady += ColorManagerOnColorFrameReady;
+                var skeletonFrame = e.OpenSkeletonFrame();
+                if (skeletonFrame == null)
+                    return;
+               
+                _bodyFrame = new BodyManager360.BodyFrame360(skeletonFrame);
             }
+            
+            MultiFrameArrived?.Invoke(this, new MultiFrameReadyEventArgs(new MultiFrame360(_colorFrame, _bodyFrame)));
         }
 
         private void ColorManagerOnColorFrameReady(object sender, ColorFrameReadyEventArgs e)

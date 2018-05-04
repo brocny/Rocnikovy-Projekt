@@ -36,6 +36,7 @@ namespace Kinect360
                     break;
                 }
             }
+
             if (KinectSensor == null)
                 throw new ApplicationException("No Kinect device found!");
         }
