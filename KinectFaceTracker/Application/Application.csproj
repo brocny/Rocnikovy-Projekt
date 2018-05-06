@@ -181,6 +181,7 @@
     </Compile>
     <Compile Include="FormUtil.cs" />
     <Compile Include="FpsCounter.cs" />
+    <Compile Include="Main\KinectFaceTracker.cs" />
     <Compile Include="Main\KinectTrackedAppSettings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -216,10 +217,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KinectFaceTracker\KinectFaceTracker.csproj">
-      <Project>{6a321ce4-251c-479f-bd14-a67614256e20}</Project>
-      <Name>KinectFaceTracker</Name>
-    </ProjectReference>
     <ProjectReference Include="..\KinectFactory\KinectFactory.csproj">
       <Project>{67644ffe-d3e4-4670-94a7-b12f076857c4}</Project>
       <Name>KinectFactory</Name>
