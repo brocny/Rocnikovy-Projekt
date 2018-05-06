@@ -10,18 +10,20 @@ namespace Core
         {
         }
 
-        public ImageBuffer(byte[] buffer, int width, int height, int bytesPerPixel)
+        public ImageBuffer(byte[] buffer, int width, int height, int bytesPerPixel, PixelFormat pixelFormat = PixelFormat.Undefined)
         {
             Width = width;
             Height = height;
             BytesPerPixel = bytesPerPixel;
             Buffer = buffer;
+            PixelFormat = pixelFormat;
         }
 
         public ImageBuffer(Bitmap bmp)
         {
             int bytesPerPixel = bmp.PixelFormat.BytesPerPixel();
             int bufferLength = bmp.Height * bmp.Width * bytesPerPixel;
+            PixelFormat = bmp.PixelFormat;
             Buffer = new byte[bufferLength];
             BytesPerPixel = bytesPerPixel;
             Width = bmp.Width;
@@ -33,6 +35,7 @@ namespace Core
 
         public byte[] Buffer { get; }
 
+        public PixelFormat PixelFormat { get; }
         public int Width { get; }
         public int Height { get; }
         public int BytesPerPixel { get; }
