@@ -5,11 +5,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core
+namespace Core.Kinect
 {
-    public interface IColorManager
+    public interface IColorFrameStream
     {
         event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady;
+        bool IsOpen { get; }
         int FrameWidth { get; }
         int FrameHeight { get; }
         int BytesPerPixel { get; }

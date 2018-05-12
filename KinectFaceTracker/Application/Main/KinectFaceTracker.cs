@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core.Face;
 using Core;
+using Core.Kinect;
 using FsdkFaceLib;
 
 namespace KinectFaceTracker
@@ -13,7 +14,7 @@ namespace KinectFaceTracker
         private readonly ICoordinateMapper _coordinateMapper;
 
         private readonly IKinect _kinect;
-        private IMultiManager _multiManager;
+        private IMultiFrameStream _multiFrameStream;
         private CancellationTokenSource _cancellationTokenSource;
 
         public KinectFaceTracker(FSDKFacePipeline facePipeline, IKinect kinect, CancellationTokenSource cts)
@@ -38,17 +39,17 @@ namespace KinectFaceTracker
 
         public void Dispose()
         {
-            _multiManager.Dispose();
+            _multiFrameStream.Dispose();
         }
 
         public event EventHandler<FrameArrivedEventArgs> FrameArrived;
 
         public void Start()
         {
-            if (_multiManager == null)
+            if (_multiFrameStream == null)
             {
-                _multiManager = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color, true);
-                _multiManager.MultiFrameArrived += MultiManagerOnMultiFrameArrived;
+                _multiFrameStream = _kinect.OpenMultiManager(MultiFrameTypes.Body | MultiFrameTypes.Color, true);
+                _multiFrameStream.MultiFrameArrived += MultiFrameStreamOnMultiFrameArrived;
             }
 
             if (_cancellationTokenSource != null && _cancellationTokenSource.IsCancellationRequested)
@@ -66,7 +67,7 @@ namespace KinectFaceTracker
             _cancellationTokenSource.Cancel();
         }
 
-        private async void MultiManagerOnMultiFrameArrived(object sender, MultiFrameReadyEventArgs e)
+        private async void MultiFrameStreamOnMultiFrameArrived(object sender, MultiFrameReadyEventArgs e)
         {
             var multiFrame = e.MultiFrame;
             if (multiFrame == null) return;

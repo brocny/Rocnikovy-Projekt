@@ -4,8 +4,9 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Core.Kinect;
 
-namespace Core
+namespace Core.Kinect
 {
     public interface IKinect
     {
@@ -14,10 +15,11 @@ namespace Core
         void Open();
         void Close();
 
-        IBodyManager BodyManager { get; }
-        IColorManager ColorManager { get; }
+        IBodyFrameStream BodyFrameStream { get; }
+        IColorFrameStream ColorFrameStream { get; }
+        IDepthFrameStream DepthFrameStream { get; }
         ICoordinateMapper CoordinateMapper { get; }
-        IMultiManager OpenMultiManager(MultiFrameTypes frameTypes, bool preferResolutionOverFps = false);
+        IMultiFrameStream OpenMultiManager(MultiFrameTypes frameTypes, bool preferResolutionOverFps = false);
 
 
         bool IsRunning { get; }

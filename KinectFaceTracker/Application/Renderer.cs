@@ -5,6 +5,7 @@ using System.Linq;
 using Core;
 using System.Numerics;
 using App.Properties;
+using Core.Kinect;
 
 namespace App
 {

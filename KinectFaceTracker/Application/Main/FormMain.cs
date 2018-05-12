@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Core.Face;
 using Core;
+using Core.Kinect;
 using FsdkFaceLib;
 using KinectFaceTracker;
 
@@ -59,8 +60,8 @@ namespace App.KinectTracked
             facePipeline.TemplateProcessingComplete += FacePipelineOnTemplateProcessingComplete;
 
             FSDKFacePipeline.InitializeLibrary();
-            _kinectFrameWidth = kinect.ColorManager.FrameHeight;
-            _kinectFrameHeight = kinect.ColorManager.FrameWidth;
+            _kinectFrameWidth = kinect.ColorFrameStream.FrameHeight;
+            _kinectFrameHeight = kinect.ColorFrameStream.FrameWidth;
             _coordinateMapper = kinect.CoordinateMapper;
             _kft = new KinectFaceTracker.KinectFaceTracker(facePipeline, kinect, cts);
             _kft.FrameArrived += KftOnFrameArrived;

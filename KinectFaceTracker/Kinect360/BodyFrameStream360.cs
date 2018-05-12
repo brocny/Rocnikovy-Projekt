@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Microsoft.Kinect;
-using Core;
+using Core.Kinect;
 
 using Vector4 = System.Numerics.Vector4;
-using MyJointType = Core.JointType;
+using MyJointType = Core.Kinect.JointType;
 using KJointType = Microsoft.Kinect.JointType;
 
 
 namespace Kinect360
 {
-    public class BodyManager360 : IBodyManager
+    public class BodyFrameStream360 : IBodyFrameStream
     {
         private readonly Kinect360 _kinect360; 
         private readonly SkeletonStream _skeletonStream;
@@ -23,34 +23,67 @@ namespace Kinect360
 
         public int BodyCount => _skeletonStream.FrameSkeletonArrayLength;
 
-        public BodyManager360(Kinect360 kinect360)
+        public BodyFrameStream360(Kinect360 kinect360)
         {
             _kinect360 = kinect360;
             _skeletonStream = _kinect360.KinectSensor.SkeletonStream;
         }
 
-        public event EventHandler<BodyFrameReadyEventArgs> BodyFrameReady;
+        private bool _isEventRegistered = false;
+        private EventHandler<BodyFrameReadyEventArgs> _bodyFrameReady;
+        public event EventHandler<BodyFrameReadyEventArgs> BodyFrameReady
+        {
+            add
+            {
+                if (!_isEventRegistered)
+                {
+                    _kinect360.KinectSensor.SkeletonFrameReady += KinectSensor_SkeletonFrameReady;
+                    _isEventRegistered = true;
+                }
+
+                _bodyFrameReady += value;
+            }
+            remove
+            {
+                _bodyFrameReady -= value;
+                if (_bodyFrameReady == null && _isEventRegistered)
+                {
+                    _kinect360.KinectSensor.SkeletonFrameReady -= KinectSensor_SkeletonFrameReady;
+                    _isEventRegistered = false;
+                }
+            }
+        }
 
         private void KinectSensor_SkeletonFrameReady(object sender, SkeletonFrameReadyEventArgs e)
         {
             var skeletonFrame = e.OpenSkeletonFrame();
             if (skeletonFrame != null)
             {
-                BodyFrameReady?.Invoke(this, new BodyFrameReadyEventArgs(new BodyFrame360(skeletonFrame)));
+                _bodyFrameReady?.Invoke(this, new BodyFrameReadyEventArgs(new BodyFrame360(skeletonFrame)));
             }
         }
 
         public void Open()
         {
             _kinect360.KinectSensor.SkeletonStream.Enable();
-            _kinect360.KinectSensor.SkeletonFrameReady += KinectSensor_SkeletonFrameReady;
+            if (_bodyFrameReady != null && !_isEventRegistered)
+            {
+                _kinect360.KinectSensor.SkeletonFrameReady += KinectSensor_SkeletonFrameReady;
+                _isEventRegistered = true;
+            }
         }
 
         public void Close()
         {
             _kinect360.KinectSensor.SkeletonStream.Disable();
-            _kinect360.KinectSensor.SkeletonFrameReady -= KinectSensor_SkeletonFrameReady;
+            if (_isEventRegistered)
+            {
+                _kinect360.KinectSensor.SkeletonFrameReady -= KinectSensor_SkeletonFrameReady;
+                _isEventRegistered = false;
+            }
         }
+
+        public bool IsOpen => _skeletonStream.IsEnabled;
 
         public class BodyFrame360 : IBodyFrame
         {

@@ -94,11 +94,12 @@
     <Compile Include="Face\Match.cs" />
     <Compile Include="ImageBuffer.cs" />
     <Compile Include="Kinect\ICoordinateMapper.cs" />
-    <Compile Include="Kinect\IMultiManager.cs" />
+    <Compile Include="Kinect\IDepthFrameStream.cs" />
+    <Compile Include="Kinect\IMultiFrameStream.cs" />
     <Compile Include="Properties\CoreSettings.Designer.cs" />
     <Compile Include="Util.cs" />
-    <Compile Include="Kinect\IBodyManager.cs" />
-    <Compile Include="Kinect\IColorManager.cs" />
+    <Compile Include="Kinect\IBodyFrameStream.cs" />
+    <Compile Include="Kinect\IColorFrameStream.cs" />
     <Compile Include="Kinect\IKinect.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

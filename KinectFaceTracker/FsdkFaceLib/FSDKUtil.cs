@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
 using Core;
 using Luxand;
@@ -24,7 +23,7 @@ namespace FsdkFaceLib
             };
         }
 
-        public static ImageBuffer ImageHandleToImmutableImage(int imageHandle, FSDK.FSDK_IMAGEMODE imageMode = FSDK.FSDK_IMAGEMODE.FSDK_IMAGE_COLOR_32BIT)
+        public static ImageBuffer ImageHandleToImageBuffer(int imageHandle, FSDK.FSDK_IMAGEMODE imageMode = FSDK.FSDK_IMAGEMODE.FSDK_IMAGE_COLOR_32BIT)
         {
             FSDK.SaveImageToBuffer(imageHandle, out var buffer, imageMode);
 

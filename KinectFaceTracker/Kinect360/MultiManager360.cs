@@ -1,10 +1,11 @@
 ﻿using System;
 using Core;
+using Core.Kinect;
 using Microsoft.Kinect;
 
 namespace Kinect360
 {
-    public class MultiManager360 : IMultiManager
+    public class MultiManager360 : IMultiFrameStream
     {
         public MultiManager360(Kinect360 kinect, MultiFrameTypes frameTypes, bool preferResolutionOverFps)
         {
@@ -12,9 +13,10 @@ namespace Kinect360
             var colorImageFormat = preferResolutionOverFps
                 ? ColorImageFormat.RgbResolution1280x960Fps12
                 : ColorImageFormat.RgbResolution640x480Fps30;
-            (_kinect360.ColorManager as ColorManager360).ColorImageFormat = ColorImageFormat.RgbResolution1280x960Fps12;
+            (_kinect360.ColorFrameStream as ColorFrameStream360).ColorImageFormat = ColorImageFormat.RgbResolution1280x960Fps12;
             _kinect360.KinectSensor.ColorStream.Enable(colorImageFormat);
             _kinect360.KinectSensor.SkeletonStream.Enable();
+            _kinect360.KinectSensor.DepthStream.Enable();
             _kinect360.Open();
             _kinect360.KinectSensor.AllFramesReady += KinectSensor_AllFramesReady;
             FrameTypes = frameTypes;
@@ -28,7 +30,7 @@ namespace Kinect360
                 if(colorFrame == null)
                     return;
 
-                _colorFrame = new ColorManager360.ColorFrame360(colorFrame);
+                _colorFrame = new ColorFrameStream360.ColorFrame360(colorFrame);
             }
 
             if (FrameTypes.HasFlag(MultiFrameTypes.Body))
@@ -37,59 +39,29 @@ namespace Kinect360
                 if (skeletonFrame == null)
                     return;
                
-                _bodyFrame = new BodyManager360.BodyFrame360(skeletonFrame);
+                _bodyFrame = new BodyFrameStream360.BodyFrame360(skeletonFrame);
+            }
+
+            if (FrameTypes.HasFlag(MultiFrameTypes.Depth))
+            {
+                var depthFrame = e.OpenDepthImageFrame();
+                if(depthFrame == null)
+                    return;
+
+                _depthFrame = new DepthFrameStream360.DepthFrame360(depthFrame);
             }
             
-            MultiFrameArrived?.Invoke(this, new MultiFrameReadyEventArgs(new MultiFrame360(_colorFrame, _bodyFrame)));
+            MultiFrameArrived?.Invoke(this, new MultiFrameReadyEventArgs(new MultiFrame360(_colorFrame, _bodyFrame, _depthFrame)));
         }
 
-        private void ColorManagerOnColorFrameReady(object sender, ColorFrameReadyEventArgs e)
-        {
-            var cFrame = e.ColorFrame;
-            if (cFrame != null)
-            {
-                _colorFrame?.Dispose();
-                _colorFrame = cFrame;
-            }
-
-            if(!_hasNewBodyFrame && FrameTypes.HasFlag(MultiFrameTypes.Body))
-            {
-                _hasNewColorFrame = true;
-                return;
-            }
-
-            _hasNewBodyFrame = false;
-            _hasNewColorFrame = false;
-            MultiFrameArrived?.Invoke(this, new MultiFrameReadyEventArgs(new MultiFrame360(_colorFrame, _bodyFrame)));
-        }
-
-        private void BodyManagerOnBodyFrameReady(object sender, BodyFrameReadyEventArgs e)
-        {
-            var bFrame = e.BodyFrame;
-            if (bFrame != null)
-            {
-                _bodyFrame?.Dispose();
-                _bodyFrame = bFrame;
-            }
-
-            if (!_hasNewColorFrame && FrameTypes.HasFlag(MultiFrameTypes.Color))
-            {
-                _hasNewBodyFrame = true;
-                return;
-            }
-
-            _hasNewBodyFrame = false;
-            _hasNewColorFrame = false;
-            MultiFrameArrived?.Invoke(this, new MultiFrameReadyEventArgs(new MultiFrame360(_colorFrame, _bodyFrame)));
-        }
+        
 
         public event EventHandler<MultiFrameReadyEventArgs> MultiFrameArrived;
         public MultiFrameTypes FrameTypes { get; }
-        private bool _hasNewColorFrame;
-        private bool _hasNewBodyFrame;
 
         private IColorFrame _colorFrame;
         private IBodyFrame _bodyFrame;
+        private IDepthFrame _depthFrame;
 
         private readonly Kinect360 _kinect360;
 
@@ -97,33 +69,29 @@ namespace Kinect360
         {
             _colorFrame?.Dispose();
             _bodyFrame?.Dispose();
-            if (FrameTypes.HasFlag(MultiFrameTypes.Color))
-            {
-                _kinect360.ColorManager.ColorFrameReady -= ColorManagerOnColorFrameReady;
-            }
-
-            if (FrameTypes.HasFlag(MultiFrameTypes.Body))
-            {
-                _kinect360.BodyManager.BodyFrameReady -= BodyManagerOnBodyFrameReady;
-            }
+            _depthFrame?.Dispose();
+            _kinect360.KinectSensor.AllFramesReady -= KinectSensor_AllFramesReady;
         }
     }
 
     public class MultiFrame360 : IMultiFrame
     {
-        public MultiFrame360(IColorFrame colorFrame, IBodyFrame bodyFrame)
+        public MultiFrame360(IColorFrame colorFrame, IBodyFrame bodyFrame, IDepthFrame depthFrame)
         {
             ColorFrame = colorFrame;
             BodyFrame = bodyFrame;
+            DepthFrame = depthFrame;
         }
 
         public IColorFrame ColorFrame { get; }
         public IBodyFrame BodyFrame { get; }
+        public IDepthFrame DepthFrame { get; }
 
         public void Dispose()
         {
             ColorFrame?.Dispose();
             BodyFrame?.Dispose();
+            DepthFrame?.Dispose();
         }
     }
 }

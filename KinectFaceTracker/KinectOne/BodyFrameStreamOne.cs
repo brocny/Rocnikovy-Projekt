@@ -3,15 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Microsoft.Kinect;
-using Core;
-
-using MyJointType = Core.JointType;
+using Core.Kinect;
+using MyJointType = Core.Kinect.JointType;
 using KJointType = Microsoft.Kinect.JointType;
 using Vector4 = System.Numerics.Vector4;
 
 namespace KinectOne
 {
-    public class BodyManagerOne : IBodyManager
+    public class BodyFrameStreamOne : IBodyFrameStream
     {
         private readonly KinectOne _kinectOne;
 
@@ -25,7 +24,7 @@ namespace KinectOne
 
         public int BodyCount => _bodyFrameSource.BodyCount;
 
-        public BodyManagerOne(KinectOne kinectOne)
+        public BodyFrameStreamOne(KinectOne kinectOne)
         {
             _kinectOne = kinectOne;
             _bodyFrameSource = _kinectOne.KinectSensor.BodyFrameSource;
@@ -150,7 +149,7 @@ namespace KinectOne
 
         public class JointOne : IJoint
         {
-            private Joint _joint;
+            private readonly Joint _joint;
             
             public JointOne(Joint joint)
             {

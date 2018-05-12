@@ -4,6 +4,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using Core;
+using Core.Kinect;
 using Luxand;
 using FsdkFaceLib;
 
@@ -17,7 +18,7 @@ namespace App.FSDKTracked
         private ProgramState _programState = ProgramState.Recognize;
 
         private IKinect _kinect;
-        private IColorManager _colorManager;
+        private IColorFrameStream _colorFrameStream;
         private byte[] _imageBuffer;
         private float _imageWidthRatio = 1f;
         private float _imageHeightRatio = 1f;
@@ -56,12 +57,12 @@ namespace App.FSDKTracked
 
         private void button1_Click(object sender, EventArgs e)
         {
-            _colorManager = _kinect.ColorManager;
+            _colorFrameStream = _kinect.ColorFrameStream;
             _kinect.Open();
-            _colorManager.Open(true);
-            _imageBuffer = new byte[_colorManager.FrameDataSize];
-            _imageWidthRatio = _colorManager.FrameWidth / (float)pictureBox1.Width;
-            _imageHeightRatio = _colorManager.FrameHeight / (float)pictureBox1.Height;
+            _colorFrameStream.Open(true);
+            _imageBuffer = new byte[_colorFrameStream.FrameDataSize];
+            _imageWidthRatio = _colorFrameStream.FrameWidth / (float)pictureBox1.Width;
+            _imageHeightRatio = _colorFrameStream.FrameHeight / (float)pictureBox1.Height;
             _nameFont = new Font("Arial", 12f * _imageWidthRatio);
 
             // creating a Tracker
@@ -92,7 +93,7 @@ namespace App.FSDKTracked
 
             while (!_needClose)
             {
-                using (var frame = _colorManager.GetNextFrame())
+                using (var frame = _colorFrameStream.GetNextFrame())
                 {
                     if (frame == null)
                     {

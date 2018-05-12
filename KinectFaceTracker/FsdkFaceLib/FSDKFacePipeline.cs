@@ -9,6 +9,7 @@ using Core;
 using Luxand;
 using System.Threading.Tasks.Dataflow;
 using System.Buffers;
+using Core.Kinect;
 using FsdkFaceLib.Properties;
 
 

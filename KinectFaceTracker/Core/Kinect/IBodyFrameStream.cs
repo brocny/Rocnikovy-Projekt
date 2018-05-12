@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace Core
+namespace Core.Kinect
 {
-    public interface IBodyManager
+    public interface IBodyFrameStream
     {
         event EventHandler<BodyFrameReadyEventArgs> BodyFrameReady;
         void Open();

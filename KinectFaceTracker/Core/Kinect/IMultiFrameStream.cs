@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Core
+namespace Core.Kinect
 {
-    public interface IMultiManager : IDisposable
+    public interface IMultiFrameStream : IDisposable
     {
         event EventHandler<MultiFrameReadyEventArgs> MultiFrameArrived;
         MultiFrameTypes FrameTypes { get; }
@@ -27,12 +22,14 @@ namespace Core
     {
         IColorFrame ColorFrame { get; }
         IBodyFrame BodyFrame { get; }
+        IDepthFrame DepthFrame { get; }
     }
 
     [Flags]
     public enum MultiFrameTypes
     {
         Color = 1 << 0,
+        Depth = 1 << 3,
         Body = 1 << 5
     }
 }

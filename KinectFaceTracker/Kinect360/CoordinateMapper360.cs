@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-using Core;
+using Core.Kinect;
 using Microsoft.Kinect;
 
 
@@ -27,7 +27,7 @@ namespace Kinect360
                         X = cameraPoints[i].X,
                         Y = cameraPoints[i].Y,
                         Z = cameraPoints[i].Z
-                    }, _kinect360.ColorManager == null ? ColorImageFormat.RgbResolution640x480Fps30 : _kinect360._colorManager.ColorImageFormat);
+                    }, _kinect360.ColorFrameStream == null ? ColorImageFormat.RgbResolution640x480Fps30 : _kinect360._colorFrameStream.ColorImageFormat);
 
                 colorPoints[i] = new Vector2(colorSpacePoint.X, colorSpacePoint.Y);
             }
@@ -57,7 +57,7 @@ namespace Kinect360
                    X = cameraPoint.X,
                    Y = cameraPoint.Y,
                    Z = cameraPoint.Z
-               }, _kinect360.ColorManager == null ? ColorImageFormat.RgbResolution640x480Fps30 : _kinect360._colorManager.ColorImageFormat);
+               }, _kinect360.ColorFrameStream == null ? ColorImageFormat.RgbResolution640x480Fps30 : _kinect360._colorFrameStream.ColorImageFormat);
             return new Vector2(colorSpacePoint.X, colorSpacePoint.Y);
         }
 
