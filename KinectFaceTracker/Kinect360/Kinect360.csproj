@@ -77,9 +77,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BodyManager360.cs" />
-    <Compile Include="ColorManager360.cs" />
+    <Compile Include="BodyFrameStream360.cs" />
+    <Compile Include="ColorFrameStream360.cs" />
     <Compile Include="CoordinateMapper360.cs" />
+    <Compile Include="DepthFrameStream360.cs" />
     <Compile Include="Kinect360.cs" />
     <Compile Include="MultiManager360.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,4 +1,5 @@
 ﻿using Core;
+using Core.Kinect;
 using Microsoft.Kinect;
 
 namespace KinectOne
@@ -10,17 +11,19 @@ namespace KinectOne
         public bool IsKinectOne => true;
         public bool IsAvailable => KinectSensor.IsAvailable;
 
-        public IBodyManager BodyManager => _bodyManager ?? (_bodyManager = new BodyManagerOne(this));
-        public IColorManager ColorManager => _colorManager ?? (_colorManager = new ColorManagerOne(this));
+        public IBodyFrameStream BodyFrameStream => _bodyFrameStream ?? (_bodyFrameStream = new BodyFrameStreamOne(this));
+        public IColorFrameStream ColorFrameStream => _colorFrameStream ?? (_colorFrameStream = new ColorFrameStreamOne(this));
+        public IDepthFrameStream DepthFrameStream => _depthSource ?? (_depthSource = new DepthFrameStreamOne(this));
         public ICoordinateMapper CoordinateMapper => _coordinateMapper ?? (_coordinateMapper = new CoordinateMapperOne(KinectSensor.CoordinateMapper));
         
-        public IMultiManager OpenMultiManager(MultiFrameTypes frameTypes, bool preferResolutionOverFps = false)
+        public IMultiFrameStream OpenMultiManager(MultiFrameTypes frameTypes, bool preferResolutionOverFps = false)
         {
-            return new MultiFrameManagerOne(frameTypes, this);
+            return new MultiFrameFrameStreamOne(frameTypes, this);
         }
 
-        private BodyManagerOne _bodyManager;
-        private ColorManagerOne _colorManager;
+        private BodyFrameStreamOne _bodyFrameStream;
+        private ColorFrameStreamOne _colorFrameStream;
+        private DepthFrameStreamOne _depthSource;
         private CoordinateMapperOne _coordinateMapper;
         
         public bool IsRunning => KinectSensor.IsOpen;
