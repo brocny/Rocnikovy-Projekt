@@ -172,9 +172,10 @@
             // 
             // matchedFacePictureBox
             // 
-            this.matchedFacePictureBox.Location = new System.Drawing.Point(978, 384);
+            this.matchedFacePictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.matchedFacePictureBox.Location = new System.Drawing.Point(978, 363);
             this.matchedFacePictureBox.Name = "matchedFacePictureBox";
-            this.matchedFacePictureBox.Size = new System.Drawing.Size(177, 168);
+            this.matchedFacePictureBox.Size = new System.Drawing.Size(177, 189);
             this.matchedFacePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.matchedFacePictureBox.TabIndex = 9;
             this.matchedFacePictureBox.TabStop = false;

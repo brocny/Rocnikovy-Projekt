@@ -12,7 +12,7 @@ namespace FsdkFaceLib.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.6.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.7.0.0")]
     internal sealed partial class FsdkSettings : global::System.Configuration.ApplicationSettingsBase {
         
         private static FsdkSettings defaultInstance = ((FsdkSettings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new FsdkSettings())));
@@ -37,7 +37,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.75")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.82")]
         public float TrackedNewTemplateThreshold {
             get {
                 return ((float)(this["TrackedNewTemplateThreshold"]));
@@ -49,7 +49,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.68")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.79")]
         public float MatchThreshold {
             get {
                 return ((float)(this["MatchThreshold"]));
@@ -61,7 +61,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("40")]
+        [global::System.Configuration.DefaultSettingValueAttribute("70")]
         public int FsdkInternalResizeWidth {
             get {
                 return ((int)(this["FsdkInternalResizeWidth"]));
@@ -85,7 +85,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool FsdkHandleArbitraryRot {
             get {
                 return ((bool)(this["FsdkHandleArbitraryRot"]));
@@ -97,7 +97,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool FsdkDetermineRotAngle {
             get {
                 return ((bool)(this["FsdkDetermineRotAngle"]));
@@ -109,7 +109,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        [global::System.Configuration.DefaultSettingValueAttribute("6")]
         public int SkipMinimumConfirmations {
             get {
                 return ((int)(this["SkipMinimumConfirmations"]));
@@ -121,7 +121,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        [global::System.Configuration.DefaultSettingValueAttribute("8")]
         public int MaxSkippedFrames {
             get {
                 return ((int)(this["MaxSkippedFrames"]));
@@ -169,7 +169,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool FsdkDetectFace {
             get {
                 return ((bool)(this["FsdkDetectFace"]));

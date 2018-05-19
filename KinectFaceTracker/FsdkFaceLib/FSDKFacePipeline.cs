@@ -270,18 +270,15 @@ namespace FsdkFaceLib
             {
                 if (_templateProc.TrackedFaces.TryGetValue(faceCutout.TrackingId, out var status))
                 {
-                    var topCand = status.TopCandidate;
-                    if (topCand != null)
+                    if (status.TopCandidate.Confirmations >=  _skipMinimumConfirmations && status.SkippedFrames <= _skipMaxSkips)
                     {
-                        if (topCand.Confirmations >=  _skipMinimumConfirmations && topCand.SkippedFrames <= _skipMaxSkips)
-                        {
-                            topCand.SkippedFrames++;
-                            continue;
-                        }
-
-                        topCand.SkippedFrames = 0;
+                        status.SkippedFrames++;
+                        continue;
                     }
-                        
+                    else
+                    {
+                        status.SkippedFrames = 0;
+                    }
                 }
 
                 var result = new FSDKFaceImage();
@@ -342,10 +339,13 @@ namespace FsdkFaceLib
             {
                 var faceImage = faceImages[i];
                 var gender = faceImage.GetGender();
+                var template = faceImage.GetFaceTemplate();
+                if (template == null)
+                    return;
                 results[i] = new FaceTemplate
                 {
                     TrackingId = faceImage.TrackingId,
-                    Template = faceImage.GetFaceTemplate(),
+                    Template = template,
                     FaceImage = faceImage.ImageBuffer,
                     Age = faceImage.GetAge() ?? 0,
                     Gender = gender.gender,

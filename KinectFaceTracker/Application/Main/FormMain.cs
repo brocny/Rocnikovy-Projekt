@@ -385,12 +385,12 @@ namespace App.KinectTracked
             if (inputNameForm.ShowDialog() != DialogResult.OK)
                 return;
 
-            if (!_kft.TrackedFaces.TryGetValue(trackingId, out var status))
+            if (!_kft.TrackedFaces.TryGetValue(trackingId, out var trackingStatus))
             {
-                status = await _kft.FacePipeline.Capture(trackingId);
+                trackingStatus = await _kft.FacePipeline.Capture(trackingId);
             }
 
-            if (!_kft.FaceDatabase.TryGetValue(status.TopCandidate.FaceId, out var faceInfo))
+            if (!_kft.FaceDatabase.TryGetValue(trackingStatus.TopCandidate.FaceId, out var faceInfo) || faceInfo == null)
                 return;
 
             faceInfo.Name = inputNameForm.UserName;

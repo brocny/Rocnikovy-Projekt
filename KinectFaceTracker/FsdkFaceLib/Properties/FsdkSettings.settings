@@ -6,28 +6,28 @@
       <Value Profile="(Default)">0.94</Value>
     </Setting>
     <Setting Name="TrackedNewTemplateThreshold" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">0.75</Value>
+      <Value Profile="(Default)">0.82</Value>
     </Setting>
     <Setting Name="MatchThreshold" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">0.68</Value>
+      <Value Profile="(Default)">0.79</Value>
     </Setting>
     <Setting Name="FsdkInternalResizeWidth" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">40</Value>
+      <Value Profile="(Default)">70</Value>
     </Setting>
     <Setting Name="FsdkFaceDetectionThreshold" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">3</Value>
     </Setting>
     <Setting Name="FsdkHandleArbitraryRot" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="FsdkDetermineRotAngle" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="SkipMinimumConfirmations" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">5</Value>
+      <Value Profile="(Default)">6</Value>
     </Setting>
     <Setting Name="MaxSkippedFrames" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">10</Value>
+      <Value Profile="(Default)">8</Value>
     </Setting>
     <Setting Name="PipelineParallelism" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">1</Value>
@@ -39,7 +39,7 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="FsdkDetectFace" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="FsdkDetectExpression" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>

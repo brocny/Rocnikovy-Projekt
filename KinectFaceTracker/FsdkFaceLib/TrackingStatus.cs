@@ -6,16 +6,13 @@ namespace FsdkFaceLib
     {
         public TrackingStatus(CandidateStatus topCandidate)
         {
-            _candidates = new List<CandidateStatus>{ topCandidate };
-        }
-
-        internal TrackingStatus()
-        {
-            _candidates = new List<CandidateStatus>();
+            _candidates = new List<CandidateStatus> {topCandidate};
         }
 
         public IList<CandidateStatus> Candidates => _candidates;
         public bool WasSeen { get; set; } = true;
+        public int SkippedFrames { get; set; }
+
         public CandidateStatus TopCandidate
         {
             get => _candidates[0];
@@ -33,7 +30,6 @@ namespace FsdkFaceLib
     public class CandidateStatus
     {
         public float Confirmations;
-        public ushort SkippedFrames;
         public int FaceId;
     }
 }

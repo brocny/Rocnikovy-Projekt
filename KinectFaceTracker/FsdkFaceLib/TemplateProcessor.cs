@@ -3,19 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Core.Face;
-using FsdkFaceLib;
 using FsdkFaceLib.Properties;
 
 namespace FsdkFaceLib
 {
     internal class TemplateProcessor
     {
-        private const ushort ClearCacheIterationsLimit = 20;
+        private const int ClearCacheIterationsLimit = 20;
 
         private readonly ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>> _addTemplates =
             new ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>>();
 
-        private ushort _cacheClearingCounter;
+        private int _cacheClearingCounter;
         private readonly IFaceDatabase<byte[]> _faceDb;
         private readonly ConcurrentDictionary<long, TrackingStatus> _trackedFaces;
 
@@ -44,8 +43,9 @@ namespace FsdkFaceLib
         {
             if (_addTemplates.TryRemove(t.TrackingId, out var tsc))
             {
-                tsc.SetResult(Capture(t));
-                return new Match<byte[]> { IsValid = false };
+                var result = Capture(t);
+                tsc.SetResult(result);
+                return new Match<byte[]>{ IsValid = false };
             }
 
             if (!_trackedFaces.TryGetValue(t.TrackingId, out var trackingStatus)) return ProcessUntracked(t);
@@ -115,7 +115,7 @@ namespace FsdkFaceLib
         {
             if (!_trackedFaces.TryGetValue(t.TrackingId, out var ts))
             {
-                ts = _trackedFaces[t.TrackingId] = new TrackingStatus(new CandidateStatus {FaceId = _faceDb.NextId});
+                ts = _trackedFaces[t.TrackingId] = new TrackingStatus(new CandidateStatus {FaceId = _faceDb.NextId, Confirmations = 1});
             }
 
             NewTemplate(t, ts.TopCandidate);
@@ -143,21 +143,21 @@ namespace FsdkFaceLib
         private (CandidateStatus candidate, float similarity, FaceSnapshot<byte[]> snapshot) 
         GetBestOfTheRest(TrackingStatus ts, IFaceTemplate<byte[]> template)
         {
-            (float sim, FaceSnapshot<byte[]> snapshot) bestMatch = default;
+            (float simimilarity, FaceSnapshot<byte[]> snapshot) bestMatch = default;
             CandidateStatus bestCand = default;
             var candidates = ts.Candidates;
             for (int i = 1; i < candidates.Count; i++)
             {
-                var cand = candidates[i];
-                var match = _faceDb[cand.FaceId].GetSimilarity(template);
-                if (match.similarity > bestMatch.sim)
+                var candidate = candidates[i];
+                var match = _faceDb[candidate.FaceId].GetSimilarity(template);
+                if (match.similarity > bestMatch.simimilarity)
                 {
                     bestMatch = match;
-                    bestCand = cand;
+                    bestCand = candidate;
                 }
             }
 
-            return (bestCand, bestMatch.sim, bestMatch.snapshot);
+            return (bestCand, bestMatch.simimilarity, bestMatch.snapshot);
         }
 
         /// <summary>
@@ -177,7 +177,11 @@ namespace FsdkFaceLib
                 _cacheClearingCounter = 0;
             }
 
-            return templates.Select(ProcessTemplate).Where(match => match.IsValid && match.Similarity >= MatchingParameters.MatchThreshold).ToArray();
+            return templates
+                .Where(t => t?.Template != null)
+                .Select(ProcessTemplate)
+                .Where(match => match.IsValid && match.Similarity >= MatchingParameters.MatchThreshold)
+                .ToArray();
         }
     }
 

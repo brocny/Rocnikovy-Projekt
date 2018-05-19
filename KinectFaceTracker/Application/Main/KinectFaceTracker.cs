@@ -69,27 +69,26 @@ namespace KinectFaceTracker
 
         private async void MultiFrameStreamOnMultiFrameArrived(object sender, MultiFrameReadyEventArgs e)
         {
-            var multiFrame = e.MultiFrame;
-            if (multiFrame == null) return;
-
-            //if (_facePipeline.Completion.IsCompleted) throw _facePipeline.Completion.Result.Exception.InnerException;
-
-            using (var colorFrame = multiFrame.ColorFrame)
-            using (var bodyFrame = multiFrame.BodyFrame)
+            using (var multiFrame = e.MultiFrame)
             {
+                if (multiFrame == null) return;
+
+                //if (_facePipeline.Completion.IsCompleted) throw _facePipeline.Completion.Result.Exception.InnerException;
+
+                var colorFrame = multiFrame.ColorFrame;
+                var bodyFrame = multiFrame.BodyFrame;
+
                 if (colorFrame == null || bodyFrame == null) return;
                 try
                 {
-                    var faceLocations = await FacePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
+                    var faceLocations =
+                        await FacePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
                     FrameArrived?.Invoke(this, new FrameArrivedEventArgs(faceLocations));
                 }
                 catch (TaskCanceledException)
                 {
-                    return;
                 }
             }
-
-            multiFrame.Dispose();
         }
     }
 

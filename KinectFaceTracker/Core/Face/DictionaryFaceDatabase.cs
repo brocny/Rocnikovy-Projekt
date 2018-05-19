@@ -69,7 +69,7 @@ namespace Core.Face
 
         public string GetName(int id)
         {
-            return _storedFaces[id].Name;
+            return _storedFaces.TryGetValue(id, out var faceInfo) ? faceInfo.Name : null;
         }
 
         /// <summary>
@@ -128,7 +128,8 @@ namespace Core.Face
         {
             var matches = from f in _storedFaces.AsParallel()
                 let faceInfo = f.Value
-                where faceInfo.Age == 0 || (faceInfo.Age / template.Age > 0.75f && faceInfo.Age / template.Age < 1.33f)
+                let ageRatio = template.Age == 0 || faceInfo.Age == 0 ? 1 : faceInfo.Age / template.Age
+                where ageRatio > 0.66f && ageRatio < 1.5f
                 where faceInfo.Gender == template.Gender || faceInfo.Gender == Gender.Unknown
                 let match = faceInfo.GetSimilarity(template)
                 select new Match<T>(f.Key, match.similarity, match.snapshot, faceInfo, template.TrackingId);
