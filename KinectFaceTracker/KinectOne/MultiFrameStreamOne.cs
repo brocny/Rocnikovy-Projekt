@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core;
 using Core.Kinect;
 using Microsoft.Kinect;
 
 namespace KinectOne
 {
-    public class MultiFrameFrameStreamOne : IMultiFrameStream
+    public class MultiFrameStreamOne : IMultiFrameStream
     {
-        public MultiFrameFrameStreamOne(MultiFrameTypes frameTypes, KinectOne kinect)
+        public MultiFrameStreamOne(MultiFrameTypes frameTypes, KinectOne kinect)
         {
             FrameTypes = frameTypes;
             _kinectOne = kinect;
@@ -68,7 +63,7 @@ namespace KinectOne
         {
             _colorFrame?.Dispose();
             _bodyFrame?.Dispose();
-            _depthFrame.Dispose();
+            _depthFrame?.Dispose();
         }
     }
 }

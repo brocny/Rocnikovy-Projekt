@@ -18,7 +18,7 @@ namespace KinectOne
         
         public IMultiFrameStream OpenMultiManager(MultiFrameTypes frameTypes, bool preferResolutionOverFps = false)
         {
-            return new MultiFrameFrameStreamOne(frameTypes, this);
+            return new MultiFrameStreamOne(frameTypes, this);
         }
 
         private BodyFrameStreamOne _bodyFrameStream;
