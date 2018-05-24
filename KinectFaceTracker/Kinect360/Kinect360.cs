@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Core.Kinect;
 using Microsoft.Kinect;
 
@@ -30,14 +31,8 @@ namespace Kinect360
 
         public Kinect360()
         {
-            foreach (var potentialSensor in KinectSensor.KinectSensors)
-            {
-                if (potentialSensor.Status == KinectStatus.Connected)
-                {
-                    KinectSensor = potentialSensor;
-                    break;
-                }
-            }
+            KinectSensor = KinectSensor.KinectSensors
+                .FirstOrDefault(kinectSensor => kinectSensor.Status == KinectStatus.Connected);
 
             if (KinectSensor == null)
                 throw new ApplicationException("No Kinect device found!");
@@ -53,6 +48,4 @@ namespace Kinect360
             KinectSensor.Stop();
         }
     }
-
-
 }
