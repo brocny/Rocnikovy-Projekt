@@ -190,5 +190,19 @@ namespace FsdkFaceLib.Properties {
                 this["FsdkDetectExpression"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("qVyhlxKiB1+NfuKH8HjrN2QA5oaMXI/aYiH9AS9oDDTjdGZ9fwODv9iTJG/rAow2uRnGFkvZnjVbCHWSK" +
+            "ThqoetUYxlMAI1j+Gm9sjl8eEi7zN01FgwY/bK7R6+NrSZ1aOMiWPP1NG8JcrzgIfH9qNCTI+9kQkw6N" +
+            "s/mHES7O2E=")]
+        public string FsdkActiovationKey {
+            get {
+                return ((string)(this["FsdkActiovationKey"]));
+            }
+            set {
+                this["FsdkActiovationKey"] = value;
+            }
+        }
     }
 }

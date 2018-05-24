@@ -9,6 +9,7 @@ using Core;
 using Luxand;
 using System.Threading.Tasks.Dataflow;
 using System.Buffers;
+using System.Globalization;
 using Core.Kinect;
 using FsdkFaceLib.Properties;
 
@@ -45,7 +46,7 @@ namespace FsdkFaceLib
             return _templateProc.Capture(trakckingId);
         }
 
-        public TaskScheduler TaskScheduler { get; set; }
+        public TaskScheduler TaskScheduler { get; }
 
         public int FSDKInternalResizeWidth
         {
@@ -72,7 +73,7 @@ namespace FsdkFaceLib
             get => _handleArbitrayRot;
             set
             {
-                _handleArbitrayRot = value;
+                _handleArbitrayRot = value;;
                 SetFSDKParams();
             }
         }
@@ -89,8 +90,7 @@ namespace FsdkFaceLib
 
         public IFaceDatabase<byte[]> FaceDb { get; set; }
 
-        public const string ActivationKey =
-            @"hp/l+aH4rdJKVKg0Jk+KIMmyzeKusO+5R4ZJ45xJJEIRM9PxoL4qrANFDvabmSzZt2rE1cQ6NNUUmrpTMgnrM4b/PpupNxRizmu/yRhzx0qKX3hLlLB6ZK73edGhxsrAH/NieibA6EFyCEwa2QErNVFGM/kplfxKw61XQ03zHAw=";
+        private static readonly string ActivationKey = FsdkSettings.Default.FsdkActiovationKey;
 
         private static bool _isLibraryActivated;
         public static void InitializeLibrary()
@@ -110,10 +110,9 @@ namespace FsdkFaceLib
             _templateProc = new TemplateProcessor(FaceDb);
 
             _options.CancellationToken = cancellationToken;
-            _options.TaskScheduler = taskScheduler ?? TaskScheduler.Default;
+            _options.TaskScheduler = TaskScheduler = taskScheduler ?? TaskScheduler.Default;
 
             ConstructPipeline(_options);
-            
 
             _bufferPool = ArrayPool<byte>.Create(1920 * 1080 * 4, 8);
 

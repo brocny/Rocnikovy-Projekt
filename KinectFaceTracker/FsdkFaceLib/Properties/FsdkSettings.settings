@@ -44,5 +44,8 @@
     <Setting Name="FsdkDetectExpression" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
+    <Setting Name="FsdkActiovationKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">qVyhlxKiB1+NfuKH8HjrN2QA5oaMXI/aYiH9AS9oDDTjdGZ9fwODv9iTJG/rAow2uRnGFkvZnjVbCHWSKThqoetUYxlMAI1j+Gm9sjl8eEi7zN01FgwY/bK7R6+NrSZ1aOMiWPP1NG8JcrzgIfH9qNCTI+9kQkw6Ns/mHES7O2E=</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
