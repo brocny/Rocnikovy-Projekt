@@ -6,7 +6,7 @@ namespace FsdkFaceLib
     {
         public TrackingStatus(CandidateStatus topCandidate)
         {
-            _candidates = new List<CandidateStatus> {topCandidate};
+            _candidates = new List<CandidateStatus> { topCandidate };
         }
 
         public IList<CandidateStatus> Candidates => _candidates;
@@ -18,9 +18,12 @@ namespace FsdkFaceLib
             get => _candidates[0];
             set
             {
-                var temp = _candidates[0];
-                _candidates[0] = value;
-                _candidates.Add(temp);
+                lock (_candidates)
+                {
+                    var temp = _candidates[0];
+                    _candidates[0] = value;
+                    _candidates.Add(temp);
+                }
             }
         }
 
@@ -29,7 +32,18 @@ namespace FsdkFaceLib
 
     public class CandidateStatus
     {
-        public float Confirmations;
-        public int FaceId;
+        public CandidateStatus()
+        {
+
+        }
+
+        public CandidateStatus(float confirmations, int faceId)
+        {
+            Confirmations = confirmations;
+            FaceId = faceId;
+        }
+
+        public float Confirmations { get; set; }
+        public int FaceId { get; set; }
     }
 }

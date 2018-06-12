@@ -16,7 +16,7 @@ namespace App
         }
     }
 
-    internal static class DialogHelpers
+    public static class DialogHelpers
     {
         internal static DialogResult STAShowDialog(this CommonDialog dialog)
         {

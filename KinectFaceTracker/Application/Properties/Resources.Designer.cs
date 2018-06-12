@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace App.KinectTracked.Properties {
+namespace App.Main.Properties {
     using System;
     
     

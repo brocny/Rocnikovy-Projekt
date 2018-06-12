@@ -10,28 +10,22 @@ using Core.Face;
 using Core;
 using Core.Kinect;
 using FsdkFaceLib;
-using KinectFaceTracker;
+using FsdkFaceLib.Properties;
 
-namespace App.KinectTracked
+namespace App.Main
 {
     public partial class FormMain : Form
     {
-        private const string FileFilter = "Xml files|*.xml|All files|*.*";
-
-        private static readonly string DefaultDbPath =
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\KFT\FaceDb";
-
         private readonly ICoordinateMapper _coordinateMapper;
 
         private readonly FpsCounter _fpsCounter = new FpsCounter();
 
-        private readonly KinectFaceTracker.KinectFaceTracker _kft;
+        private readonly DatabaseHelper<byte[]> _databaseHelper;
+        private readonly KinectFaceTracker _kft;
         private readonly int _kinectFrameHeight;
         private readonly int _kinectFrameWidth;
 
         private readonly Renderer _renderer;
-
-        private string _dbSerializePath;
 
         private long _focusedFaceTrackingId;
         private int _imageHeight;
@@ -44,7 +38,7 @@ namespace App.KinectTracked
 
         public FormMain()
         {
-            var kinect = InitializeKinect();
+            var kinect = KinectInitializeHelper.InitializeKinect();
             if (kinect == null)
             {
                 Environment.Exit(1);
@@ -52,18 +46,39 @@ namespace App.KinectTracked
 
             InitializeComponent();
 
+            var faceDatabase = new DictionaryFaceDatabase<byte[]>(new FSDKFaceInfo());
+            _databaseHelper = new DatabaseHelper<byte[]>(faceDatabase);
+
             var cts = new CancellationTokenSource();
-            var facePipeline = new FSDKFacePipeline(new DictionaryFaceDatabase<byte[]>(new FSDKFaceInfo()), TaskScheduler.Default, cts.Token);
+            var facePipeline = new FSDKFacePipeline(faceDatabase, TaskScheduler.Default, cts.Token);
 
             facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
             facePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
             facePipeline.TemplateProcessingComplete += FacePipelineOnTemplateProcessingComplete;
 
-            FSDKFacePipeline.InitializeLibrary();
+            try
+            {
+                FSDKFacePipeline.InitializeLibrary();
+            }
+            catch (ApplicationException e)
+            {
+                var result = MessageBox.Show(e.Message + Environment.NewLine + "Do you wish to enter a new key?", "Face library activation failed!", MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    var inputKeyForm = new InputNameForm("FaceSDK Key", "Enter new FSDK key");
+                    result = inputKeyForm.ShowDialog();
+                    if (result == DialogResult.OK)
+                    {
+                        FsdkSettings.Default.FsdkActiovationKey = inputKeyForm.UserName;
+                        FsdkSettings.Default.Save();
+                    }
+                }
+            }
+
             _kinectFrameWidth = kinect.ColorFrameStream.FrameHeight;
             _kinectFrameHeight = kinect.ColorFrameStream.FrameWidth;
             _coordinateMapper = kinect.CoordinateMapper;
-            _kft = new KinectFaceTracker.KinectFaceTracker(facePipeline, kinect, cts);
+            _kft = new KinectFaceTracker(facePipeline, kinect, cts);
             _kft.FrameArrived += KftOnFrameArrived;
 
             _kft.FacePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
@@ -72,7 +87,7 @@ namespace App.KinectTracked
             _imageHeight = mainPictureBox.Height;
             _imageWidth = mainPictureBox.Width;
 
-            startStopSpaceToolStripMenuItem.Text =
+            startStopToolStripMenuItem.Text =
                 _programState == ProgramState.Running ? "Stop (Space)" : "Start (Space)";
 
             _renderer = new Renderer(_kinectFrameHeight, _kinectFrameWidth);
@@ -103,7 +118,7 @@ namespace App.KinectTracked
                     {
                         if (_kft.TrackedFaces.TryGetValue(faceLocations.TrackingIds[i], out var trackingStatus))
                         {
-                            labels[i] = _kft.FaceDatabase.GetName(trackingStatus.TopCandidate.FaceId) ??
+                            labels[i] = _kft.FaceDatabase[trackingStatus.TopCandidate.FaceId]?.Name ??
                                         $"ID: {trackingStatus.TopCandidate.FaceId}";
                         }
                     }
@@ -123,31 +138,6 @@ namespace App.KinectTracked
             _lastTrackingIds = faceLocations.TrackingIds;
             statusLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
             mainPictureBox.Image = task.Result;
-        }
-
-        private IKinect InitializeKinect()
-        {
-            IKinect kinect = null;
-            bool tryAgain = false;
-            do
-            {
-                try
-                {
-                    kinect = KinectFactory.KinectFactory.GetKinect();
-                    tryAgain = false;
-                }
-                catch (ApplicationException)
-                {
-                    var result = MessageBox.Show("Error: No Kinect device found!", "Kinect not found",
-                        MessageBoxButtons.RetryCancel,
-                        MessageBoxIcon.Error);
-                    if (result == DialogResult.Retry) tryAgain = true;
-
-                    if (result == DialogResult.Cancel) return null;
-                }
-            } while (tryAgain);
-
-            return kinect;
         }
 
         private void FacePipelineOnFeatureDetection(object sender, FSDKFaceImage[] fsdkFaceImages)
@@ -206,7 +196,7 @@ namespace App.KinectTracked
             _kft.Stop();
             statusLabel.Text = "STOPPED";
             _programState = ProgramState.Paused;
-            startStopSpaceToolStripMenuItem.Text = "Stop (Space)";
+            startStopToolStripMenuItem.Text = "Stop (Space)";
         }
 
         private void UnPause()
@@ -215,24 +205,13 @@ namespace App.KinectTracked
             _kft.Start();
             statusLabel.Text = "";
             _programState = ProgramState.Running;
-            startStopSpaceToolStripMenuItem.Text = "Start (Space)";
+            startStopToolStripMenuItem.Text = "Start (Space)";
         }
 
         private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
         {
-            _kft.Stop();
-
-            if(string.IsNullOrWhiteSpace(_dbSerializePath))
-                return;
-
-            var dialogResult = MessageBox.Show("Do you wish to save database before exiting?", "Save database", MessageBoxButtons.YesNo);
-            if (dialogResult == DialogResult.Yes)
-            {
-                using (var stream = File.OpenWrite(_dbSerializePath))
-                {
-                    _kft.FaceDatabase.Serialize(stream);
-                }
-            }
+            Pause();
+           _databaseHelper.SaveBeforeClose();
         }
 
         private void FormMain_KeyPress(object sender, KeyPressEventArgs e)
@@ -246,34 +225,8 @@ namespace App.KinectTracked
             var originalState = _programState;
             Pause();
 
-            var dialog = new OpenFileDialog
-            {
-                InitialDirectory = DefaultDbPath,
-                DefaultExt = "xml",
-                Filter = FileFilter,
-                Title = "Select file containing saved face database"
-            };
+            _databaseHelper.Open();
 
-            var result = dialog.STAShowDialog();
-            // make a backup of the current database in case something goes wrong
-            var backup = _kft.FaceDatabase.Backup();
-            if (result == DialogResult.OK)
-                try
-                {
-                    using (var fs = dialog.OpenFile())
-                    {
-                        _kft.FaceDatabase.Deserialize(fs);
-                    }
-                }
-                catch (Exception exc)
-                {
-                    MessageBox.Show(
-                        $"Error: An error occured while loading the database from {dialog.FileName}: {Environment.NewLine}{exc}");
-                    // something went wrong -> revert
-                    _kft.FaceDatabase.Restore(backup);
-                }
-
-            _dbSerializePath = dialog.FileName;
             if (originalState == ProgramState.Running) UnPause();
         }
 
@@ -282,60 +235,17 @@ namespace App.KinectTracked
             var originalState = _programState;
             Pause();
 
-            if (!Directory.Exists(DefaultDbPath)) Directory.CreateDirectory(DefaultDbPath);
-
-            var dialog = new SaveFileDialog
-            {
-                InitialDirectory = DefaultDbPath,
-                DefaultExt = "xml",
-                Filter = FileFilter
-            };
-
-            var result = dialog.STAShowDialog();
-            if (result == DialogResult.OK)
-            {
-                try
-                {
-                    using (var fs = dialog.OpenFile())
-                    {
-                        _kft.FaceDatabase.Serialize(fs);
-                    }
-                }
-                catch (Exception exc)
-                {
-                    MessageBox.Show(
-                        $"Error: An error occured while saving the database to {dialog.FileName}:{Environment.NewLine}{exc}");
-                }
-
-                _dbSerializePath = dialog.FileName;
-            }
+            _databaseHelper.SaveAs();
 
             if (originalState == ProgramState.Running) UnPause();
         }
 
         private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(_dbSerializePath))
-            {
-                SaveAsToolStripMenuItem_Click(sender, e);
-                return;
-            }
-
             var originalState = _programState;
             Pause();
 
-            try
-            {
-                using (var fs = File.OpenWrite(_dbSerializePath))
-                {
-                    _kft.FaceDatabase.Serialize(fs);
-                }
-            }
-            catch (Exception exc)
-            {
-                MessageBox.Show(
-                    $"Error: An error occured while saving the database to {_dbSerializePath}:{Environment.NewLine}{exc}");
-            }
+            _databaseHelper.Save();
 
             if (originalState == ProgramState.Running) UnPause();
         }
@@ -369,7 +279,7 @@ namespace App.KinectTracked
                     NameFace(id);
                     break;
                 case MouseButtons.Right:
-                    _kft.FacePipeline.Capture(id);
+                    _kft.FacePipeline.Capture(id, ModifierKeys.HasFlag(Keys.Control));
                     break;
                 case MouseButtons.Middle:
                     _focusedFaceTrackingId = id;
@@ -387,7 +297,7 @@ namespace App.KinectTracked
 
             if (!_kft.TrackedFaces.TryGetValue(trackingId, out var trackingStatus))
             {
-                trackingStatus = await _kft.FacePipeline.Capture(trackingId);
+                trackingStatus = await _kft.FacePipeline.Capture(trackingId, true);
             }
 
             if (!_kft.FaceDatabase.TryGetValue(trackingStatus.TopCandidate.FaceId, out var faceInfo) || faceInfo == null)

@@ -9,7 +9,6 @@ using Core;
 using Luxand;
 using System.Threading.Tasks.Dataflow;
 using System.Buffers;
-using System.Globalization;
 using Core.Kinect;
 using FsdkFaceLib.Properties;
 
@@ -38,12 +37,13 @@ namespace FsdkFaceLib
         ///  and a data record will be created (if not previously created) from the first frame it is found in. 
         /// </summary>
         /// <param name="trakckingId"></param>
+        /// <param name="forceNewFace">If this parameter is set to <c>true</c>, a new face will always be added, overriding any previous recogntion</param>
         /// <returns>
         /// A Task, containing <see cref="TrackingStatus"/> of the face, Task will compelete once saving face's template is completed.
         /// </returns>
-        public Task<TrackingStatus> Capture(long trakckingId)
+        public Task<TrackingStatus> Capture(long trakckingId, bool forceNewFace = false)
         {
-            return _templateProc.Capture(trakckingId);
+            return _templateProc.Capture(trakckingId, forceNewFace);
         }
 
         public TaskScheduler TaskScheduler { get; }
@@ -98,7 +98,7 @@ namespace FsdkFaceLib
             if (_isLibraryActivated) return;
             if (FSDK.FSDKE_OK != FSDK.ActivateLibrary(ActivationKey))
             {
-                throw new ApplicationException("Invalid Luxand FSDK activation key");
+                throw new ApplicationException("Invalid Luxand FSDK activation key! If the key is expired, a new key can be requested at https://www.luxand.com/facesdk/requestkey/");
             }
             FSDK.InitializeLibrary();
             _isLibraryActivated = true;

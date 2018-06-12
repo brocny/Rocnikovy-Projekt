@@ -1,4 +1,5 @@
-﻿using Core.Kinect;
+﻿using System;
+using Core.Kinect;
 
 namespace KinectFactory
 {
@@ -13,7 +14,14 @@ namespace KinectFactory
         public static IKinect GetKinect360()
         {
 #if K_360
-            return new Kinect360();
+            try
+            {
+                return new Kinect360();
+            }
+            catch (ApplicationException)
+            {
+                return null;
+            }
 #else
             return null;
 #endif
@@ -23,7 +31,14 @@ namespace KinectFactory
         public static IKinect GetKinectOne()
         {
 #if K_ONE
-            return new KinectOne();
+            try
+            {
+                return new KinectOne();
+            }
+            catch (ApplicationException)
+            {
+                return null;
+            }
 #else
             return null;
 #endif

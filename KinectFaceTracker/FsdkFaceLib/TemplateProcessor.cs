@@ -11,8 +11,8 @@ namespace FsdkFaceLib
     {
         private const int ClearCacheIterationsLimit = 20;
 
-        private readonly ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>> _addTemplates =
-            new ConcurrentDictionary<long, TaskCompletionSource<TrackingStatus>>();
+        private readonly ConcurrentDictionary<long, (TaskCompletionSource<TrackingStatus> tcs, bool forceNewFace)> _addTemplateRequests =
+            new ConcurrentDictionary<long, (TaskCompletionSource<TrackingStatus> tsc, bool forceNewFace)>();
 
         private int _cacheClearingCounter;
         private readonly IFaceDatabase<byte[]> _faceDb;
@@ -32,19 +32,19 @@ namespace FsdkFaceLib
 
         public MatchingParameters MatchingParameters { get; set; } = MatchingParameters.Default;
 
-        public Task<TrackingStatus> Capture(long trackingId)
+        public Task<TrackingStatus> Capture(long trackingId, bool forceNewFace = false)
         {
             var tsc = new TaskCompletionSource<TrackingStatus>();
-            _addTemplates[trackingId] = tsc;
+            _addTemplateRequests[trackingId] = (tsc, forceNewFace);
             return tsc.Task;
         }
 
         public Match<byte[]> ProcessTemplate(FaceTemplate t)
         {
-            if (_addTemplates.TryRemove(t.TrackingId, out var tsc))
+            if (_addTemplateRequests.TryRemove(t.TrackingId, out var request))
             {
-                var result = Capture(t);
-                tsc.SetResult(result);
+                var result = CaptureImpl(t, request.forceNewFace);
+                request.tcs.SetResult(result);
                 return new Match<byte[]>{ IsValid = false };
             }
 
@@ -83,7 +83,7 @@ namespace FsdkFaceLib
 
             if (topCandidateMatch.similarity > MatchingParameters.TrackedNewTemplateThreshold)
             {
-                NewTemplate(t, topCandidate);
+                AddTemplate(t, topCandidate);
             }
 
             if (topCandidateMatch.similarity > MatchingParameters.MatchThreshold)
@@ -106,21 +106,21 @@ namespace FsdkFaceLib
             }
 
             _trackedFaces[t.TrackingId] =
-                new TrackingStatus(new CandidateStatus {Confirmations = bestMatch.Similarity, FaceId = bestMatch.FaceId});
+                new TrackingStatus(new CandidateStatus { Confirmations = bestMatch.Similarity, FaceId = bestMatch.FaceId });
 
             return bestMatch;
         }
 
-        public TrackingStatus Capture(FaceTemplate t)
+        private TrackingStatus CaptureImpl(FaceTemplate template, bool forceNewFace)
         {
-            if (!_trackedFaces.TryGetValue(t.TrackingId, out var ts))
+            if (forceNewFace || !_trackedFaces.TryGetValue(template.TrackingId, out var trackingStatus))
             {
-                ts = _trackedFaces[t.TrackingId] = new TrackingStatus(new CandidateStatus {FaceId = _faceDb.NextId, Confirmations = 1});
+                trackingStatus = _trackedFaces[template.TrackingId] = new TrackingStatus(new CandidateStatus { FaceId = _faceDb.NextId, Confirmations = 1 });
             }
 
-            NewTemplate(t, ts.TopCandidate);
+            AddTemplate(template, trackingStatus.TopCandidate);
 
-            return ts;
+            return trackingStatus;
         }
 
         private Match<byte[]> Matched(FaceTemplate t, CandidateStatus cs, float confidence, FaceSnapshot<byte[]> snapshot, IFaceInfo<byte[]> faceInfo)
@@ -129,9 +129,9 @@ namespace FsdkFaceLib
             return new Match<byte[]>(cs.FaceId, confidence, snapshot, faceInfo, t.TrackingId);
         }
 
-        private void NewTemplate(FaceTemplate t, CandidateStatus ts)
+        private void AddTemplate(FaceTemplate template, CandidateStatus candidateStatus)
         {
-            _faceDb.AddOrUpdate(ts.FaceId, t);
+            _faceDb.AddOrUpdate(candidateStatus.FaceId, template);
         }
 
         /// <summary>

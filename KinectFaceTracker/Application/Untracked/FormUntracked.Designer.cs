@@ -1,6 +1,8 @@
-﻿namespace App.Main
+﻿using System.Windows.Forms;
+
+namespace App.Untracked
 {
-    partial class FormMain
+    public partial class FormUntracked
     {
         /// <summary>
         /// Required designer variable.
@@ -28,10 +30,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.mainPictureBox = new System.Windows.Forms.PictureBox();
             this.statusLabel = new System.Windows.Forms.Label();
-            this.focusedFacePictureBox = new System.Windows.Forms.PictureBox();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -42,11 +42,10 @@
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.startStopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.faceLabel = new System.Windows.Forms.Label();
-            this.matchedFacePictureBox = new System.Windows.Forms.PictureBox();
+            this.focusedFacePictureBox = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.mainPictureBox)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.focusedFacePictureBox)).BeginInit();
             this.menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.matchedFacePictureBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.focusedFacePictureBox)).BeginInit();
             this.SuspendLayout();
             // 
             // mainPictureBox
@@ -72,17 +71,6 @@
             this.statusLabel.Size = new System.Drawing.Size(131, 17);
             this.statusLabel.TabIndex = 1;
             this.statusLabel.Text = "Waiting for Kinect...";
-            // 
-            // focusedFacePictureBox
-            // 
-            this.focusedFacePictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.focusedFacePictureBox.Location = new System.Drawing.Point(978, 32);
-            this.focusedFacePictureBox.Name = "focusedFacePictureBox";
-            this.focusedFacePictureBox.Size = new System.Drawing.Size(177, 188);
-            this.focusedFacePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.focusedFacePictureBox.TabIndex = 4;
-            this.focusedFacePictureBox.TabStop = false;
-            this.focusedFacePictureBox.MouseClick += new System.Windows.Forms.MouseEventHandler(this.FocusedFacePictureBox_MouseClick);
             // 
             // menuStrip1
             // 
@@ -170,50 +158,48 @@
             this.faceLabel.Size = new System.Drawing.Size(0, 17);
             this.faceLabel.TabIndex = 7;
             // 
-            // matchedFacePictureBox
+            // focusedFacePictureBox
             // 
-            this.matchedFacePictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.matchedFacePictureBox.Location = new System.Drawing.Point(978, 363);
-            this.matchedFacePictureBox.Name = "matchedFacePictureBox";
-            this.matchedFacePictureBox.Size = new System.Drawing.Size(177, 189);
-            this.matchedFacePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.matchedFacePictureBox.TabIndex = 9;
-            this.matchedFacePictureBox.TabStop = false;
+            this.focusedFacePictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.focusedFacePictureBox.Location = new System.Drawing.Point(978, 32);
+            this.focusedFacePictureBox.Name = "focusedFacePictureBox";
+            this.focusedFacePictureBox.Size = new System.Drawing.Size(177, 188);
+            this.focusedFacePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.focusedFacePictureBox.TabIndex = 4;
+            this.focusedFacePictureBox.TabStop = false;
             // 
-            // FormMain
+            // FormUntracked
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1167, 584);
-            this.Controls.Add(this.matchedFacePictureBox);
             this.Controls.Add(this.faceLabel);
             this.Controls.Add(this.focusedFacePictureBox);
             this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.mainPictureBox);
             this.Controls.Add(this.menuStrip1);
             this.DoubleBuffered = true;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.MinimumSize = new System.Drawing.Size(490, 340);
-            this.Name = "FormMain";
+            this.Name = "FormUntracked";
             this.Text = "Kinect Face Tracker";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);
             this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.FormMain_KeyPress);
             ((System.ComponentModel.ISupportInitialize)(this.mainPictureBox)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.focusedFacePictureBox)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.matchedFacePictureBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.focusedFacePictureBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
+        
+
         #endregion
 
         private System.Windows.Forms.PictureBox mainPictureBox;
         private System.Windows.Forms.Label statusLabel;
-        private System.Windows.Forms.PictureBox focusedFacePictureBox;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
@@ -224,7 +210,7 @@
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.Label faceLabel;
-        private System.Windows.Forms.PictureBox matchedFacePictureBox;
+        private PictureBox focusedFacePictureBox;
     }
 }
 

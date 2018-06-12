@@ -60,7 +60,7 @@ namespace Core.Face
             return _storedFaces.TryGetValue(id, out faceInfo);
         }
 
-        public IFaceInfo<T> this[int index] => _storedFaces[index];
+        public IFaceInfo<T> this[int faceId] => _storedFaces[faceId];
         [XmlIgnore]
         public IEnumerable<int> Keys => _storedFaces.Keys;
         [XmlIgnore]

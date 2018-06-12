@@ -9,7 +9,6 @@ namespace Kinect360
     public class Kinect360 : IKinect
     {
         public KinectSensor KinectSensor { get; private set; }
-        public bool IsKinectOne => false;
 
         public IBodyFrameStream BodyFrameStream =>  _bodyFrameStream ?? (_bodyFrameStream = new BodyFrameStream360(this));
         public IColorFrameStream ColorFrameStream => _colorFrameStream ?? (_colorFrameStream = new ColorFrameStream360(this));

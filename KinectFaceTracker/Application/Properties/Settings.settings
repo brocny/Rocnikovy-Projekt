@@ -14,5 +14,11 @@
     <Setting Name="NameFontFamily" Type="System.String" Scope="User">
       <Value Profile="(Default)">Arial</Value>
     </Setting>
+    <Setting Name="DefaultSerializePath" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="FileFilter" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Xml files|*.xml|All files|*.*</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

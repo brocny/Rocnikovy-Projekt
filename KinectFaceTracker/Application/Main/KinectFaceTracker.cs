@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Core.Face;
-using Core;
 using Core.Kinect;
 using FsdkFaceLib;
 
-namespace KinectFaceTracker
+namespace App.Main
 {
     public class KinectFaceTracker : IDisposable
     {

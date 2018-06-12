@@ -1,6 +1,6 @@
 ﻿namespace App.FSDKTracked
 {
-    partial class Form1
+    partial class FormFSDKTracked
     {
         /// <summary>
         /// Required designer variable.

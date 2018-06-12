@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using System;
+using Core;
 using Core.Kinect;
 using Microsoft.Kinect;
 
@@ -8,7 +9,6 @@ namespace KinectOne
     {
         public KinectSensor KinectSensor { get; private set; }
 
-        public bool IsKinectOne => true;
         public bool IsAvailable => KinectSensor.IsAvailable;
 
         public IBodyFrameStream BodyFrameStream => _bodyFrameStream ?? (_bodyFrameStream = new BodyFrameStreamOne(this));
@@ -31,6 +31,11 @@ namespace KinectOne
         public KinectOne()
         {
             KinectSensor = KinectSensor.GetDefault();
+
+            if (KinectSensor == null)
+            {
+                throw new ApplicationException("No Kinect device connected!");
+            }
         }
 
         public void Open()

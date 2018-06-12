@@ -10,12 +10,15 @@ using FsdkFaceLib;
 
 namespace App.FSDKTracked
 {
-    public partial class Form1 : Form
+    public partial class FormFSDKTracked : Form
     {
         // program states: whether we recognize faces, or user has clicked a face
-        private enum ProgramState { Remember, Recognize }
+        private enum ProgramState { Remember, Recognize, Stopped, Unitialized }
 
-        private ProgramState _programState = ProgramState.Recognize;
+        private ProgramState _programState = ProgramState.Unitialized;
+
+        private const string StartButtonStoppedText = "Start";
+        private const string StartButtonRunningText = "Stop";
 
         private IKinect _kinect;
         private IColorFrameStream _colorFrameStream;
@@ -36,7 +39,7 @@ namespace App.FSDKTracked
         private int _mouseY;
         private string _userName;
 
-        public Form1()
+        public FormFSDKTracked()
         {
             InitializeComponent();
         }
@@ -44,43 +47,63 @@ namespace App.FSDKTracked
         private void Form1_Load(object sender, EventArgs e)
         {
             FSDKFacePipeline.InitializeLibrary();
-            _kinect = KinectFactory.KinectFactory.GetKinect();
+            _kinect = KinectInitializeHelper.InitializeKinect();
         }
       
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             _needClose = true;
-            FSDK.SaveTrackerMemoryToFile(_trackerHandle, TrackerMemoryFile);
+            var result = MessageBox.Show("Do you want to save tracker memory?", "Save tracker memory?", MessageBoxButtons.YesNo);
+            if (result == DialogResult.Yes)
+            {
+                FSDK.SaveTrackerMemoryToFile(_trackerHandle, TrackerMemoryFile);
+            }
+
             FSDK.FreeTracker(_trackerHandle);
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            _colorFrameStream = _kinect.ColorFrameStream;
-            _kinect.Open();
-            _colorFrameStream.Open(true);
-            _imageBuffer = new byte[_colorFrameStream.FrameDataSize];
-            _imageWidthRatio = _colorFrameStream.FrameWidth / (float)pictureBox1.Width;
-            _imageHeightRatio = _colorFrameStream.FrameHeight / (float)pictureBox1.Height;
-            _nameFont = new Font("Arial", 12f * _imageWidthRatio);
+            if (_programState == ProgramState.Recognize || _programState == ProgramState.Remember)
+            {
+                _needClose = true;
+                startButton.Text = StartButtonStoppedText;
+                return;
+            }
 
-            // creating a Tracker
-            if (FSDK.FSDKE_OK != FSDK.LoadTrackerMemoryFromFile(ref _trackerHandle, TrackerMemoryFile)
-            ) // try to load saved tracker state
-                FSDK.CreateTracker(ref _trackerHandle); // if could not be loaded, create a new _trackerHandle
+            if (_programState == ProgramState.Unitialized)
+            {
+                _colorFrameStream = _kinect.ColorFrameStream;
+                _kinect.Open();
+                _colorFrameStream.Open(true);
+                _imageBuffer = new byte[_colorFrameStream.FrameDataSize];
+                _imageWidthRatio = _colorFrameStream.FrameWidth / (float)pictureBox1.Width;
+                _imageHeightRatio = _colorFrameStream.FrameHeight / (float)pictureBox1.Height;
+                _nameFont = new Font("Arial", 12f * _imageWidthRatio);
 
-            int err = 0;
-            // ToString().ToLowerInvariant() needed because false.ToString() == "False", but FSDK expects "false"
-            FSDK.SetTrackerMultipleParameters(_trackerHandle,
-                $"HandleArbitraryRotations={FSDKTrackedAppSettings.Default.FsdkHandleArbitraryRot.ToString().ToLowerInvariant()}; " +
-                $"DetermineFaceRotationAngle={FSDKTrackedAppSettings.Default.FsdkDetermineRotAngle.ToString().ToLowerInvariant()}; " +
-                $"InternalResizeWidth={FSDKTrackedAppSettings.Default.FsdkInternalResizeWidth}; " +
-                $"FaceDetectionThreshold={FSDKTrackedAppSettings.Default.FsdkFaceDetectionThreshold};",
-                ref err);
+                // creating a Tracker
+                if (FSDK.FSDKE_OK != FSDK.LoadTrackerMemoryFromFile(ref _trackerHandle, TrackerMemoryFile)
+                ) // try to load saved tracker state
+                    FSDK.CreateTracker(ref _trackerHandle); // if could not be loaded, create a new _trackerHandle
 
-            startButton.Enabled = false;
-            startButton.Visible = false;
+                int err = 0;
+                // ToString().ToLowerInvariant() needed because false.ToString() == "False", but FSDK expects "false"
+                FSDK.SetTrackerMultipleParameters(_trackerHandle,
+                    $"HandleArbitraryRotations={FSDKTrackedAppSettings.Default.FsdkHandleArbitraryRot.ToString().ToLowerInvariant()}; " +
+                    $"DetermineFaceRotationAngle={FSDKTrackedAppSettings.Default.FsdkDetermineRotAngle.ToString().ToLowerInvariant()}; " +
+                    $"InternalResizeWidth={FSDKTrackedAppSettings.Default.FsdkInternalResizeWidth}; " +
+                    $"FaceDetectionThreshold={FSDKTrackedAppSettings.Default.FsdkFaceDetectionThreshold};",
+                    ref err);
+            }
+
+            if (_programState == ProgramState.Stopped)
+            {
+                // no extra work needed
+            }
+
+            _needClose = false;
+            startButton.Text = StartButtonRunningText;
             TrackingLoop();
         }
 
@@ -151,9 +174,9 @@ namespace App.FSDKTracked
                                 if (DialogResult.OK == inputNameForm.ShowDialog())
                                 {
                                     _userName = inputNameForm.UserName;
-                                    if (string.IsNullOrEmpty(_userName))
+                                    if (string.IsNullOrWhiteSpace(_userName))
                                     {
-                                        FSDK.SetName(_trackerHandle, id, "");
+                                        FSDK.SetName(_trackerHandle, id, id.ToString());
                                         FSDK.PurgeID(_trackerHandle, id);
                                     }
                                     else
@@ -178,6 +201,8 @@ namespace App.FSDKTracked
                 _programState = ProgramState.Recognize;
                 GC.Collect(); // collect the garbage after the deletion 
             }
+
+            _programState = ProgramState.Stopped;
         }
 
         private void pictureBox1_MouseUp(object sender, MouseEventArgs e)

@@ -10,8 +10,6 @@ namespace Core.Kinect
 {
     public interface IKinect
     {
-        bool IsKinectOne { get; }
-
         void Open();
         void Close();
 
