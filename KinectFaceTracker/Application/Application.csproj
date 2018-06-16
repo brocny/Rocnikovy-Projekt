@@ -174,7 +174,7 @@
     <Compile Include="InputNameForm.Designer.cs">
       <DependentUpon>InputNameForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="KinectHelper.cs" />
+    <Compile Include="KinectInitializeHelper.cs" />
     <Compile Include="Main\FormMain.cs">
       <SubType>Form</SubType>
     </Compile>
