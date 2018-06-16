@@ -15,7 +15,7 @@ namespace App
         public StringFormat NameFormat { get; set; } = new StringFormat{ Alignment = StringAlignment.Center };
 
         public IList<Brush> BodyBrushes { get; set; } = new List<Brush>
-            { Brushes.LimeGreen, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink, Brushes.Red, Brushes.MediumPurple, Brushes.OrangeRed};
+            { Brushes.LimeGreen, Brushes.Red, Brushes.Blue, Brushes.Yellow, Brushes.Orange, Brushes.DeepPink,  Brushes.MediumPurple, Brushes.OrangeRed};
         public IList<Pen> BodyPens { get; set; } 
 
         public Bitmap Image
@@ -85,6 +85,11 @@ namespace App
                 DrawBone(body.Joints, jointColorSpacePoints, joint1, joint2, pen);
             }
         }
+        
+        public void DrawRectangle(Rectangle rect, int colorNumber)
+        {
+            _gr.DrawRectangle(BodyPens[colorNumber % BodyPens.Count], rect);
+        }
 
         public void DrawRectangles(Rectangle[] rects, long[] trackingIds = null)
         {
@@ -102,8 +107,6 @@ namespace App
                     _gr.DrawRectangle(BodyPens[(int)trackingIds[i] % BodyPens.Count], rects[i]);
                 }
             }
-
-            
         }
 
         public void DrawBodies(IBody[] bodies, ICoordinateMapper mapper)
@@ -179,6 +182,16 @@ namespace App
         public void DrawName(string name, Point location, Brush brush)
         {
             DrawName(name, location.X, location.Y, brush);
+        }
+
+        public void DrawName(string name, int xPos, int yPos, int colorId = 0)
+        {
+            DrawName(name, xPos, yPos, BodyBrushes[colorId % BodyBrushes.Count]);
+        }
+
+        public void DrawName(string name, Point location, int colorId = 0)
+        {
+            DrawName(name, location.X, location.Y, colorId);
         }
 
         public void DrawNames(string[] names, Point[] positions, long[] trackingIds = null)
