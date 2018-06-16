@@ -2,10 +2,10 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="FsdkFaceLib.Properties" GeneratedClassName="FsdkSettings">
   <Profiles />
   <Settings>
-    <Setting Name="TrackedInstantMatchThreshold" Type="System.Single" Scope="User">
+    <Setting Name="InstantMatchThreshold" Type="System.Single" Scope="User">
       <Value Profile="(Default)">0.94</Value>
     </Setting>
-    <Setting Name="TrackedNewTemplateThreshold" Type="System.Single" Scope="User">
+    <Setting Name="NewTemplateThreshold" Type="System.Single" Scope="User">
       <Value Profile="(Default)">0.82</Value>
     </Setting>
     <Setting Name="MatchThreshold" Type="System.Single" Scope="User">

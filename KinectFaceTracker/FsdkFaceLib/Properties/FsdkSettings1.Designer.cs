@@ -26,24 +26,24 @@ namespace FsdkFaceLib.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0.94")]
-        public float TrackedInstantMatchThreshold {
+        public float InstantMatchThreshold {
             get {
-                return ((float)(this["TrackedInstantMatchThreshold"]));
+                return ((float)(this["InstantMatchThreshold"]));
             }
             set {
-                this["TrackedInstantMatchThreshold"] = value;
+                this["InstantMatchThreshold"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0.82")]
-        public float TrackedNewTemplateThreshold {
+        public float NewTemplateThreshold {
             get {
-                return ((float)(this["TrackedNewTemplateThreshold"]));
+                return ((float)(this["NewTemplateThreshold"]));
             }
             set {
-                this["TrackedNewTemplateThreshold"] = value;
+                this["NewTemplateThreshold"] = value;
             }
         }
         
