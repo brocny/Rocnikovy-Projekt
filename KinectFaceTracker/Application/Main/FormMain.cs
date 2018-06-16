@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -93,9 +94,10 @@ namespace App.Main
             _renderer = new Renderer(_kinectFrameHeight, _kinectFrameWidth);
         }
 
-        private void FacePipelineOnTemplateProcessingComplete(object sender, Match<byte[]>[] matches)
+        private void FacePipelineOnTemplateProcessingComplete(object sender, IEnumerable<KeyValuePair<long, Match<byte[]>>> matches)
         {
-            var focusedFaceMatch = matches.SingleOrDefault(x => x.TrackingId == _focusedFaceTrackingId);
+            var focusedFaceMatch = matches.SingleOrDefault(x => x.Key == _focusedFaceTrackingId).Value;
+
             if (focusedFaceMatch?.Snapshot?.FaceImageBuffer != null)
             {
                 matchedFacePictureBox.InvokeIfRequired(pb => pb.Image = focusedFaceMatch.Snapshot.FaceImageBuffer.ToBitmap());

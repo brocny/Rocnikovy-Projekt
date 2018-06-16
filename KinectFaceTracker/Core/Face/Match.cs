@@ -6,13 +6,12 @@ namespace Core.Face
     {
         public Match() { }
 
-        public Match(int faceId, float similarity, FaceSnapshot<TTemplate> snapshot, IFaceInfo<TTemplate> faceInfo, long trackingId = 0, bool isValid = true)
+        public Match(int faceId, float similarity, FaceSnapshot<TTemplate> snapshot, IFaceInfo<TTemplate> faceInfo, bool isValid = true)
         {
             FaceId = faceId;
             Similarity = similarity;
             Snapshot = snapshot;
             FaceInfo = faceInfo;
-            TrackingId = trackingId;
             IsValid = isValid;
         }
 
@@ -20,7 +19,6 @@ namespace Core.Face
         public float Similarity { get; }
         public FaceSnapshot<TTemplate> Snapshot { get; }
         public IFaceInfo<TTemplate> FaceInfo { get; }
-        public long TrackingId { get; set; }
         public bool IsValid { get; set; }
 
         public int CompareTo(Match<TTemplate> other)

@@ -39,7 +39,7 @@ namespace FsdkFaceLib
             return tsc.Task;
         }
 
-        public Match<byte[]> ProcessTemplate(FaceTemplate t)
+        public  Match<byte[]> ProcessTemplate(FaceTemplate t)
         {
             if (_addTemplateRequests.TryRemove(t.TrackingId, out var request))
             {
@@ -55,7 +55,7 @@ namespace FsdkFaceLib
             var topCondidateFaceInfo = _faceDb[topCandidate.FaceId];
             var topCandidateMatch = topCondidateFaceInfo.GetSimilarity(t);
 
-            if (topCandidateMatch.similarity > MatchingParameters.TrackedInstantMatchThreshold)
+            if (topCandidateMatch.similarity > MatchingParameters.InstantMatchThreshold)
             {
                 return Matched(t, topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, topCondidateFaceInfo);
             }
@@ -63,7 +63,7 @@ namespace FsdkFaceLib
             if (trackingStatus.Candidates.Count > 1)
             {
                 var bestOfTheRest = GetBestOfTheRest(trackingStatus, t);
-                if (bestOfTheRest.similarity > MatchingParameters.TrackedInstantMatchThreshold)
+                if (bestOfTheRest.similarity > MatchingParameters.InstantMatchThreshold)
                 {
                     var match = Matched(t, bestOfTheRest.candidate, bestOfTheRest.similarity, bestOfTheRest.snapshot, _faceDb[bestOfTheRest.candidate.FaceId]);
                     if (bestOfTheRest.candidate.Confirmations > topCandidate.Confirmations)
@@ -81,7 +81,7 @@ namespace FsdkFaceLib
                 }
             }
 
-            if (topCandidateMatch.similarity > MatchingParameters.TrackedNewTemplateThreshold)
+            if (topCandidateMatch.similarity > MatchingParameters.NewTemplateThreshold)
             {
                 AddTemplate(t, topCandidate);
             }
@@ -98,7 +98,7 @@ namespace FsdkFaceLib
         {
             var bestMatch = _faceDb.GetBestMatch(t);
             if (bestMatch == null) return new Match<byte[]>{ IsValid = false };
-            bestMatch.TrackingId = t.TrackingId;
+
             if (bestMatch.Similarity <= MatchingParameters.MatchThreshold)
             {
                 bestMatch.IsValid = false;
@@ -165,7 +165,7 @@ namespace FsdkFaceLib
         /// </summary>
         /// <param name="templates">Templates to be processed</param>
         /// <returns>Any matches that might be found</returns>
-        public IEnumerable<Match<byte[]>> ProcessTemplates(IEnumerable<FaceTemplate> templates)
+        public IEnumerable<KeyValuePair<long, Match<byte[]>>> ProcessTemplates(IEnumerable<FaceTemplate> templates)
         {
             if (_cacheClearingCounter++ > ClearCacheIterationsLimit)
             {
@@ -179,22 +179,25 @@ namespace FsdkFaceLib
 
             return templates
                 .Where(t => t?.Template != null)
-                .Select(ProcessTemplate)
-                .Where(match => match.IsValid && match.Similarity >= MatchingParameters.MatchThreshold)
-                .ToArray();
+                .Select(t =>
+                {
+                    var match = ProcessTemplate(t);
+                    return new KeyValuePair<long, Match<byte[]>>(t.TrackingId, match);
+                })
+                .Where(pair => pair.Value.IsValid && pair.Value.Similarity >= MatchingParameters.MatchThreshold);
         }
     }
 
     public class MatchingParameters
     {
-        public float TrackedInstantMatchThreshold { get; set; }
-        public float TrackedNewTemplateThreshold { get; set; }
+        public float InstantMatchThreshold { get; set; }
+        public float NewTemplateThreshold { get; set; }
         public float MatchThreshold { get; set; }
 
         public static MatchingParameters Default => new MatchingParameters
         {
-            TrackedInstantMatchThreshold = FsdkSettings.Default.TrackedInstantMatchThreshold,
-            TrackedNewTemplateThreshold = FsdkSettings.Default.TrackedNewTemplateThreshold,
+            InstantMatchThreshold = FsdkSettings.Default.InstantMatchThreshold,
+            NewTemplateThreshold = FsdkSettings.Default.NewTemplateThreshold,
             MatchThreshold = FsdkSettings.Default.MatchThreshold,
         };
     }
