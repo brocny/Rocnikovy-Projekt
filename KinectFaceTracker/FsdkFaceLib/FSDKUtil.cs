@@ -7,9 +7,9 @@ namespace FsdkFaceLib
 {
     public static class FsdkUtil
     {
-        public static (Rectangle rect, double rotAngle) TFacePositionToRectRotAngle(FSDK.TFacePosition tfp)
+        public static Rectangle ToRectangle(this FSDK.TFacePosition tfp)
         {
-            return (new Rectangle(tfp.xc - tfp.w, tfp.yc - tfp.w, tfp.w, tfp.w), tfp.angle);
+            return new Rectangle(tfp.xc - tfp.w, tfp.yc - tfp.w, tfp.w, tfp.w);
         }
 
         public static FSDK.TFacePosition RectRotAngleToTFacePosition(Rectangle rect, double rotAngle)
