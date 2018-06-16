@@ -3,13 +3,13 @@ using System.Xml;
 
 namespace Core.Face
 {
-    public partial class DictionaryFaceDatabase<T>
+    public partial class DictionaryFaceDatabase<TTemplate>
     {
         public class FaceDatabaseSerializer
         {
-            private readonly DictionaryFaceDatabase<T> _faceDatabase;
+            private readonly DictionaryFaceDatabase<TTemplate> _faceDatabase;
 
-            public FaceDatabaseSerializer(DictionaryFaceDatabase<T> faceDatabase)
+            public FaceDatabaseSerializer(DictionaryFaceDatabase<TTemplate> faceDatabase)
             {
                 _faceDatabase = faceDatabase;
             }

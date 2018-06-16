@@ -6,8 +6,8 @@ namespace Core.Face
     /// <summary>
     ///     Interface for types used for storing multiple face templates of a single face
     /// </summary>
-    /// <typeparam name="T">The type of face templates stored</typeparam>
-    public interface IFaceInfo<T>
+    /// <typeparam name="TTemplate">The type of face templates stored</typeparam>
+    public interface IFaceInfo<TTemplate>
     {
         /// <summary>
         ///     Identification of the face
@@ -29,9 +29,9 @@ namespace Core.Face
         /// </summary>
         float GenderConfidence { get; }
 
-        IEnumerable<FaceSnapshot<T>> Snapshots { get; }
+        IEnumerable<FaceSnapshot<TTemplate>> Snapshots { get; }
 
-        IEnumerable<T> Templates { get; }
+        IEnumerable<TTemplate> Templates { get; }
 
         IEnumerable<ImageBuffer> Images { get; }
 
@@ -40,14 +40,14 @@ namespace Core.Face
         /// </summary>
         /// <param name="template">The template to compare</param>
         /// <returns>A value between 0 (no similaraty) and 1 (maximum similarity)</returns>
-        (float similarity, FaceSnapshot<T> snapshot) GetSimilarity(T template);
+        (float similarity, FaceSnapshot<TTemplate> snapshot) GetSimilarity(TTemplate template);
 
         /// <summary>
         ///     Get similarity between <paramref name="faceInfo" /> and <c>this</c>
         /// </summary>
         /// <param name="faceInfo"></param>
         /// <returns>A value between 0 (no similarity) and 1 (maximum similarity)</returns>
-        (float similarity, FaceSnapshot<T> snapshot) GetSimilarity(IFaceInfo<T> faceInfo);
+        (float similarity, FaceSnapshot<TTemplate> snapshot) GetSimilarity(IFaceInfo<TTemplate> faceInfo);
 
         /// <summary>
         ///     Get similarity between
@@ -55,34 +55,34 @@ namespace Core.Face
         /// </summary>
         /// <param name="faceTemplate"></param>
         /// <returns>A value between 0 (no similarity) and 1 (maximum similarity)</returns>
-        (float similarity, FaceSnapshot<T> snapshot) GetSimilarity(IFaceTemplate<T> faceTemplate);
+        (float similarity, FaceSnapshot<TTemplate> snapshot) GetSimilarity(IFaceTemplate<TTemplate> faceTemplate);
 
         /// <summary>
         ///     Add a new template to this face
         /// </summary>
         /// <param name="template">Template to be added</param>
         /// <param name="imageBuffer"> Optionally add an image, from which the template was generated </param>
-        void AddTemplate(T template, ImageBuffer imageBuffer = null);
+        void AddTemplate(TTemplate template, ImageBuffer imageBuffer = null);
 
         /// <summary>
-        ///     Add a new template including additional information included in FaceTemplate<typeparamref name="T" /> besides the
+        ///     Add a new template including additional information included in FaceTemplate<typeparamref name="TTemplate" /> besides the
         ///     actual template
         /// </summary>
         /// <param name="faceTemplate">Template to be added</param>
-        void AddTemplate(IFaceTemplate<T> faceTemplate);
+        void AddTemplate(IFaceTemplate<TTemplate> faceTemplate);
 
         /// <summary>
         ///     Add all the templates in <paramref name="other" /> into this
         /// </summary>
         /// <param name="other"></param>
-        void Merge(IFaceInfo<T> other);
+        void Merge(IFaceInfo<TTemplate> other);
 
         /// <summary>
         ///     Checks whether <paramref name="template" /> is a valid face template
         /// </summary>
         /// <param name="template">Face template</param>
         /// <returns><c>true</c> if <paramref name="template" /> is a valid face template</returns>
-        bool IsValid(T template);
+        bool IsValid(TTemplate template);
 
         /// <summary>
         ///     Serialize this into a <c>Stream</c>
@@ -101,20 +101,20 @@ namespace Core.Face
         /// </summary>
         /// <param name="stream"><c>Stream</c> to deserialize from</param>
         /// <returns>A new instance</returns>
-        IFaceInfo<T> Deserialize(Stream stream);
+        IFaceInfo<TTemplate> Deserialize(Stream stream);
 
         /// <summary>
         ///     Create a new instance of the same type by reading from a <c>TextReader</c>
         /// </summary>
         /// <param name="reader"><c>TextReader</c> to read from</param>
         /// <returns>A new instance</returns>
-        IFaceInfo<T> Deserialize(TextReader reader);
+        IFaceInfo<TTemplate> Deserialize(TextReader reader);
 
         /// <summary>
         ///     Get a new instance of the same type
         /// </summary>
         /// <returns>A new instance of the same type</returns>
-        IFaceInfo<T> NewInstance();
+        IFaceInfo<TTemplate> NewInstance();
     }
 
     public enum Gender

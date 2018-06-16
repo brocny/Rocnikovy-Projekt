@@ -3,14 +3,14 @@ using System.Xml;
 
 namespace Core.Face
 {
-    public partial class DictionaryFaceDatabase<T>
+    public partial class DictionaryFaceDatabase<TTemplate>
     {
         public class FaceDatabaseDeserializer
         {
-            private readonly DictionaryFaceDatabase<T> _db;
-            private readonly IFaceInfo<T> _faceInfoBaseInstance;
+            private readonly DictionaryFaceDatabase<TTemplate> _db;
+            private readonly IFaceInfo<TTemplate> _faceInfoBaseInstance;
 
-            public FaceDatabaseDeserializer(IFaceInfo<T> faceInfoBaseInstance, DictionaryFaceDatabase<T> db)
+            public FaceDatabaseDeserializer(IFaceInfo<TTemplate> faceInfoBaseInstance, DictionaryFaceDatabase<TTemplate> db)
             {
                 _faceInfoBaseInstance = faceInfoBaseInstance;
                 _db = db;

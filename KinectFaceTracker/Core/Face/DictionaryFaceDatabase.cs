@@ -15,34 +15,34 @@ namespace Core.Face
     /// <remarks>
     /// Thread-safe 
     /// </remarks>
-    /// <typeparam name="T">Type of face templates</typeparam>
+    /// <typeparam name="TTemplate">Type of face templates</typeparam>
     [Serializable]
-    public partial class DictionaryFaceDatabase<T> : IFaceDatabase<T>, IEnumerable<KeyValuePair<int, IFaceInfo<T>>>
+    public partial class DictionaryFaceDatabase<TTemplate> : IFaceDatabase<TTemplate>, IEnumerable<KeyValuePair<int, IFaceInfo<TTemplate>>>
     {
-        private ConcurrentDictionary<int, IFaceInfo<T>> _storedFaces;
-        private readonly IFaceInfo<T> _baseInstance;
+        private ConcurrentDictionary<int, IFaceInfo<TTemplate>> _storedFaces;
+        private readonly IFaceInfo<TTemplate> _baseInstance;
 
-        public IEnumerable<KeyValuePair<int, IFaceInfo<T>>> Pairs => _storedFaces.Select(x => x);
+        public IEnumerable<KeyValuePair<int, IFaceInfo<TTemplate>>> Pairs => _storedFaces.Select(x => x);
 
         public int NextId { get; private set; }
         public string SerializePath { get; set; }
 
-        public DictionaryFaceDatabase(IFaceInfo<T> baseInstance = null, IEnumerable<KeyValuePair<int, IFaceInfo<T>>> initialDb = null)
+        public DictionaryFaceDatabase(IFaceInfo<TTemplate> baseInstance = null, IEnumerable<KeyValuePair<int, IFaceInfo<TTemplate>>> initialDb = null)
         {
             if (baseInstance == null)
             {
                 var firstType = (from t in Assembly.GetExecutingAssembly().GetExportedTypes()
-                        where !t.IsAbstract && !t.IsInterface && typeof(IFaceInfo<T>).IsAssignableFrom(t) && t.GetConstructor(Type.EmptyTypes) != null
+                        where !t.IsAbstract && !t.IsInterface && typeof(IFaceInfo<TTemplate>).IsAssignableFrom(t) && t.GetConstructor(Type.EmptyTypes) != null
                         select t)
                     .FirstOrDefault();
 
                 if (firstType != null)
                 {
-                    _baseInstance = (IFaceInfo<T>)Activator.CreateInstance(firstType);
+                    _baseInstance = (IFaceInfo<TTemplate>)Activator.CreateInstance(firstType);
                 }
                 else
                 {
-                    throw new ApplicationException($"No suitable class implementing {typeof(IFaceInfo<T>)} found");
+                    throw new ApplicationException($"No suitable class implementing {typeof(IFaceInfo<TTemplate>)} found");
                 }
             }
             else
@@ -51,20 +51,20 @@ namespace Core.Face
             }
 
             _storedFaces = initialDb == null
-                ? new ConcurrentDictionary<int, IFaceInfo<T>>()
-                : new ConcurrentDictionary<int, IFaceInfo<T>>(initialDb);
+                ? new ConcurrentDictionary<int, IFaceInfo<TTemplate>>()
+                : new ConcurrentDictionary<int, IFaceInfo<TTemplate>>(initialDb);
         }
 
-        public bool TryGetValue(int id, out IFaceInfo<T> faceInfo)
+        public bool TryGetValue(int id, out IFaceInfo<TTemplate> faceInfo)
         {
             return _storedFaces.TryGetValue(id, out faceInfo);
         }
 
-        public IFaceInfo<T> this[int faceId] => _storedFaces[faceId];
+        public IFaceInfo<TTemplate> this[int faceId] => _storedFaces[faceId];
         [XmlIgnore]
         public IEnumerable<int> Keys => _storedFaces.Keys;
         [XmlIgnore]
-        public IEnumerable<IFaceInfo<T>> Values => _storedFaces.Values;
+        public IEnumerable<IFaceInfo<TTemplate>> Values => _storedFaces.Values;
         public bool ContainsKey(int key) => _storedFaces.ContainsKey(key);
 
         public string GetName(int id)
@@ -78,7 +78,7 @@ namespace Core.Face
         /// <param name="info"></param>
         /// <param name="id"></param>
         /// <returns><c>true</c> if successful</returns>
-        public bool TryAddNewFace(int id, IFaceInfo<T> info)
+        public bool TryAddNewFace(int id, IFaceInfo<TTemplate> info)
         {
             bool ret = _storedFaces.TryAdd(id, info);
             if (ret)
@@ -89,7 +89,7 @@ namespace Core.Face
             return ret;
         }
 
-        public bool TryAddNewFace(int id, T template, string name = "")
+        public bool TryAddNewFace(int id, TTemplate template, string name = "")
         {
             var faceInfo = _baseInstance.NewInstance();
             faceInfo.AddTemplate(template);
@@ -114,17 +114,17 @@ namespace Core.Face
         /// </summary>
         /// <param name="template"></param>
         /// <returns><c>id</c> of the best matching face and <c>confidence</c> value [0, 1]</returns>
-        public Match<T> GetBestMatch(T template)
+        public Match<TTemplate> GetBestMatch(TTemplate template)
         {
             var matches = from f in _storedFaces.AsParallel()
                 let faceInfo = f.Value
                 let match = faceInfo.GetSimilarity(template)
-                select new Match<T>(f.Key, match.similarity, match.snapshot, faceInfo);
+                select new Match<TTemplate>(f.Key, match.similarity, match.snapshot, faceInfo);
 
             return matches.Max();
         }
 
-        public Match<T> GetBestMatch(IFaceTemplate<T> template)
+        public Match<TTemplate> GetBestMatch(IFaceTemplate<TTemplate> template)
         {
             var matches = from f in _storedFaces.AsParallel()
                 let faceInfo = f.Value
@@ -132,7 +132,7 @@ namespace Core.Face
                 where ageRatio > 0.66f && ageRatio < 1.5f
                 where faceInfo.Gender == template.Gender || faceInfo.Gender == Gender.Unknown
                 let match = faceInfo.GetSimilarity(template)
-                select new Match<T>(f.Key, match.similarity, match.snapshot, faceInfo, template.TrackingId);
+                select new Match<TTemplate>(f.Key, match.similarity, match.snapshot, faceInfo, template.TrackingId);
 
             return matches.Max();
         }
@@ -144,7 +144,7 @@ namespace Core.Face
         /// <param name="faceTemplate"></param>
         /// <returns><c>true</c>if succesful</returns>
         /// <exception cref="ArgumentException"> thrown if <paramref name="faceTemplate"/> has incorrect length</exception>
-        public bool TryAddFaceTemplateToExistingFace(int id, T faceTemplate)
+        public bool TryAddFaceTemplateToExistingFace(int id, TTemplate faceTemplate)
         {
             if (_storedFaces.TryGetValue(id, out var faceInfo))
             {
@@ -155,7 +155,7 @@ namespace Core.Face
             return false;
         }
 
-        public void AddOrUpdate(int id, IFaceTemplate<T> template)
+        public void AddOrUpdate(int id, IFaceTemplate<TTemplate> template)
         {
             if (_storedFaces.TryGetValue(id, out var faceInfo))
             {
@@ -177,7 +177,7 @@ namespace Core.Face
             }
         }
 
-        public void AddOrUpdate(int id, T template)
+        public void AddOrUpdate(int id, TTemplate template)
         {
             if (_storedFaces.TryGetValue(id, out var faceInfo))
             {
@@ -204,7 +204,7 @@ namespace Core.Face
             _storedFaces.Clear();
         }
 
-        public void Add(int id, IFaceInfo<T> faceInfo)
+        public void Add(int id, IFaceInfo<TTemplate> faceInfo)
         {
             if (_storedFaces.TryGetValue(id, out var targetFaceInfo))
             {
@@ -244,22 +244,22 @@ namespace Core.Face
             deserializer.Deserialize(stream);
         }
 
-        public IFaceDatabase<T> Backup()
+        public IFaceDatabase<TTemplate> Backup()
         {
-            return new DictionaryFaceDatabase<T>(_baseInstance, _storedFaces)
+            return new DictionaryFaceDatabase<TTemplate>(_baseInstance, _storedFaces)
             {
                 SerializePath = SerializePath,
                 NextId = NextId
             };
         }
 
-        public void Restore(IFaceDatabase<T> backup)
+        public void Restore(IFaceDatabase<TTemplate> backup)
         {
-            _storedFaces = new ConcurrentDictionary<int, IFaceInfo<T>>(backup.Pairs);
+            _storedFaces = new ConcurrentDictionary<int, IFaceInfo<TTemplate>>(backup.Pairs);
             NextId = backup.NextId;
         }
 
-        public IEnumerator<KeyValuePair<int, IFaceInfo<T>>> GetEnumerator()
+        public IEnumerator<KeyValuePair<int, IFaceInfo<TTemplate>>> GetEnumerator()
         {
             return _storedFaces.GetEnumerator();
         }
