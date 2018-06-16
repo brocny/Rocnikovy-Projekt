@@ -22,7 +22,7 @@ namespace FsdkFaceLib
         public event EventHandler<FSDKFaceImage[]> FaceDetectionComplete;
         public event EventHandler<FSDKFaceImage[]> FacialFeatureDetectionComplete;
         public event EventHandler<FaceTemplate[]> FaceTemplateExtractionComplete;
-        public event EventHandler<Match<byte[]>[]> TemplateProcessingComplete;
+        public event EventHandler<IEnumerable<KeyValuePair<long, Match<byte[]>>>> TemplateProcessingComplete;
         public IReadOnlyDictionary<long, TrackingStatus> TrackedFaces => _templateProc.TrackedFaces;
         public Task<Task> Completion { get; private set; }
 
@@ -359,7 +359,7 @@ namespace FsdkFaceLib
         private void ProcessTemplates(FaceTemplate[] templates)
         {
             var matches = _templateProc.ProcessTemplates(templates);
-            TemplateProcessingComplete?.Invoke(this, matches.ToArray());
+            TemplateProcessingComplete?.Invoke(this, matches);
         }
 
         private void SetFSDKParams()
@@ -386,38 +386,5 @@ namespace FsdkFaceLib
         private ActionBlock<FaceTemplate[]> _templateProcessingBlock;
 
         private readonly ArrayPool<byte> _bufferPool;
-    }
-
-    public class FaceLocationResult
-    {
-        public ImageBuffer ImageBuffer;
-
-        public Rectangle[] FaceRectangles;
-        public long[] TrackingIds;
-        public IBody[] Bodies;
-    }
-
-    public class FaceCutout
-    {
-        /// <summary>
-        /// Bitmap image of the face
-        /// </summary>
-        public ImageBuffer ImageBuffer;
-        
-        /// <summary>
-        /// Original location of the top-left point of the face rectangle in the original image
-        /// </summary>
-        public Point OrigLocation;
-        public long TrackingId;
-    }
-
-    public class FaceTemplate : IFaceTemplate<byte[]>
-    {
-        public byte[] Template { get; internal set; }
-        public ImageBuffer FaceImage { get; internal set; }
-        public float Age { get; internal set; }
-        public Gender Gender { get; internal set; }
-        public float GenderConfidence { get; internal set; }
-        public long TrackingId { get; internal set; }
     }
 }

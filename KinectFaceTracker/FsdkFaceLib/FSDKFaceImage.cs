@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using Core.Face;
 using Core;
+using Core.Kinect;
 using Luxand;
 
 namespace FsdkFaceLib
@@ -211,5 +212,38 @@ namespace FsdkFaceLib
 
             return (eyes, smile);
         }
+    }
+
+    public class FaceLocationResult
+    {
+        public ImageBuffer ImageBuffer;
+
+        public Rectangle[] FaceRectangles;
+        public long[] TrackingIds;
+        public IBody[] Bodies;
+    }
+
+    public class FaceCutout
+    {
+        /// <summary>
+        /// Bitmap image of the face
+        /// </summary>
+        public ImageBuffer ImageBuffer;
+
+        /// <summary>
+        /// Original location of the top-left point of the face rectangle in the original image
+        /// </summary>
+        public Point OrigLocation;
+        public long TrackingId;
+    }
+
+    public class FaceTemplate : IFaceTemplate<byte[]>
+    {
+        public byte[] Template { get; internal set; }
+        public ImageBuffer FaceImage { get; internal set; }
+        public float Age { get; internal set; }
+        public Gender Gender { get; internal set; }
+        public float GenderConfidence { get; internal set; }
+        public long TrackingId { get; internal set; }
     }
 }
