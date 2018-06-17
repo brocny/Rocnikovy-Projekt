@@ -25,43 +25,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.94")]
-        public float InstantMatchThreshold {
-            get {
-                return ((float)(this["InstantMatchThreshold"]));
-            }
-            set {
-                this["InstantMatchThreshold"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.82")]
-        public float NewTemplateThreshold {
-            get {
-                return ((float)(this["NewTemplateThreshold"]));
-            }
-            set {
-                this["NewTemplateThreshold"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.79")]
-        public float MatchThreshold {
-            get {
-                return ((float)(this["MatchThreshold"]));
-            }
-            set {
-                this["MatchThreshold"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("70")]
+        [global::System.Configuration.DefaultSettingValueAttribute("100")]
         public int FsdkInternalResizeWidth {
             get {
                 return ((int)(this["FsdkInternalResizeWidth"]));
@@ -109,7 +73,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("6")]
+        [global::System.Configuration.DefaultSettingValueAttribute("8")]
         public int SkipMinimumConfirmations {
             get {
                 return ((int)(this["SkipMinimumConfirmations"]));
@@ -121,7 +85,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("8")]
+        [global::System.Configuration.DefaultSettingValueAttribute("12")]
         public int MaxSkippedFrames {
             get {
                 return ((int)(this["MaxSkippedFrames"]));
@@ -145,7 +109,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("2")]
         public int PipelineQueueDepth {
             get {
                 return ((int)(this["PipelineQueueDepth"]));
@@ -202,6 +166,42 @@ namespace FsdkFaceLib.Properties {
             }
             set {
                 this["FsdkActiovationKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.995")]
+        public float InstantMatchThreshold {
+            get {
+                return ((float)(this["InstantMatchThreshold"]));
+            }
+            set {
+                this["InstantMatchThreshold"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.99")]
+        public float NewTemplateThreshold {
+            get {
+                return ((float)(this["NewTemplateThreshold"]));
+            }
+            set {
+                this["NewTemplateThreshold"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.985")]
+        public float MatchThreshold {
+            get {
+                return ((float)(this["MatchThreshold"]));
+            }
+            set {
+                this["MatchThreshold"] = value;
             }
         }
     }
