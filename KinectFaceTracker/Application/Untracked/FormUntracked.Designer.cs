@@ -59,7 +59,6 @@ namespace App.Untracked
             this.mainPictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.mainPictureBox.TabIndex = 0;
             this.mainPictureBox.TabStop = false;
-            this.mainPictureBox.SizeChanged += new System.EventHandler(this.MainPictureBox_SizeChanged);
             this.mainPictureBox.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MainPictureBox_MouseClick);
             // 
             // statusLabel

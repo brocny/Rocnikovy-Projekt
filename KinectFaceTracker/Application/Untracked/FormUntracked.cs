@@ -16,13 +16,14 @@ namespace App.Untracked
     public partial class FormUntracked : Form
     {
         private readonly IKinect _kinect;
-        private IColorFrameStream _colorFrameStream;
+        private readonly IColorFrameStream _colorFrameStream;
         private readonly DatabaseHelper<byte[]> _databaseHelper = new DatabaseHelper<byte[]>(new DictionaryFaceDatabase<byte[]>(new FSDKFaceInfo()));
         private byte[] _previousColorBuffer;
         private byte[] _colorBuffer;
         private ProgramState _programState;
         private readonly Renderer _renderer;
         private (Rectangle Rectangle, IFaceInfo<byte[]> FaceInfo)[] _faces;
+        private readonly FpsCounter _fpsCounter = new FpsCounter();
 
         public FormUntracked()
         {
@@ -43,7 +44,9 @@ namespace App.Untracked
         {
             using (var colorFrame = e.ColorFrame)
             {
-                if (_colorBuffer.Length != colorFrame.PixelDataLength)
+                if (colorFrame == null) return;
+
+                if (_colorBuffer?.Length != colorFrame.PixelDataLength)
                 {
                     _colorBuffer = new byte[colorFrame.PixelDataLength];
                 }
@@ -54,6 +57,7 @@ namespace App.Untracked
                 {
                     copyBufferTask.Wait();
                     _previousColorBuffer = _colorBuffer;
+                    _colorBuffer = null;
                     return;
                 }
 
@@ -65,10 +69,58 @@ namespace App.Untracked
                     _renderer.Image = bitmap;
                 });
 
+                _fpsCounter.NewFrame();
+                statusLabel.Text = _fpsCounter.Fps.ToString();
+
                 previousImage.CreateFsdkImageHandle(out int fsdkImageHandle);
                 int detectedFaceCount = 0;
-                FSDK.DetectMultipleFaces(fsdkImageHandle, ref detectedFaceCount, out var detectedFaces, 4096);
-                _faces = new (Rectangle, IFaceInfo<byte[]>)[detectedFaceCount];
+                var err = FSDK.DetectMultipleFaces(fsdkImageHandle, ref detectedFaceCount, out var detectedFaces, 4096);
+                Task recTask;
+
+                if (err == FSDK.FSDKE_OK && detectedFaces != null)
+                {
+                    recTask = RecognizeFaces(detectedFaceCount, detectedFaces, fsdkImageHandle, previousImage);
+                }
+                else
+                {
+                    recTask = Task.FromResult<string[]>(null);
+                }
+
+                var renderTask = Task.Factory.ContinueWhenAll(new[] {bitmapTask, recTask}, tasks =>
+                {
+                    var names = ((Task<string[]>) recTask).Result;
+
+                    for (int i = 0; i < detectedFaceCount; i++)
+                    {
+                        if (names[i] != null)
+                        {
+                            _renderer.DrawRectangle(_faces[i].Rectangle, 0);
+                            _renderer.DrawName(names[i], _faces[i].Rectangle.Left, _faces[i].Rectangle.Bottom, 0);
+                        }
+                        else
+                        {
+                            _renderer.DrawRectangle(_faces[i].Rectangle, 1);
+                        }
+                    }
+                });
+
+                Application.DoEvents();
+                copyBufferTask.Wait();
+                renderTask.Wait();
+                mainPictureBox.Image = _renderer.Image;
+                var temp = _colorBuffer;
+                _colorBuffer = _previousColorBuffer;
+                _previousColorBuffer = temp;
+                FSDK.FreeImage(fsdkImageHandle);
+            }
+        }
+
+        private Task<string[]> RecognizeFaces(int detectedFaceCount, FSDK.TFacePosition[] detectedFaces, int fsdkImageHandle,
+            ImageBuffer previousImage)
+        {
+            return Task.Run(() =>
+            {
+                _faces = new(Rectangle, IFaceInfo<byte[]>)[detectedFaceCount];
                 var names = new string[detectedFaceCount];
 
                 Parallel.For(0, detectedFaces.Length, i =>
@@ -85,10 +137,10 @@ namespace App.Untracked
 
 
                     var bestMatch = _databaseHelper.FaceDatabase.GetBestMatch(template);
-                    if(!bestMatch.IsValid)
+                    if (bestMatch == null || !bestMatch.IsValid)
                         return;
-                    
-                   
+
+
                     if (bestMatch.Similarity > FsdkSettings.Default.NewTemplateThreshold)
                     {
                         if (bestMatch.Similarity < FsdkSettings.Default.InstantMatchThreshold)
@@ -102,31 +154,20 @@ namespace App.Untracked
                     }
                 });
 
-                bitmapTask.Wait();
-                for (int i = 0; i < detectedFaceCount; i++)
-                {
-                    if (names[i] != null)
-                    {
-                        _renderer.DrawRectangle(_faces[i].Rectangle, 0);
-                        _renderer.DrawName(names[i], _faces[i].Rectangle.Left, _faces[i].Rectangle.Bottom, 0);
-                    }
-                    else
-                    {
-                        _renderer.DrawRectangle(_faces[i].Rectangle, 1);
-                    }
-                }
+                return names;
+            });
 
-                copyBufferTask.Wait();
-                var temp = _colorBuffer;
-                _previousColorBuffer = _colorBuffer;
-                _colorBuffer = temp;
-            }
+            
         }
 
         private void MainPictureBox_MouseClick(object sender, MouseEventArgs e)
         {
+            if(_faces == null)
+                return;
+
             var clickPos = e.Location.Rescale(mainPictureBox.Width, mainPictureBox.Height, _colorFrameStream.FrameWidth,
                 _colorFrameStream.FrameHeight);
+
             foreach (var face in _faces)
             {
                 if (face.Rectangle.Contains(clickPos))
@@ -221,11 +262,6 @@ namespace App.Untracked
             {
                 TogglePause();
             }
-        }
-
-        private void MainPictureBox_SizeChanged(object sender, EventArgs e)
-        {
-            throw new NotImplementedException();
         }
 
         private enum ProgramState
