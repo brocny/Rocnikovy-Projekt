@@ -53,12 +53,12 @@ namespace KinectOne
         private readonly FrameDescription _frameDescription;
 
 
-        private void ColorFrameReader_FrameArrived(object sender, Microsoft.Kinect.ColorFrameArrivedEventArgs e)
+        private void ColorFrameReader_FrameArrived(object sender, ColorFrameArrivedEventArgs e)
         {
             var colorFrame = e.FrameReference.AcquireFrame();
             if (colorFrame != null)
             {
-                _colorFrameReady.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrameOne(colorFrame)));
+                _colorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrameOne(colorFrame)));
             }
         }
 
