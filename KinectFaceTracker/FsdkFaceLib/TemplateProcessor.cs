@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 using Core.Face;
@@ -57,7 +58,7 @@ namespace FsdkFaceLib
 
             if (topCandidateMatch.similarity > MatchingParameters.InstantMatchThreshold)
             {
-                return Matched(t, topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, topCondidateFaceInfo);
+                return Matched(topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, topCondidateFaceInfo);
             }
 
             if (trackingStatus.Candidates.Count > 1)
@@ -65,7 +66,7 @@ namespace FsdkFaceLib
                 var bestOfTheRest = GetBestOfTheRest(trackingStatus, t);
                 if (bestOfTheRest.similarity > MatchingParameters.InstantMatchThreshold)
                 {
-                    var match = Matched(t, bestOfTheRest.candidate, bestOfTheRest.similarity, bestOfTheRest.snapshot, _faceDb[bestOfTheRest.candidate.FaceId]);
+                    var match = Matched(bestOfTheRest.candidate, bestOfTheRest.similarity, bestOfTheRest.snapshot, _faceDb[bestOfTheRest.candidate.FaceId]);
                     if (bestOfTheRest.candidate.Confirmations > topCandidate.Confirmations)
                     {
                         trackingStatus.TopCandidate = bestOfTheRest.candidate;
@@ -88,7 +89,7 @@ namespace FsdkFaceLib
 
             if (topCandidateMatch.similarity > MatchingParameters.MatchThreshold)
             {
-                return Matched(t, topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, _faceDb[topCandidate.FaceId]);
+                return Matched(topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, _faceDb[topCandidate.FaceId]);
             }
 
             return ProcessUntracked(t);
@@ -123,10 +124,10 @@ namespace FsdkFaceLib
             return trackingStatus;
         }
 
-        private Match<byte[]> Matched(FaceTemplate t, CandidateStatus cs, float confidence, FaceSnapshot<byte[]> snapshot, IFaceInfo<byte[]> faceInfo)
+        private Match<byte[]> Matched(CandidateStatus cs, float confidence, FaceSnapshot<byte[]> snapshot, IFaceInfo<byte[]> faceInfo)
         {
             cs.Confirmations += confidence;
-            return new Match<byte[]>(cs.FaceId, confidence, snapshot, faceInfo, t.TrackingId);
+            return new Match<byte[]>(cs.FaceId, confidence, snapshot, faceInfo);
         }
 
         private void AddTemplate(FaceTemplate template, CandidateStatus candidateStatus)
