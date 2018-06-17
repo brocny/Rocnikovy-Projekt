@@ -60,17 +60,13 @@ namespace Core.Face
             return _storedFaces.TryGetValue(id, out faceInfo);
         }
 
-        public IFaceInfo<TTemplate> this[int faceId] => _storedFaces[faceId];
+        public IFaceInfo<TTemplate> this[int faceId] => _storedFaces.TryGetValue(faceId, out var faceInfo) ? faceInfo : null;
+
         [XmlIgnore]
         public IEnumerable<int> Keys => _storedFaces.Keys;
         [XmlIgnore]
         public IEnumerable<IFaceInfo<TTemplate>> Values => _storedFaces.Values;
         public bool ContainsKey(int key) => _storedFaces.ContainsKey(key);
-
-        public string GetName(int id)
-        {
-            return _storedFaces.TryGetValue(id, out var faceInfo) ? faceInfo.Name : null;
-        }
 
         /// <summary>
         /// Will do nothing if a face the same <paramref name="id"/> is already in the database
@@ -132,7 +128,7 @@ namespace Core.Face
                 where ageRatio > 0.66f && ageRatio < 1.5f
                 where faceInfo.Gender == template.Gender || faceInfo.Gender == Gender.Unknown
                 let match = faceInfo.GetSimilarity(template)
-                select new Match<TTemplate>(f.Key, match.similarity, match.snapshot, faceInfo, template.TrackingId);
+                select new Match<TTemplate>(f.Key, match.similarity, match.snapshot, faceInfo);
 
             return matches.Max();
         }
@@ -201,6 +197,7 @@ namespace Core.Face
 
         public void Clear()
         {
+            NextId = 0;
             _storedFaces.Clear();
         }
 
