@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -98,10 +97,17 @@ namespace App.Main
         {
             var focusedFaceMatch = matches.SingleOrDefault(x => x.Key == _focusedFaceTrackingId).Value;
 
-            if (focusedFaceMatch?.Snapshot?.FaceImageBuffer != null)
+            if (focusedFaceMatch == null)
+            {
+                return;
+            }
+
+            if (focusedFaceMatch.Snapshot?.FaceImageBuffer != null)
             {
                 matchedFacePictureBox.InvokeIfRequired(pb => pb.Image = focusedFaceMatch.Snapshot.FaceImageBuffer.ToBitmap());
             }
+
+            matchLabel.Text = $"{focusedFaceMatch.Similarity * 100 :F2}%";
         }
 
         private void KftOnFrameArrived(object sender, FrameArrivedEventArgs e)
@@ -182,6 +188,7 @@ namespace App.Main
             {
                 _focusedFaceTrackingId = fco.TrackingId;
                 matchedFacePictureBox.Image = null;
+                matchLabel.Text = "";
             }
         }
 
@@ -322,7 +329,7 @@ namespace App.Main
                     NameFace(_focusedFaceTrackingId);
                     break;
                 case MouseButtons.Right:
-                    _kft.FacePipeline.Capture(_focusedFaceTrackingId);
+                    _kft.FacePipeline.Capture(_focusedFaceTrackingId, ModifierKeys.HasFlag(Keys.Control));
                     break;
             }
         }

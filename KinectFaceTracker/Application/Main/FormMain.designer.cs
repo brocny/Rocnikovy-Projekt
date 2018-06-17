@@ -43,6 +43,7 @@
             this.startStopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.faceLabel = new System.Windows.Forms.Label();
             this.matchedFacePictureBox = new System.Windows.Forms.PictureBox();
+            this.matchLabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.mainPictureBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.focusedFacePictureBox)).BeginInit();
             this.menuStrip1.SuspendLayout();
@@ -180,11 +181,20 @@
             this.matchedFacePictureBox.TabIndex = 9;
             this.matchedFacePictureBox.TabStop = false;
             // 
+            // matchLabel
+            // 
+            this.matchLabel.AutoSize = true;
+            this.matchLabel.Location = new System.Drawing.Point(975, 558);
+            this.matchLabel.Name = "matchLabel";
+            this.matchLabel.Size = new System.Drawing.Size(0, 17);
+            this.matchLabel.TabIndex = 10;
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1167, 584);
+            this.Controls.Add(this.matchLabel);
             this.Controls.Add(this.matchedFacePictureBox);
             this.Controls.Add(this.faceLabel);
             this.Controls.Add(this.focusedFacePictureBox);
@@ -225,6 +235,7 @@
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.Label faceLabel;
         private System.Windows.Forms.PictureBox matchedFacePictureBox;
+        private System.Windows.Forms.Label matchLabel;
     }
 }
 
