@@ -46,15 +46,15 @@ namespace Core.Face
         ///     Get similarity between <paramref name="faceInfo" /> and <c>this</c>
         /// </summary>
         /// <param name="faceInfo"></param>
-        /// <returns>A value between 0 (no similarity) and 1 (maximum similarity)</returns>
+        /// <returns>A tuple containing a value between 0 (no similarity) and 1 (maximum similarity) and the most similar snapshot</returns>
         (float similarity, FaceSnapshot<TTemplate> snapshot) GetSimilarity(IFaceInfo<TTemplate> faceInfo);
 
         /// <summary>
         ///     Get similarity between
-        ///     <param name="faceTemplate"> and <c>this</c></param>
+        ///     <paramref name="faceTemplate"/> and <c>this</c>
         /// </summary>
         /// <param name="faceTemplate"></param>
-        /// <returns>A value between 0 (no similarity) and 1 (maximum similarity)</returns>
+        /// <returns>A tuple containing a value between 0 (no similarity) and 1 (maximum similarity) and the most similar snapshot </returns>
         (float similarity, FaceSnapshot<TTemplate> snapshot) GetSimilarity(IFaceTemplate<TTemplate> faceTemplate);
 
         /// <summary>
