@@ -158,16 +158,15 @@ namespace App
                 );
         }
 
-        public void DrawFacialFeatures(Point[] features, Brush brush, float size)
+        public void DrawFacialFeatures(Point[] features, long colorId, float size = 0.5f)
         {
             if (features == null)
                 return;
+
+            var halfSize = size / 2;
             foreach (var f in features)
             {
-                int bmpX = f.X;
-                int bmpY = f.Y;
-
-                _gr.FillEllipse(brush, bmpX, bmpY, size, size);
+                _gr.FillEllipse(BodyBrushes[(int)(colorId % BodyBrushes.Count)], f.X - halfSize, f.Y - halfSize, size, size);
             }
         }
 
