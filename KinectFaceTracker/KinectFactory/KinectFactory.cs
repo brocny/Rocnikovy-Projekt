@@ -4,7 +4,6 @@ using Core.Kinect;
 namespace KinectFactory
 {
 #if K_ONE
-    using KinectOne;
 #elif K_360
     using Kinect360;
 #endif
@@ -33,7 +32,7 @@ namespace KinectFactory
 #if K_ONE
             try
             {
-                return new KinectOne();
+                return new KinectOne.KinectOne();
             }
             catch (ApplicationException)
             {

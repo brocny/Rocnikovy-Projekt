@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using Core;
 using System.Numerics;
 using App.Properties;
+using Core;
 using Core.Kinect;
 
 namespace App

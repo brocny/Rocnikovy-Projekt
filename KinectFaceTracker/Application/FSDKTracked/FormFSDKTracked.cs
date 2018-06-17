@@ -5,8 +5,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using Core;
 using Core.Kinect;
-using Luxand;
 using FsdkFaceLib;
+using Luxand;
 
 namespace App.FSDKTracked
 {

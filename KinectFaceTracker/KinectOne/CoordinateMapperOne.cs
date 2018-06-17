@@ -1,8 +1,6 @@
 ﻿using System.Numerics;
 using Core.Kinect;
 using Microsoft.Kinect;
-using Vector2 = System.Numerics.Vector2;
-using Vector3 = System.Numerics.Vector3;
 
 namespace KinectOne
 {

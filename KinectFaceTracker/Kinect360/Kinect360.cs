@@ -3,12 +3,11 @@ using System.Linq;
 using Core.Kinect;
 using Microsoft.Kinect;
 
-
 namespace Kinect360
 {
     public class Kinect360 : IKinect
     {
-        public KinectSensor KinectSensor { get; private set; }
+        public KinectSensor KinectSensor { get; }
 
         public IBodyFrameStream BodyFrameStream =>  _bodyFrameStream ?? (_bodyFrameStream = new BodyFrameStream360(this));
         public IColorFrameStream ColorFrameStream => _colorFrameStream ?? (_colorFrameStream = new ColorFrameStream360(this));
