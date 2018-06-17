@@ -130,9 +130,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FaceSDK.NET, Version=6.4.0.0, Culture=neutral, processorArchitecture=AMD64">
+    <Reference Include="FaceSDK.NET">
+      <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Luxand\FaceSDK\bin\win64\FaceSDK.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.QualityTools.Testing.Fakes, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Luxand\FaceSDK\bin\win32\FaceSDK.NET.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
