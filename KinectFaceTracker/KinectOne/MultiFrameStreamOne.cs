@@ -25,10 +25,10 @@ namespace KinectOne
                 var colorFrame = multiFrame.ColorFrameReference.AcquireFrame();
                 var bodyFrame = multiFrame.BodyFrameReference.AcquireFrame();
                 var depthFrame = multiFrame.DepthFrameReference.AcquireFrame();
-                var colorFrameOne = colorFrame == null ? null : new ColorFrameStreamOne.ColorFrameOne(colorFrame);
-                var bodyFrameOne = bodyFrame == null ? null : new BodyFrameStreamOne.BodyFrameOne(bodyFrame);
-                var depthFrameOne = depthFrame == null ? null : new DepthFrameStreamOne.DepthFrameOne(depthFrame);
-                MultiFrameArrived?.Invoke(this, new MultiFrameReadyEventArgs(new MultiFrameOne(colorFrameOne, bodyFrameOne, depthFrameOne)));
+                var colorFrameOne = colorFrame == null ? null : new ColorFrameStreamOne.ColorFrame(colorFrame);
+                var bodyFrameOne = bodyFrame == null ? null : new BodyFrameStreamOne.BodyFrame(bodyFrame);
+                var depthFrameOne = depthFrame == null ? null : new DepthFrameStreamOne.DepthFrame(depthFrame);
+                MultiFrameArrived?.Invoke(this, new MultiFrameReadyEventArgs(new MultiFrame(colorFrameOne, bodyFrameOne, depthFrameOne)));
             }
         }
 
@@ -40,30 +40,30 @@ namespace KinectOne
             _multiReader.MultiSourceFrameArrived -= MultiReaderOnMultiSourceFrameArrived;
             _multiReader?.Dispose();
         }
-    }
 
-    public class MultiFrameOne : IMultiFrame
-    {
-        public MultiFrameOne(ColorFrameStreamOne.ColorFrameOne colorFrame, BodyFrameStreamOne.BodyFrameOne bodyFrame, DepthFrameStreamOne.DepthFrameOne depthFrame)
+        public class MultiFrame : IMultiFrame
         {
-            _bodyFrame = bodyFrame;
-            _colorFrame = colorFrame;
-            _depthFrame = depthFrame;
-        }
+            public MultiFrame(ColorFrameStreamOne.ColorFrame colorFrame, BodyFrameStreamOne.BodyFrame bodyFrame, DepthFrameStreamOne.DepthFrame depthFrame)
+            {
+                _bodyFrame = bodyFrame;
+                _colorFrame = colorFrame;
+                _depthFrame = depthFrame;
+            }
 
-        private readonly ColorFrameStreamOne.ColorFrameOne _colorFrame;
-        private readonly BodyFrameStreamOne.BodyFrameOne _bodyFrame;
-        private readonly DepthFrameStreamOne.DepthFrameOne _depthFrame;
+            private readonly ColorFrameStreamOne.ColorFrame _colorFrame;
+            private readonly BodyFrameStreamOne.BodyFrame _bodyFrame;
+            private readonly DepthFrameStreamOne.DepthFrame _depthFrame;
 
-        public IColorFrame ColorFrame => _colorFrame;
-        public IBodyFrame BodyFrame => _bodyFrame;
-        public IDepthFrame DepthFrame => _depthFrame;
+            public IColorFrame ColorFrame => _colorFrame;
+            public IBodyFrame BodyFrame => _bodyFrame;
+            public IDepthFrame DepthFrame => _depthFrame;
 
-        public void Dispose()
-        {
-            _colorFrame?.Dispose();
-            _bodyFrame?.Dispose();
-            _depthFrame?.Dispose();
+            public void Dispose()
+            {
+                _colorFrame?.Dispose();
+                _bodyFrame?.Dispose();
+                _depthFrame?.Dispose();
+            }
         }
     }
 }

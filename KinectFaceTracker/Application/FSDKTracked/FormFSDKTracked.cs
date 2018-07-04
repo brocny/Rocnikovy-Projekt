@@ -2,6 +2,7 @@
 
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using Core;
 using Core.Kinect;
@@ -13,7 +14,7 @@ namespace App.FSDKTracked
     public partial class FormFSDKTracked : Form
     {
         // program states: whether we recognize faces, or user has clicked a face
-        private enum ProgramState { Remember, Recognize, Stopped, Unitialized }
+        private enum ProgramState { Remember, Name, Recognize, Stopped, Unitialized }
 
         private ProgramState _programState = ProgramState.Unitialized;
 
@@ -26,7 +27,11 @@ namespace App.FSDKTracked
         private float _imageWidthRatio = 1f;
         private float _imageHeightRatio = 1f;
 
-        private const string TrackerMemoryFile = "tracker.dat";
+        private readonly string _initialDirectory =
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "/KFT/tracker";
+
+        private string _trackerMemoryFile = "";
+
         private int _trackerHandle;
         private Font _nameFont;
         private readonly StringFormat _nameFormat = new StringFormat { Alignment = StringAlignment.Center };
@@ -37,7 +42,6 @@ namespace App.FSDKTracked
         private bool _needClose;
         private int _mouseX;
         private int _mouseY;
-        private string _userName;
 
         public FormFSDKTracked()
         {
@@ -54,18 +58,21 @@ namespace App.FSDKTracked
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             _needClose = true;
-            var result = MessageBox.Show("Do you want to save tracker memory?", "Save tracker memory?", MessageBoxButtons.YesNo);
-            if (result == DialogResult.Yes)
+            if (!string.IsNullOrWhiteSpace(_trackerMemoryFile))
             {
-                FSDK.SaveTrackerMemoryToFile(_trackerHandle, TrackerMemoryFile);
+                var result = MessageBox.Show("Do you want to save tracker memory?", "Save tracker memory?", MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    FSDK.SaveTrackerMemoryToFile(_trackerHandle, _trackerMemoryFile);
+                }
             }
-
+            
             FSDK.FreeTracker(_trackerHandle);
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (_programState == ProgramState.Recognize || _programState == ProgramState.Remember)
+            if (_programState == ProgramState.Recognize || _programState == ProgramState.Name)
             {
                 _needClose = true;
                 startButton.Text = StartButtonStoppedText;
@@ -83,7 +90,7 @@ namespace App.FSDKTracked
                 _nameFont = new Font("Arial", 12f * _imageWidthRatio);
 
                 // creating a Tracker
-                if (FSDK.FSDKE_OK != FSDK.LoadTrackerMemoryFromFile(ref _trackerHandle, TrackerMemoryFile)
+                if (FSDK.FSDKE_OK != FSDK.LoadTrackerMemoryFromFile(ref _trackerHandle, _initialDirectory)
                 ) // try to load saved tracker state
                     FSDK.CreateTracker(ref _trackerHandle); // if could not be loaded, create a new _trackerHandle
 
@@ -160,7 +167,7 @@ namespace App.FSDKTracked
                     }
 
                     var pen = _limeGreenPen;
-                    if (ProgramState.Remember == _programState)
+                    if (ProgramState.Name == _programState || _programState == ProgramState.Remember)
                     {
                         int mouseX = (int)(_mouseX * _imageWidthRatio);
                         int mouseY = (int)(_mouseY * _imageHeightRatio);
@@ -169,23 +176,32 @@ namespace App.FSDKTracked
                             pen = _bluePen;
                             if (FSDK.FSDKE_OK == FSDK.LockID(_trackerHandle, id))
                             {
-                                // get the user name
-                                var inputNameForm = new InputNameForm();
-                                if (DialogResult.OK == inputNameForm.ShowDialog())
-                                {
-                                    _userName = inputNameForm.UserName;
-                                    if (string.IsNullOrWhiteSpace(_userName))
-                                    {
-                                        FSDK.SetName(_trackerHandle, id, id.ToString());
-                                        FSDK.PurgeID(_trackerHandle, id);
-                                    }
-                                    else
-                                    {
-                                        FSDK.SetName(_trackerHandle, id, _userName);
-                                    }
 
-                                    FSDK.UnlockID(_trackerHandle, id);
+                                if (_programState == ProgramState.Name)
+                                {
+                                    // get the user name
+                                    var inputNameForm = new InputNameForm();
+
+                                    if (DialogResult.OK == inputNameForm.ShowDialog())
+                                    {
+                                        var userName = inputNameForm.UserName;
+                                        if (string.IsNullOrWhiteSpace(userName))
+                                        {
+                                            FSDK.SetName(_trackerHandle, id, id.ToString());
+                                            FSDK.PurgeID(_trackerHandle, id);
+                                        }
+                                        else
+                                        {
+                                            FSDK.SetName(_trackerHandle, id, userName);
+                                        }
+                                    }
                                 }
+                                else
+                                {
+                                    FSDK.SetName(_trackerHandle, id, id.ToString());
+                                }
+
+                                FSDK.UnlockID(_trackerHandle, id);
                             }
 
                         }
@@ -207,7 +223,15 @@ namespace App.FSDKTracked
 
         private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
         {
-            _programState = ProgramState.Remember;
+            if (e.Button == MouseButtons.Left)
+            {
+                _programState = ProgramState.Name;
+            }
+            else if (e.Button == MouseButtons.Right)
+            {
+                _programState = ProgramState.Remember;
+            }
+
         }
 
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
@@ -220,6 +244,61 @@ namespace App.FSDKTracked
         {
             _mouseX = 0;
             _mouseY = 0;
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                InitialDirectory = _initialDirectory,
+                DefaultExt = "dat",
+                Filter = FSDKTrackedAppSettings.Default.FileFilter,
+                Title = "Select file containing saved face database"
+            };
+
+            if (DialogResult.OK == dialog.STAShowDialog())
+            {
+                FSDK.LoadTrackerMemoryFromFile(ref _trackerHandle, dialog.SafeFileName);
+            }
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var dialog = new SaveFileDialog
+            {
+                InitialDirectory = _initialDirectory,
+                DefaultExt = "dat",
+                Filter = FSDKTrackedAppSettings.Default.FileFilter,
+                Title = "Save as..."
+            };
+
+            if (DialogResult.OK == dialog.STAShowDialog())
+            {
+                FSDK.SaveTrackerMemoryToFile(_trackerHandle, dialog.FileName);
+                _trackerMemoryFile = dialog.FileName;
+            }
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(_trackerMemoryFile))
+            {
+                FSDK.SaveTrackerMemoryToFile(_trackerHandle, _trackerMemoryFile);
+            }
+            else
+            {
+                saveAsToolStripMenuItem_Click(sender, e);
+            }
+        }
+
+        private void clearToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FSDK.ClearTracker(_trackerHandle);
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

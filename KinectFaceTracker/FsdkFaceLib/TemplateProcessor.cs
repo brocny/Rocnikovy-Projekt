@@ -58,7 +58,13 @@ namespace FsdkFaceLib
 
             if (topCandidateMatch.similarity > MatchingParameters.InstantMatchThreshold)
             {
+                if (topCondidateFaceInfo.Templates.Count() < 5)
+                {
+                    AddTemplate(t, topCandidate);
+                }
+
                 return Matched(topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, topCondidateFaceInfo);
+                
             }
 
             if (trackingStatus.Candidates.Count > 1)

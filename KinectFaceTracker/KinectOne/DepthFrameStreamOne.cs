@@ -13,25 +13,31 @@ namespace KinectOne
 
         public void Open()
         {
-            if (_depthFrameReader == null)
+            lock (_eventLock)
             {
-                _depthFrameReader = _depthFrameSource.OpenReader();
-                if (!_isEventRegistered && _depthFrameReady != null)
+                if (_depthFrameReader == null)
                 {
-                    _depthFrameReader.FrameArrived += DepthFrameReaderOnFrameArrived;
+                    _depthFrameReader = _depthFrameSource.OpenReader();
+                    if (!_isEventRegistered && _depthFrameReady != null)
+                    {
+                        _depthFrameReader.FrameArrived += DepthFrameReaderOnFrameArrived;
+                    }
                 }
-            }
-            else
-            {
-                _depthFrameReader.IsPaused = false;
+                else
+                {
+                    _depthFrameReader.IsPaused = false;
+                }
             }
         }
 
         public void Close()
         {
-            if (_depthFrameReader != null)
+            lock (_eventLock)
             {
-                _depthFrameReader.IsPaused = true;
+                if (_depthFrameReader != null)
+                {
+                    _depthFrameReader.IsPaused = true;
+                }
             }
         }
 
@@ -39,27 +45,35 @@ namespace KinectOne
         public int FrameHeight => _depthFrameSource.FrameDescription.Height;
         public int MinDistance => _depthFrameSource.DepthMinReliableDistance;
         public int MaxDistance => _depthFrameSource.DepthMaxReliableDistance;
+
         public bool IsOpen => !_depthFrameReader.IsPaused;
         private bool _isEventRegistered;
         private EventHandler<DepthFrameReadyEventArgs> _depthFrameReady;
+        private readonly object _eventLock = new object();
         public event EventHandler<DepthFrameReadyEventArgs> DepthFrameReady
         {
             add
             {
-                if (_depthFrameReader != null && !_isEventRegistered)
+                lock (_eventLock)
                 {
-                    _depthFrameReader.FrameArrived += DepthFrameReaderOnFrameArrived;
-                    _isEventRegistered = true;
-                }
+                    if (_depthFrameReader != null && !_isEventRegistered)
+                    {
+                        _depthFrameReader.FrameArrived += DepthFrameReaderOnFrameArrived;
+                        _isEventRegistered = true;
+                    }
 
+                }
                 _depthFrameReady += value;
             }
             remove
             {
                 _depthFrameReady -= value;
-                if (_depthFrameReady == null && _depthFrameReader != null && _isEventRegistered)
+                lock (_eventLock)
                 {
-                    _depthFrameReader.FrameArrived -= DepthFrameReaderOnFrameArrived;
+                    if (_depthFrameReady == null && _depthFrameReader != null && _isEventRegistered)
+                    {
+                        _depthFrameReader.FrameArrived -= DepthFrameReaderOnFrameArrived;
+                    }
                 }
             }
 
@@ -70,22 +84,22 @@ namespace KinectOne
             var depthFrame = e.FrameReference.AcquireFrame();
             if (depthFrame != null)
             {
-                _depthFrameReady?.Invoke(this, new DepthFrameReadyEventArgs(new DepthFrameOne(depthFrame)));
+                _depthFrameReady?.Invoke(this, new DepthFrameReadyEventArgs(new DepthFrame(depthFrame)));
             }
         }
 
         public IDepthFrame GetNextFrame()
         {
             var frame = _depthFrameReader.AcquireLatestFrame();
-            return frame == null ? null : new DepthFrameOne(frame);
+            return frame == null ? null : new DepthFrame(frame);
         }
 
         private readonly DepthFrameSource _depthFrameSource;
         private DepthFrameReader _depthFrameReader;
 
-        public class DepthFrameOne : IDepthFrame
+        public class DepthFrame : IDepthFrame
         {
-            public DepthFrameOne(DepthFrame depthFrame)
+            public DepthFrame(Microsoft.Kinect.DepthFrame depthFrame)
             {
                 _depthFrame = depthFrame ?? throw new ArgumentNullException(nameof(depthFrame));
             }
@@ -109,7 +123,7 @@ namespace KinectOne
 
             public int BytesPerPixel => (int) _depthFrame.FrameDescription.BytesPerPixel;
 
-            private readonly DepthFrame _depthFrame;
+            private readonly Microsoft.Kinect.DepthFrame _depthFrame;
         }
     }
 }

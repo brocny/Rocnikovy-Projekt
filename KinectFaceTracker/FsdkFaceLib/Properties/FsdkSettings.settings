@@ -39,13 +39,13 @@
       <Value Profile="(Default)">qVyhlxKiB1+NfuKH8HjrN2QA5oaMXI/aYiH9AS9oDDTjdGZ9fwODv9iTJG/rAow2uRnGFkvZnjVbCHWSKThqoetUYxlMAI1j+Gm9sjl8eEi7zN01FgwY/bK7R6+NrSZ1aOMiWPP1NG8JcrzgIfH9qNCTI+9kQkw6Ns/mHES7O2E=</Value>
     </Setting>
     <Setting Name="InstantMatchThreshold" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">0.995</Value>
+      <Value Profile="(Default)">0.998</Value>
     </Setting>
     <Setting Name="NewTemplateThreshold" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">0.99</Value>
+      <Value Profile="(Default)">0.992</Value>
     </Setting>
     <Setting Name="MatchThreshold" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">0.985</Value>
+      <Value Profile="(Default)">0.987</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -20,11 +20,15 @@ namespace Kinect360
         public void Open()
         {
             _depthImageStream.Enable();
-            if (_depthFrameReady != null && !_isEventRegistered)
+            lock (_eventLock)
             {
-                _kinect360.KinectSensor.DepthFrameReady += KinectSensorOnDepthFrameReady;
-                _isEventRegistered = true;
+                if (_depthFrameReady != null && !_isEventRegistered)
+                {
+                    _kinect360.KinectSensor.DepthFrameReady += KinectSensorOnDepthFrameReady;
+                    _isEventRegistered = true;
+                }
             }
+            
         }
 
         private void KinectSensorOnDepthFrameReady(object sender, DepthImageFrameReadyEventArgs e)
@@ -32,18 +36,22 @@ namespace Kinect360
             var depthFrame = e.OpenDepthImageFrame();
             if (depthFrame != null)
             {
-                _depthFrameReady?.Invoke(this, new DepthFrameReadyEventArgs(new DepthFrame360(depthFrame)));
+                _depthFrameReady?.Invoke(this, new DepthFrameReadyEventArgs(new DepthFrame(depthFrame)));
             }
         }
 
         public void Close()
         {
             _kinect360.KinectSensor.DepthStream.Disable();
-            if (_isEventRegistered)
+            lock (_eventLock)
             {
-                _kinect360.KinectSensor.DepthFrameReady -= KinectSensorOnDepthFrameReady;
-                _isEventRegistered = false;
+                if (_isEventRegistered)
+                {
+                    _kinect360.KinectSensor.DepthFrameReady -= KinectSensorOnDepthFrameReady;
+                    _isEventRegistered = false;
+                }
             }
+            
         }
 
         public int FrameWidth => _depthImageStream.FrameWidth;
@@ -54,14 +62,18 @@ namespace Kinect360
 
         private bool _isEventRegistered = false;
         private EventHandler<DepthFrameReadyEventArgs> _depthFrameReady;
+        private readonly object _eventLock = new object();
         public event EventHandler<DepthFrameReadyEventArgs> DepthFrameReady
         {
             add
             {
-                if (!_isEventRegistered)
+                lock (_eventLock)
                 {
-                    _kinect360.KinectSensor.DepthFrameReady += KinectSensorOnDepthFrameReady;
-                    _isEventRegistered = true;
+                    if (!_isEventRegistered)
+                    {
+                        _kinect360.KinectSensor.DepthFrameReady += KinectSensorOnDepthFrameReady;
+                        _isEventRegistered = true;
+                    }
                 }
 
                 _depthFrameReady += value;
@@ -69,24 +81,28 @@ namespace Kinect360
             remove
             {
                 _depthFrameReady -= value;
-                if (_depthFrameReady == null && _isEventRegistered)
+
+                lock (_eventLock)
                 {
-                    _kinect360.KinectSensor.DepthFrameReady -= KinectSensorOnDepthFrameReady;
+                    if (_depthFrameReady == null && _isEventRegistered)
+                    {
+                        _kinect360.KinectSensor.DepthFrameReady -= KinectSensorOnDepthFrameReady;
+                    }
                 }
             }
         }
         public IDepthFrame GetNextFrame()
         {
             var depthFrame = _depthImageStream.OpenNextFrame(30);
-            return depthFrame == null ? null : new DepthFrame360(depthFrame);
+            return depthFrame == null ? null : new DepthFrame(depthFrame);
         }
 
         private readonly DepthImageStream _depthImageStream;
         private readonly Kinect360 _kinect360;
 
-        public class DepthFrame360 : IDepthFrame
+        public class DepthFrame : IDepthFrame
         {
-            public DepthFrame360(DepthImageFrame depthImageFrame)
+            public DepthFrame(DepthImageFrame depthImageFrame)
             {
                 _depthImageFrame = depthImageFrame ?? throw new ArgumentNullException(nameof(depthImageFrame));
             }

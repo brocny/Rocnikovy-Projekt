@@ -171,7 +171,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.995")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.998")]
         public float InstantMatchThreshold {
             get {
                 return ((float)(this["InstantMatchThreshold"]));
@@ -183,7 +183,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.99")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.992")]
         public float NewTemplateThreshold {
             get {
                 return ((float)(this["NewTemplateThreshold"]));
@@ -195,7 +195,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.985")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.987")]
         public float MatchThreshold {
             get {
                 return ((float)(this["MatchThreshold"]));

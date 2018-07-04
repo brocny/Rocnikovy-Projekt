@@ -21,30 +21,38 @@ namespace KinectOne
         public IColorFrame GetNextFrame()
         {
             var frame = _colorFrameReader.AcquireLatestFrame();
-            return frame == null ? null : new ColorFrameOne(frame);
+            return frame == null ? null : new ColorFrame(frame);
         }
 
         public void Open(bool preferResolutionOverFps)
         {
-            if (_colorFrameReader == null)
+            lock (_eventLock)
             {
-                _colorFrameReader = _colorFrameSource.OpenReader();
-                if (!_isEventRegistered && _colorFrameReady != null)
+                if (_colorFrameReader == null)
                 {
-                    _colorFrameReader.FrameArrived += ColorFrameReader_FrameArrived;
+                    _colorFrameReader = _colorFrameSource.OpenReader();
+
+                    if (!_isEventRegistered && _colorFrameReady != null)
+                    {
+                        _colorFrameReader.FrameArrived += ColorFrameReader_FrameArrived;
+                    }
+
                 }
-            }
-            else
-            {
-                _colorFrameReader.IsPaused = false;
+                else
+                {
+                    _colorFrameReader.IsPaused = false;
+                }
             }
         }
 
         public void Close()
         {
-            if (_colorFrameReader != null)
+            lock (_eventLock)
             {
-                _colorFrameReader.IsPaused = true;
+                if (_colorFrameReader != null)
+                {
+                    _colorFrameReader.IsPaused = true;
+                }
             }
         }
 
@@ -58,43 +66,52 @@ namespace KinectOne
             var colorFrame = e.FrameReference.AcquireFrame();
             if (colorFrame != null)
             {
-                _colorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrameOne(colorFrame)));
+                _colorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrame(colorFrame)));
             }
         }
 
         private bool _isEventRegistered;
         private EventHandler<ColorFrameReadyEventArgs> _colorFrameReady;
+        private readonly object _eventLock = new object();
         public event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady
         {
             add
             {
-                if (_colorFrameReader != null && !_isEventRegistered)
+                lock (_eventLock)
                 {
-                    _colorFrameReader.FrameArrived += ColorFrameReader_FrameArrived;
-                    _isEventRegistered = true;
+                    if (_colorFrameReader != null && !_isEventRegistered)
+                    {
+                        _colorFrameReader.FrameArrived += ColorFrameReader_FrameArrived;
+                        _isEventRegistered = true;
+                    }
                 }
 
                 _colorFrameReady += value;
+                
             }
             remove
             {
                 _colorFrameReady -= value;
-                if (_colorFrameReady == null && _colorFrameReader != null && _isEventRegistered)
+
+                lock (_eventLock)
                 {
-                    _colorFrameReader.FrameArrived -= ColorFrameReader_FrameArrived;
+                    if (_colorFrameReady == null && _colorFrameReader != null && _isEventRegistered)
+                    {
+                        _colorFrameReader.FrameArrived -= ColorFrameReader_FrameArrived;
+                    }
                 }
             }
 
         }
 
-        public class ColorFrameOne : IColorFrame
+        public class ColorFrame : IColorFrame
         {
-            public ColorFrameOne(ColorFrame colorFrame)
+            public ColorFrame(Microsoft.Kinect.ColorFrame colorFrame)
             {
                 _colorFrame = colorFrame ?? throw new ArgumentNullException(nameof(colorFrame));
             }
 
-            private readonly ColorFrame _colorFrame;
+            private readonly Microsoft.Kinect.ColorFrame _colorFrame;
 
             public int BytesPerPixel => 4;
 

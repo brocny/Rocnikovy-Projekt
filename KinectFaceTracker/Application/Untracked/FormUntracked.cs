@@ -70,7 +70,7 @@ namespace App.Untracked
                 });
 
                 _fpsCounter.NewFrame();
-                statusLabel.Text = _fpsCounter.Fps.ToString();
+                statusLabel.Text = $"{_fpsCounter.Fps :F2} FPS";
 
                 previousImage.CreateFsdkImageHandle(out int fsdkImageHandle);
                 int detectedFaceCount = 0;

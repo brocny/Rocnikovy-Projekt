@@ -12,7 +12,7 @@ namespace App.FSDKTracked {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.6.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.7.0.0")]
     internal sealed partial class FSDKTrackedAppSettings : global::System.Configuration.ApplicationSettingsBase {
         
         private static FSDKTrackedAppSettings defaultInstance = ((FSDKTrackedAppSettings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new FSDKTrackedAppSettings())));
@@ -68,6 +68,18 @@ namespace App.FSDKTracked {
             }
             set {
                 this["FsdkHandleArbitraryRot"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Dat files|*.dat|All files|*.*")]
+        public string FileFilter {
+            get {
+                return ((string)(this["FileFilter"]));
+            }
+            set {
+                this["FileFilter"] = value;
             }
         }
     }

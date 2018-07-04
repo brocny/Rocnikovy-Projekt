@@ -29,30 +29,38 @@ namespace Kinect360
             var colorImageFrame = e.OpenColorImageFrame();
             if (colorImageFrame != null)
             {
-                _colorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrame360(colorImageFrame)));
+                _colorFrameReady?.Invoke(this, new ColorFrameReadyEventArgs(new ColorFrame(colorImageFrame)));
             }
         }
 
         private bool _isEventRegistered = false;
         private EventHandler<ColorFrameReadyEventArgs> _colorFrameReady;
+        private readonly object _eventLock = new object();
         public event EventHandler<ColorFrameReadyEventArgs> ColorFrameReady
         {
             add
             {
-                if (!_isEventRegistered)
+                lock (_eventLock)
                 {
-                    _kinect360.KinectSensor.ColorFrameReady += KinectSensor_ColorFrameReady;
-                    _isEventRegistered = true;
+                    if (!_isEventRegistered)
+                    {
+                        _kinect360.KinectSensor.ColorFrameReady += KinectSensor_ColorFrameReady;
+                        _isEventRegistered = true;
+                    }
                 }
+
                 _colorFrameReady += value;
             }
             remove
             {
                 _colorFrameReady -= value;
-                if (_colorFrameReady == null && _isEventRegistered)
+                lock (_eventLock)
                 {
-                    _kinect360.KinectSensor.ColorFrameReady -= KinectSensor_ColorFrameReady;
-                    _isEventRegistered = false;
+                    if (_colorFrameReady == null && _isEventRegistered)
+                    {
+                        _kinect360.KinectSensor.ColorFrameReady -= KinectSensor_ColorFrameReady;
+                        _isEventRegistered = false;
+                    }
                 }
             }
         }
@@ -60,35 +68,41 @@ namespace Kinect360
         public IColorFrame GetNextFrame()
         {
             var colorFrame = _colorStream.OpenNextFrame(30);
-            return colorFrame == null ? null : new ColorFrame360(colorFrame);
+            return colorFrame == null ? null : new ColorFrame(colorFrame);
         }
 
         public void Open(bool preferResolutionOverFps)
         {
-            ColorImageFormat = preferResolutionOverFps
-                ? ColorImageFormat.RgbResolution1280x960Fps12
-                : ColorImageFormat.RgbResolution640x480Fps30;
-            _kinect360.KinectSensor.ColorStream.Enable(ColorImageFormat);
-            if (_colorFrameReady != null && !_isEventRegistered)
+            lock (_eventLock)
             {
-                _kinect360.KinectSensor.ColorFrameReady += KinectSensor_ColorFrameReady;
-                _isEventRegistered = true;
+                ColorImageFormat = preferResolutionOverFps
+                    ? ColorImageFormat.RgbResolution1280x960Fps12
+                    : ColorImageFormat.RgbResolution640x480Fps30;
+                _kinect360.KinectSensor.ColorStream.Enable(ColorImageFormat);
+                if (_colorFrameReady != null && !_isEventRegistered)
+                {
+                    _kinect360.KinectSensor.ColorFrameReady += KinectSensor_ColorFrameReady;
+                    _isEventRegistered = true;
+                }
             }
         }
 
         public void Close()
         {
-            _kinect360.KinectSensor.ColorStream.Disable();
-            if (_isEventRegistered)
+            lock (_eventLock)
             {
-                _kinect360.KinectSensor.ColorFrameReady -= KinectSensor_ColorFrameReady;
-                _isEventRegistered = false;
+                _kinect360.KinectSensor.ColorStream.Disable();
+                if (_isEventRegistered)
+                {
+                    _kinect360.KinectSensor.ColorFrameReady -= KinectSensor_ColorFrameReady;
+                    _isEventRegistered = false;
+                }
             }
         }
 
-        public class ColorFrame360 : IColorFrame
+        public class ColorFrame : IColorFrame
         {
-            public ColorFrame360(ColorImageFrame colorImageFrame)
+            public ColorFrame(ColorImageFrame colorImageFrame)
             {
                 _colorImageFrame = colorImageFrame ?? throw new ArgumentNullException(nameof(colorImageFrame));
             }

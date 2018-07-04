@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using Microsoft.Kinect;
 using Core.Kinect;
+using FrameEdges = Core.Kinect.FrameEdges;
 using MyJointType = Core.Kinect.JointType;
 using KJointType = Microsoft.Kinect.JointType;
 using Vector4 = System.Numerics.Vector4;
@@ -19,7 +20,7 @@ namespace KinectOne
 
         public IBodyFrame GetNextFrame()
         {
-            return new BodyFrameOne(_bodyFrameReader.AcquireLatestFrame());
+            return new BodyFrame(_bodyFrameReader.AcquireLatestFrame());
         }
 
         public int BodyCount => _bodyFrameSource.BodyCount;
@@ -30,33 +31,83 @@ namespace KinectOne
             _bodyFrameSource = _kinectOne.KinectSensor.BodyFrameSource;
         }
 
-        public event EventHandler<BodyFrameReadyEventArgs> BodyFrameReady;
+        private bool _isEventRegistered = false;
+        private EventHandler<BodyFrameReadyEventArgs> _bodyFrameReady;
+        private readonly object _eventLock = new object();
+        public event EventHandler<BodyFrameReadyEventArgs> BodyFrameReady
+        {
+            add
+            {
+                lock (_eventLock)
+                {
+                    if (!_isEventRegistered)
+                    {
+                        _bodyFrameReader.FrameArrived += BodyFrameReader_FrameArrived;
+                        _isEventRegistered = true;
+                    }
+                }
+                _bodyFrameReady += value;
+            }
+            remove
+            {
+                _bodyFrameReady -= value;
+                lock (_eventLock)
+                {
+                    if (_bodyFrameReady == null && _isEventRegistered)
+                    {
+                        _bodyFrameReader.FrameArrived -= BodyFrameReader_FrameArrived;
+                        _isEventRegistered = false;
+                    }
+                }
+            }
+        }
 
         private void BodyFrameReader_FrameArrived(object sender, BodyFrameArrivedEventArgs e)
         {
             var bodyFrame = e.FrameReference.AcquireFrame();
             if (bodyFrame != null)
             {
-                BodyFrameReady?.Invoke(this, new BodyFrameReadyEventArgs(new BodyFrameOne(bodyFrame)));
+                _bodyFrameReady?.Invoke(this, new BodyFrameReadyEventArgs(new BodyFrame(bodyFrame)));
             }
         }
 
         public void Open()
         {
-            _bodyFrameReader = _bodyFrameSource.OpenReader();
-            _bodyFrameReader.FrameArrived += BodyFrameReader_FrameArrived;
+            lock (_eventLock)
+            {
+                if (_bodyFrameReader == null)
+                {
+                    _bodyFrameReader = _bodyFrameSource.OpenReader();
+
+                    if (!_isEventRegistered && _bodyFrameReady != null)
+                    {
+                        _bodyFrameReader.FrameArrived += BodyFrameReader_FrameArrived;
+                    }
+
+                }
+                else
+                {
+                    _bodyFrameReader.IsPaused = false;
+                }
+            }
         }
 
         public void Close()
         {
-            _bodyFrameReader.Dispose();
+            lock (_eventLock)
+            {
+                if (_bodyFrameReader != null)
+                {
+                    _bodyFrameReader.IsPaused = true;
+                }
+            }
         }
 
-        public class BodyFrameOne : IBodyFrame
+        public class BodyFrame : IBodyFrame
         {
-            private readonly BodyFrame _bodyFrame;
+            private readonly Microsoft.Kinect.BodyFrame _bodyFrame;
 
-            public BodyFrameOne(BodyFrame bodyFrame)
+            public BodyFrame(Microsoft.Kinect.BodyFrame bodyFrame)
             {
                 _bodyFrame = bodyFrame;
             }
@@ -136,7 +187,7 @@ namespace KinectOne
 
             public BodyOne(Body body)
             {
-                _body = body;;
+                _body = body;
             }
 
             public IReadOnlyDictionary<MyJointType, IJoint> Joints => _joints ??
@@ -144,7 +195,8 @@ namespace KinectOne
             private Dictionary<MyJointType, IJoint> _joints;
 
             public bool IsTracked => _body.IsTracked;
-            public long TrackingId => (long)_body.TrackingId;
+            public long TrackingId => (long) _body.TrackingId;
+            public FrameEdges ClippedEdges => (FrameEdges) _body.ClippedEdges;
         }
 
         public class JointOne : IJoint

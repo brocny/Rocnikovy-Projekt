@@ -24,10 +24,10 @@ namespace Core.Face
         }
 
         [XmlIgnore]
-        public T Template { get; protected set; }
+        public T Template { get; set; }
 
         [XmlIgnore]
-        public ImageBuffer FaceImageBuffer { get; protected set; }
+        public ImageBuffer FaceImageBuffer { get; set; }
 
         [Browsable(false)]
         [XmlElement("Image")]

@@ -186,10 +186,24 @@ namespace FsdkFaceLib
 
         public IFaceInfo<byte[]> Deserialize(TextReader reader)
         {
-            var xr = XmlReader.Create(reader, new XmlReaderSettings {IgnoreWhitespace = true});
+            var xr = XmlReader.Create(reader, new XmlReaderSettings { IgnoreWhitespace = true });
             var xs = new XmlSerializer(typeof(FSDKFaceInfo), new [] {typeof(FaceSnapshotByteArray)});
             var ret = (FSDKFaceInfo) xs.Deserialize(xr);
+            FixTemplates();
             return ret;
+        }
+
+        private void FixTemplates()
+        {
+            foreach (var snapshot in Snapshots)
+            {
+                if (!IsValid(snapshot.Template) && snapshot.FaceImageBuffer != null)
+                {
+                    snapshot.FaceImageBuffer.CreateFsdkImageHandle(out int handle);
+                    FSDK.GetFaceTemplate(handle, out var templateTemp);
+                    snapshot.Template = templateTemp;
+                }
+            }
         }
         
         [XmlArray("Snapshots")]
@@ -210,7 +224,7 @@ namespace FsdkFaceLib
     {
         public FaceSnapshotByteArray() { }
 
-        public FaceSnapshotByteArray(byte[] template, Core.ImageBuffer imageBuffer) : base(template, imageBuffer) { }
+        public FaceSnapshotByteArray(byte[] template, ImageBuffer imageBuffer) : base(template, imageBuffer) { }
 
         [Browsable(false)]
         [XmlElement("Template")]

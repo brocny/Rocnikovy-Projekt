@@ -14,18 +14,20 @@ namespace App
 
         private readonly int _recomputeInterval;
         private DateTime _lastRecomputeTime;
-        private int _framesSinceLastRecompute;
+        private int _framesAtLastRecompute;
+        public int TotalFrames { get; private set; }
         private double _fps;
         private TimeSpan _delta;
 
         public void NewFrame()
         {
-            _framesSinceLastRecompute++;
+            TotalFrames++;
 
             if ((_delta = DateTime.Now - _lastRecomputeTime).TotalMilliseconds > _recomputeInterval)
             {
-                _fps = 1000f * _framesSinceLastRecompute / _delta.TotalMilliseconds;
-                _framesSinceLastRecompute = 0;
+                var framesSinceLastRecompute = TotalFrames - _framesAtLastRecompute;
+                _fps = 1000f * framesSinceLastRecompute / _delta.TotalMilliseconds;
+                _framesAtLastRecompute = TotalFrames;
                 _lastRecomputeTime = DateTime.Now;
             }
         }
