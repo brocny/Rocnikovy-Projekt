@@ -1,12 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace App
 {
     internal class FpsCounter
     {
-        public double Fps => _fps;
-        
-        /// <param name="recomputerInterval">Minimum interval in microseconds after which fps will be re-evaluated</param>
+        public double CurrentFps { get; private set; }
+        public double MaxFps { get; private set; } = double.NegativeInfinity;
+        public double MinFps { get; private set; } = double.PositiveInfinity;
+
+        public IReadOnlyDictionary<DateTime, double> FpsMeasurements => _fpsMeasurements;
+        private readonly Dictionary<DateTime, double> _fpsMeasurements = new Dictionary<DateTime, double>();
+
+        public double AverageFps { get; private set; }
+
+        /// <param name="recomputerInterval">Minimum interval in miliseconds after which fps will be re-evaluated</param>
         public FpsCounter(int recomputerInterval = 800)
         {
             _recomputeInterval = recomputerInterval;
@@ -14,21 +22,37 @@ namespace App
 
         private readonly int _recomputeInterval;
         private DateTime _lastRecomputeTime;
+        private DateTime _firstFrameTime;
+
         private int _framesAtLastRecompute;
         public int TotalFrames { get; private set; }
-        private double _fps;
+
         private TimeSpan _delta;
 
         public void NewFrame()
         {
             TotalFrames++;
+            if (TotalFrames == 1)
+            {
+                _firstFrameTime = _lastRecomputeTime = DateTime.Now;
+                return;
+            }
 
-            if ((_delta = DateTime.Now - _lastRecomputeTime).TotalMilliseconds > _recomputeInterval)
+            var timeNow = DateTime.Now;
+            if ((_delta = timeNow - _lastRecomputeTime).TotalMilliseconds > _recomputeInterval)
             {
                 var framesSinceLastRecompute = TotalFrames - _framesAtLastRecompute;
-                _fps = 1000f * framesSinceLastRecompute / _delta.TotalMilliseconds;
+                CurrentFps = 1000d * framesSinceLastRecompute / _delta.TotalMilliseconds;
+
+                if (CurrentFps > MaxFps) MaxFps = CurrentFps;
+                if (CurrentFps < MinFps) MinFps = CurrentFps;
+
+                _fpsMeasurements[timeNow] = CurrentFps;
+
+                AverageFps = 1000d * TotalFrames / (timeNow - _firstFrameTime).TotalMilliseconds;
+
                 _framesAtLastRecompute = TotalFrames;
-                _lastRecomputeTime = DateTime.Now;
+                _lastRecomputeTime = timeNow;
             }
         }
 

@@ -21,6 +21,9 @@ namespace App.FSDKTracked
         private const string StartButtonStoppedText = "Start";
         private const string StartButtonRunningText = "Stop";
 
+        private const string WaitingLabelText = "Waiting for Kinect...";
+        private const string StoppedLabelText = "STOPPED";
+
         private IKinect _kinect;
         private IColorFrameStream _colorFrameStream;
         private byte[] _imageBuffer;
@@ -38,8 +41,7 @@ namespace App.FSDKTracked
         private readonly Pen _limeGreenPen = new Pen(Color.LimeGreen, 2.5f);
         private readonly Pen _bluePen = new Pen(Color.Blue, 2.5f);
 
-        private readonly FpsCounter _fpsCounter = new FpsCounter();
-        private bool _needClose;
+        private FpsCounter _fpsCounter = new FpsCounter();
         private int _mouseX;
         private int _mouseY;
 
@@ -57,7 +59,6 @@ namespace App.FSDKTracked
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            _needClose = true;
             if (!string.IsNullOrWhiteSpace(_trackerMemoryFile))
             {
                 var result = MessageBox.Show("Do you want to save tracker memory?", "Save tracker memory?", MessageBoxButtons.YesNo);
@@ -68,31 +69,30 @@ namespace App.FSDKTracked
             }
             
             FSDK.FreeTracker(_trackerHandle);
+            Application.Exit();
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (_programState == ProgramState.Recognize || _programState == ProgramState.Name)
+            if (_programState == ProgramState.Recognize || _programState == ProgramState.Name || _programState == ProgramState.Remember)
             {
-                _needClose = true;
-                startButton.Text = StartButtonStoppedText;
+                Pause();
                 return;
             }
 
             if (_programState == ProgramState.Unitialized)
             {
                 _colorFrameStream = _kinect.ColorFrameStream;
-                _kinect.Open();
                 _colorFrameStream.Open(true);
                 _imageBuffer = new byte[_colorFrameStream.FrameDataSize];
                 _imageWidthRatio = _colorFrameStream.FrameWidth / (float)pictureBox1.Width;
                 _imageHeightRatio = _colorFrameStream.FrameHeight / (float)pictureBox1.Height;
                 _nameFont = new Font("Arial", 12f * _imageWidthRatio);
+                _programState = ProgramState.Stopped;
+                statusLabel.Text = WaitingLabelText;
 
-                // creating a Tracker
-                if (FSDK.FSDKE_OK != FSDK.LoadTrackerMemoryFromFile(ref _trackerHandle, _initialDirectory)
-                ) // try to load saved tracker state
-                    FSDK.CreateTracker(ref _trackerHandle); // if could not be loaded, create a new _trackerHandle
+
+                FSDK.CreateTracker(ref _trackerHandle); // if could not be loaded, create a new _trackerHandle
 
                 int err = 0;
                 // ToString().ToLowerInvariant() needed because false.ToString() == "False", but FSDK expects "false"
@@ -102,49 +102,41 @@ namespace App.FSDKTracked
                     $"InternalResizeWidth={FSDKTrackedAppSettings.Default.FsdkInternalResizeWidth}; " +
                     $"FaceDetectionThreshold={FSDKTrackedAppSettings.Default.FsdkFaceDetectionThreshold};",
                     ref err);
+                _colorFrameStream.ColorFrameReady += ColorFrameStreamOnColorFrameReady;
             }
 
             if (_programState == ProgramState.Stopped)
             {
-                // no extra work needed
+                Unpause();
             }
-
-            _needClose = false;
-            startButton.Text = StartButtonRunningText;
-            TrackingLoop();
+            
         }
 
-        private void TrackingLoop()
+        private void ColorFrameStreamOnColorFrameReady(object sender, ColorFrameReadyEventArgs e)
         {
-            Image bitmap;
-            FSDK.CImage fsdkImage;
-            ImageBuffer imageBuffer;
             const int maximumFacesDetected = 32;
 
-            while (!_needClose)
+            using (var frame = e.ColorFrame)
             {
-                using (var frame = _colorFrameStream.GetNextFrame())
+                if (frame == null)
                 {
-                    if (frame == null)
-                    {
-                        Application.DoEvents();
-                        continue;
-                    }
-                    frame.CopyFramePixelDataToArray(_imageBuffer);
-                    imageBuffer = new ImageBuffer(_imageBuffer, frame.Width, frame.Height, frame.BytesPerPixel);              
+                    Application.DoEvents();
+                    return;
                 }
 
-                bitmap = imageBuffer.ToBitmap();
+                Array.Resize(ref _imageBuffer, frame.PixelDataLength);
+                frame.CopyFramePixelDataToArray(_imageBuffer);
+                var imageBuffer = new ImageBuffer(_imageBuffer, frame.Width, frame.Height, frame.BytesPerPixel);
+
+
+                var bitmap = imageBuffer.ToBitmap();
                 imageBuffer.CreateFsdkImageHandle(out int fsdkImageHandle);
-                fsdkImage = new FSDK.CImage(fsdkImageHandle);
+                var fsdkImage = new FSDK.CImage(fsdkImageHandle);
 
                 long faceCount = 0;
                 FSDK.FeedFrame(_trackerHandle, 0, fsdkImage.ImageHandle, ref faceCount, out var ids,
                     sizeof(long) * maximumFacesDetected);
-                Array.Resize(ref ids, (int)faceCount);
-
-                // make UI controls accessible (to find if the user clicked on a face)
-                Application.DoEvents();
+                Array.Resize(ref ids, (int) faceCount);
 
                 var graphics = Graphics.FromImage(bitmap);
 
@@ -153,9 +145,9 @@ namespace App.FSDKTracked
                     var facePosition = new FSDK.TFacePosition();
                     FSDK.GetTrackerFacePosition(_trackerHandle, 0, id, ref facePosition);
 
-                    int left = facePosition.xc - (int)(facePosition.w * 0.6);
-                    int top = facePosition.yc - (int)(facePosition.w * 0.5);
-                    int w = (int)(facePosition.w * 1.2);
+                    int left = facePosition.xc - (int) (facePosition.w * 0.6);
+                    int top = facePosition.yc - (int) (facePosition.w * 0.5);
+                    int w = (int) (facePosition.w * 1.2);
 
                     int res = FSDK.GetAllNames(_trackerHandle, id, out string name, 1024); // maximum of 1024 characters
 
@@ -169,8 +161,8 @@ namespace App.FSDKTracked
                     var pen = _limeGreenPen;
                     if (ProgramState.Name == _programState || _programState == ProgramState.Remember)
                     {
-                        int mouseX = (int)(_mouseX * _imageWidthRatio);
-                        int mouseY = (int)(_mouseY * _imageHeightRatio);
+                        int mouseX = (int) (_mouseX * _imageWidthRatio);
+                        int mouseY = (int) (_mouseY * _imageHeightRatio);
                         if (mouseX >= left && mouseX <= left + w && mouseY >= top && mouseY <= top + w)
                         {
                             pen = _bluePen;
@@ -202,6 +194,8 @@ namespace App.FSDKTracked
                                 }
 
                                 FSDK.UnlockID(_trackerHandle, id);
+
+                                _programState = ProgramState.Recognize;
                             }
 
                         }
@@ -212,14 +206,13 @@ namespace App.FSDKTracked
 
                 pictureBox1.Image = bitmap;
                 _fpsCounter.NewFrame();
-                fpsLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
+                statusLabel.Text = $"FPS: {_fpsCounter.CurrentFps:F2} (Mean {_fpsCounter.AverageFps:F2} Min {_fpsCounter.MinFps:F2} Max {_fpsCounter.MaxFps:F2})";
 
-                _programState = ProgramState.Recognize;
-                GC.Collect(); // collect the garbage after the deletion 
+                Application.DoEvents();
             }
-
-            _programState = ProgramState.Stopped;
         }
+    
+    
 
         private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
         {
@@ -231,7 +224,6 @@ namespace App.FSDKTracked
             {
                 _programState = ProgramState.Remember;
             }
-
         }
 
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
@@ -244,6 +236,27 @@ namespace App.FSDKTracked
         {
             _mouseX = 0;
             _mouseY = 0;
+        }
+
+        private void Pause()
+        {
+            if (_programState == ProgramState.Stopped) return;
+
+            _kinect.Close();
+            _programState = ProgramState.Stopped;
+            startButton.Text = StartButtonStoppedText;
+            statusLabel.Text = StoppedLabelText;
+        }
+
+        private void Unpause()
+        {
+            if(_programState != ProgramState.Stopped) return;
+
+            _fpsCounter = new FpsCounter();
+            _programState = ProgramState.Recognize;
+            _kinect.Open();
+            statusLabel.Text = WaitingLabelText;
+            startButton.Text = StartButtonRunningText;
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
@@ -294,6 +307,13 @@ namespace App.FSDKTracked
         private void clearToolStripMenuItem_Click(object sender, EventArgs e)
         {
             FSDK.ClearTracker(_trackerHandle);
+            var err = 0;
+            FSDK.SetTrackerMultipleParameters(_trackerHandle,
+                $"HandleArbitraryRotations={FSDKTrackedAppSettings.Default.FsdkHandleArbitraryRot.ToString().ToLowerInvariant()}; " +
+                $"DetermineFaceRotationAngle={FSDKTrackedAppSettings.Default.FsdkDetermineRotAngle.ToString().ToLowerInvariant()}; " +
+                $"InternalResizeWidth={FSDKTrackedAppSettings.Default.FsdkInternalResizeWidth}; " +
+                $"FaceDetectionThreshold={FSDKTrackedAppSettings.Default.FsdkFaceDetectionThreshold};",
+                ref err);
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)

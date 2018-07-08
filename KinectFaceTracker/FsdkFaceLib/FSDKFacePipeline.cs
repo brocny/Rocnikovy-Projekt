@@ -269,7 +269,7 @@ namespace FsdkFaceLib
             {
                 if (_templateProc.TrackedFaces.TryGetValue(faceCutout.TrackingId, out var status))
                 {
-                    if (status.TopCandidate.Confirmations >=  _skipMinimumConfirmations && status.SkippedFrames <= _skipMaxSkips)
+                    if (status.TopTrackedCandidate.FusionScore >=  _skipMinimumFusionScore && status.SkippedFrames <= _skipMaxSkippedFrames)
                     {
                         status.SkippedFrames++;
                         continue;
@@ -373,8 +373,8 @@ namespace FsdkFaceLib
         private bool _detectFace = FsdkSettings.Default.FsdkDetectFace;
         private bool _detectFeatures = FsdkSettings.Default.FsdkDetectFeatures;
         private int _faceDetectionThreshold = FsdkSettings.Default.FsdkFaceDetectionThreshold;
-        private readonly int _skipMinimumConfirmations = FsdkSettings.Default.SkipMinimumConfirmations;
-        private readonly int _skipMaxSkips = FsdkSettings.Default.MaxSkippedFrames;
+        private readonly int _skipMinimumFusionScore = FsdkSettings.Default.SkipMinimumFusionScore;
+        private readonly int _skipMaxSkippedFrames = FsdkSettings.Default.MaxSkippedFrames;
 
         private readonly TemplateProcessor _templateProc;
 

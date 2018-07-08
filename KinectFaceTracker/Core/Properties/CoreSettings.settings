@@ -1,5 +1,5 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="KinectUnifier" GeneratedClassName="Settings">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Core.Properties" GeneratedClassName="CoreSettings">
   <Profiles />
   <Settings>
     <Setting Name="FaceWidthMultiplier" Type="System.Single" Scope="User">
@@ -7,6 +7,12 @@
     </Setting>
     <Setting Name="FaceHeightMultiplier" Type="System.Single" Scope="User">
       <Value Profile="(Default)">1.85</Value>
+    </Setting>
+    <Setting Name="EnableAgeFiltering" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="EnableGenderFiltering" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

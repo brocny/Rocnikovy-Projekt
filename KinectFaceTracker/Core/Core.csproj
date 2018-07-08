@@ -96,7 +96,11 @@
     <Compile Include="Kinect\ICoordinateMapper.cs" />
     <Compile Include="Kinect\IDepthFrameStream.cs" />
     <Compile Include="Kinect\IMultiFrameStream.cs" />
-    <Compile Include="Properties\CoreSettings.Designer.cs" />
+    <Compile Include="Properties\CoreSettings1.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>CoreSettings.settings</DependentUpon>
+    </Compile>
     <Compile Include="Util.cs" />
     <Compile Include="Kinect\IBodyFrameStream.cs" />
     <Compile Include="Kinect\IColorFrameStream.cs" />
@@ -105,7 +109,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="Properties\CoreSettings.settings" />
+    <None Include="Properties\CoreSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>CoreSettings1.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

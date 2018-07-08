@@ -18,7 +18,7 @@ namespace App.Main
     {
         private readonly ICoordinateMapper _coordinateMapper;
 
-        private readonly FpsCounter _fpsCounter = new FpsCounter();
+        private FpsCounter _fpsCounter = new FpsCounter();
 
         private readonly DatabaseHelper<byte[]> _databaseHelper;
         private readonly KinectFaceTracker _kft;
@@ -126,8 +126,8 @@ namespace App.Main
                     {
                         if (_kft.TrackedFaces.TryGetValue(faceLocations.TrackingIds[i], out var trackingStatus))
                         {
-                            labels[i] = _kft.FaceDatabase[trackingStatus.TopCandidate.FaceId]?.Name ??
-                                        $"ID: {trackingStatus.TopCandidate.FaceId}";
+                            labels[i] = _kft.FaceDatabase[trackingStatus.TopTrackedCandidate.FaceId]?.Name ??
+                                        $"ID: {trackingStatus.TopTrackedCandidate.FaceId}";
                         }
                     }
 
@@ -144,7 +144,7 @@ namespace App.Main
             _fpsCounter.NewFrame();
             _lastFaceRects = faceLocations.FaceRectangles;
             _lastTrackingIds = faceLocations.TrackingIds;
-            statusLabel.Text = $"{_fpsCounter.Fps:F2} FPS";
+            statusLabel.Text = $"FPS: {_fpsCounter.CurrentFps:F2} (Mean {_fpsCounter.AverageFps:F2} Min {_fpsCounter.MinFps:F2} Max {_fpsCounter.MaxFps:F2})";
             mainPictureBox.Image = task.Result;
         }
 
@@ -160,14 +160,14 @@ namespace App.Main
             var labelBuilder = new StringBuilder();
             if (_kft.TrackedFaces.TryGetValue(_focusedFaceTrackingId, out var trackingStatus))
             {
-                if (_kft.FaceDatabase.TryGetValue(trackingStatus.TopCandidate.FaceId, out var faceInfo)
+                if (_kft.FaceDatabase.TryGetValue(trackingStatus.TopTrackedCandidate.FaceId, out var faceInfo)
                     && !string.IsNullOrEmpty(faceInfo.Name))
                 {
                     labelBuilder.AppendLine(faceInfo.Name);
                 }
 
                 labelBuilder.Append("ID: ");
-                labelBuilder.AppendLine(trackingStatus.TopCandidate.FaceId.ToString());
+                labelBuilder.AppendLine(trackingStatus.TopTrackedCandidate.FaceId.ToString());
             }
 
             labelBuilder.AppendLine($"Age: {fsdkFaceImage.GetAge():F1}");
@@ -211,6 +211,7 @@ namespace App.Main
         private void UnPause()
         {
             if (_kft.IsRunning) return;
+            _fpsCounter = new FpsCounter();
             _kft.Start();
             statusLabel.Text = "";
             _programState = ProgramState.Running;
@@ -309,7 +310,7 @@ namespace App.Main
                 trackingStatus = await _kft.FacePipeline.Capture(trackingId, true);
             }
 
-            if (!_kft.FaceDatabase.TryGetValue(trackingStatus.TopCandidate.FaceId, out var faceInfo) || faceInfo == null)
+            if (!_kft.FaceDatabase.TryGetValue(trackingStatus.TopTrackedCandidate.FaceId, out var faceInfo) || faceInfo == null)
                 return;
 
             faceInfo.Name = inputNameForm.UserName;

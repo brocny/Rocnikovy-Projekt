@@ -4,16 +4,16 @@ namespace FsdkFaceLib
 {
     public class TrackingStatus
     {
-        public TrackingStatus(CandidateStatus topCandidate)
+        public TrackingStatus(TrackedCandidate topTrackedCandidate)
         {
-            _candidates = new List<CandidateStatus> { topCandidate };
+            _candidates = new List<TrackedCandidate> { topTrackedCandidate };
         }
 
-        public IList<CandidateStatus> Candidates => _candidates;
+        public IList<TrackedCandidate> Candidates => _candidates;
         public bool WasSeen { get; set; } = true;
         public int SkippedFrames { get; set; }
 
-        public CandidateStatus TopCandidate
+        public TrackedCandidate TopTrackedCandidate
         {
             get => _candidates[0];
             set
@@ -27,23 +27,23 @@ namespace FsdkFaceLib
             }
         }
 
-        private readonly List<CandidateStatus> _candidates;
+        private readonly List<TrackedCandidate> _candidates;
     }
 
-    public class CandidateStatus
+    public class TrackedCandidate
     {
-        public CandidateStatus()
+        public TrackedCandidate()
         {
 
         }
 
-        public CandidateStatus(float confirmations, int faceId)
+        public TrackedCandidate(float fusionScore, int faceId)
         {
-            Confirmations = confirmations;
+            FusionScore = fusionScore;
             FaceId = faceId;
         }
 
-        public float Confirmations { get; set; }
+        public float FusionScore { get; set; }
         public int FaceId { get; set; }
     }
 }

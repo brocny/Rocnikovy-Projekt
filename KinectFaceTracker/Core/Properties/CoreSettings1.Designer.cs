@@ -12,7 +12,7 @@ namespace Core.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.6.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.7.0.0")]
     internal sealed partial class CoreSettings : global::System.Configuration.ApplicationSettingsBase {
         
         private static CoreSettings defaultInstance = ((CoreSettings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new CoreSettings())));
@@ -44,6 +44,30 @@ namespace Core.Properties {
             }
             set {
                 this["FaceHeightMultiplier"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableAgeFiltering {
+            get {
+                return ((bool)(this["EnableAgeFiltering"]));
+            }
+            set {
+                this["EnableAgeFiltering"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableGenderFiltering {
+            get {
+                return ((bool)(this["EnableGenderFiltering"]));
+            }
+            set {
+                this["EnableGenderFiltering"] = value;
             }
         }
     }

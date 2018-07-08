@@ -167,6 +167,7 @@
             // 
             // matchLabel
             // 
+            this.matchLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.matchLabel.AutoSize = true;
             this.matchLabel.Location = new System.Drawing.Point(975, 558);
             this.matchLabel.Name = "matchLabel";

@@ -28,10 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.startButton = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
-            this.fpsLabel = new System.Windows.Forms.Label();
+            this.statusLabel = new System.Windows.Forms.Label();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -41,22 +39,10 @@
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.startStopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.menuStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Location = new System.Drawing.Point(13, 32);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(4);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(1070, 619);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
-            this.pictureBox1.MouseLeave += new System.EventHandler(this.pictureBox1_MouseLeave);
-            this.pictureBox1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseMove);
-            this.pictureBox1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseUp);
             // 
             // startButton
             // 
@@ -70,24 +56,14 @@
             this.startButton.UseVisualStyleBackColor = true;
             this.startButton.Click += new System.EventHandler(this.button1_Click);
             // 
-            // label1
+            // statusLabel
             // 
-            this.label1.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(490, 634);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(0, 17);
-            this.label1.TabIndex = 3;
-            // 
-            // fpsLabel
-            // 
-            this.fpsLabel.AutoSize = true;
-            this.fpsLabel.Location = new System.Drawing.Point(12, 670);
-            this.fpsLabel.Name = "fpsLabel";
-            this.fpsLabel.Size = new System.Drawing.Size(74, 17);
-            this.fpsLabel.TabIndex = 4;
-            this.fpsLabel.Text = "STOPPED";
+            this.statusLabel.AutoSize = true;
+            this.statusLabel.Location = new System.Drawing.Point(12, 670);
+            this.statusLabel.Name = "statusLabel";
+            this.statusLabel.Size = new System.Drawing.Size(74, 17);
+            this.statusLabel.TabIndex = 4;
+            this.statusLabel.Text = "STOPPED";
             // 
             // menuStrip1
             // 
@@ -166,14 +142,26 @@
             this.startStopToolStripMenuItem.Size = new System.Drawing.Size(106, 24);
             this.startStopToolStripMenuItem.Text = "Start (Space)";
             // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Location = new System.Drawing.Point(13, 32);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(4);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(1070, 619);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 0;
+            this.pictureBox1.TabStop = false;
+            this.pictureBox1.MouseLeave += new System.EventHandler(this.pictureBox1_MouseLeave);
+            this.pictureBox1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseMove);
+            this.pictureBox1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseUp);
+            // 
             // FormFSDKTracked
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1096, 703);
             this.Controls.Add(this.menuStrip1);
-            this.Controls.Add(this.fpsLabel);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.startButton);
             this.Controls.Add(this.pictureBox1);
             this.Margin = new System.Windows.Forms.Padding(4);
@@ -181,20 +169,17 @@
             this.Text = "Live Recognition";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Button startButton;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label fpsLabel;
+        private System.Windows.Forms.Label statusLabel;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
@@ -204,6 +189,7 @@
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem startStopToolStripMenuItem;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }
 

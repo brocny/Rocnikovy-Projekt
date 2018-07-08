@@ -6,11 +6,14 @@ namespace Core.Kinect
     {
         void Open();
         void Close();
+        bool IsOpen { get; }
+
         int FrameWidth { get; }
         int FrameHeight { get; }
+
         int MinDistance { get; }
         int MaxDistance { get; }
-        bool IsOpen { get; }
+        
         event EventHandler<DepthFrameReadyEventArgs> DepthFrameReady;
         IDepthFrame GetNextFrame();
     }
@@ -19,6 +22,7 @@ namespace Core.Kinect
     {
         int Width { get; }
         int Height { get; }
+
         void CopyFramePixelDataToArray(ushort[] array);
         void CopyFramePixelDataToIntPtr(IntPtr ptr, int size);
     }

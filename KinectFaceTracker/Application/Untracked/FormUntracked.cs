@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Drawing;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows.Media.TextFormatting;
 using Core;
 using Core.Face;
 using Core.Kinect;
@@ -23,7 +21,7 @@ namespace App.Untracked
         private ProgramState _programState;
         private readonly Renderer _renderer;
         private (Rectangle Rectangle, IFaceInfo<byte[]> FaceInfo)[] _faces;
-        private readonly FpsCounter _fpsCounter = new FpsCounter();
+        private FpsCounter _fpsCounter = new FpsCounter();
 
         public FormUntracked()
         {
@@ -70,7 +68,7 @@ namespace App.Untracked
                 });
 
                 _fpsCounter.NewFrame();
-                statusLabel.Text = $"{_fpsCounter.Fps :F2} FPS";
+                statusLabel.Text = $"FPS: {_fpsCounter.CurrentFps:F2} (Mean {_fpsCounter.AverageFps:F2} Min {_fpsCounter.MinFps:F2} Max {_fpsCounter.MaxFps:F2})";
 
                 previousImage.CreateFsdkImageHandle(out int fsdkImageHandle);
                 int detectedFaceCount = 0;
@@ -104,7 +102,6 @@ namespace App.Untracked
                     }
                 });
 
-                Application.DoEvents();
                 copyBufferTask.Wait();
                 renderTask.Wait();
                 mainPictureBox.Image = _renderer.Image;
@@ -112,6 +109,8 @@ namespace App.Untracked
                 _colorBuffer = _previousColorBuffer;
                 _previousColorBuffer = temp;
                 FSDK.FreeImage(fsdkImageHandle);
+
+                Application.DoEvents();
             }
         }
 
@@ -225,6 +224,7 @@ namespace App.Untracked
             if (_programState != ProgramState.Paused)
             {
                 _kinect.Close();
+                _fpsCounter = new FpsCounter();
                 _programState = ProgramState.Paused;
             }
         }

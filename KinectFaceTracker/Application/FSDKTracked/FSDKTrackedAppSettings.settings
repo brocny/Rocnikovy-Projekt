@@ -9,7 +9,7 @@
       <Value Profile="(Default)">3</Value>
     </Setting>
     <Setting Name="FsdkDetermineRotAngle" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="FsdkHandleArbitraryRot" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>

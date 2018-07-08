@@ -25,7 +25,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("100")]
+        [global::System.Configuration.DefaultSettingValueAttribute("80")]
         public int FsdkInternalResizeWidth {
             get {
                 return ((int)(this["FsdkInternalResizeWidth"]));
@@ -49,7 +49,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool FsdkHandleArbitraryRot {
             get {
                 return ((bool)(this["FsdkHandleArbitraryRot"]));
@@ -74,12 +74,12 @@ namespace FsdkFaceLib.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("8")]
-        public int SkipMinimumConfirmations {
+        public int SkipMinimumFusionScore {
             get {
-                return ((int)(this["SkipMinimumConfirmations"]));
+                return ((int)(this["SkipMinimumFusionScore"]));
             }
             set {
-                this["SkipMinimumConfirmations"] = value;
+                this["SkipMinimumFusionScore"] = value;
             }
         }
         
@@ -171,7 +171,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.998")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.997")]
         public float InstantMatchThreshold {
             get {
                 return ((float)(this["InstantMatchThreshold"]));
@@ -202,6 +202,18 @@ namespace FsdkFaceLib.Properties {
             }
             set {
                 this["MatchThreshold"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool EnableAutoLearning {
+            get {
+                return ((bool)(this["EnableAutoLearning"]));
+            }
+            set {
+                this["EnableAutoLearning"] = value;
             }
         }
     }

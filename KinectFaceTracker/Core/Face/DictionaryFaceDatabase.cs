@@ -2,10 +2,12 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing.Text;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
+using Core.Properties;
 
 namespace Core.Face
 {
@@ -20,9 +22,12 @@ namespace Core.Face
     public partial class DictionaryFaceDatabase<TTemplate> : IFaceDatabase<TTemplate>, IEnumerable<KeyValuePair<int, IFaceInfo<TTemplate>>>
     {
         private ConcurrentDictionary<int, IFaceInfo<TTemplate>> _storedFaces;
-        private readonly IFaceInfo<TTemplate> _baseInstance;
+        private readonly IFaceInfo<TTemplate> _baseFaceInfo;
 
-        public IEnumerable<KeyValuePair<int, IFaceInfo<TTemplate>>> Pairs => _storedFaces.Select(x => x);
+        public bool EnableAgeFiltering { get; set; } = CoreSettings.Default.EnableAgeFiltering;
+        public bool EnableGenderFiltering { get; set; } = CoreSettings.Default.EnableGenderFiltering;
+
+        public IEnumerable<KeyValuePair<int, IFaceInfo<TTemplate>>> Pairs => _storedFaces;
 
         public int NextId { get; private set; }
         public string SerializePath { get; set; }
@@ -38,7 +43,7 @@ namespace Core.Face
 
                 if (firstType != null)
                 {
-                    _baseInstance = (IFaceInfo<TTemplate>)Activator.CreateInstance(firstType);
+                    _baseFaceInfo = (IFaceInfo<TTemplate>)Activator.CreateInstance(firstType);
                 }
                 else
                 {
@@ -47,7 +52,7 @@ namespace Core.Face
             }
             else
             {
-                _baseInstance = baseInstance;
+                _baseFaceInfo = baseInstance;
             }
 
             _storedFaces = initialDb == null
@@ -87,7 +92,7 @@ namespace Core.Face
 
         public bool TryAddNewFace(int id, TTemplate template, string name = "")
         {
-            var faceInfo = _baseInstance.NewInstance();
+            var faceInfo = _baseFaceInfo.NewInstance();
             faceInfo.AddTemplate(template);
             if (!faceInfo.IsValid(template))
             {
@@ -97,11 +102,15 @@ namespace Core.Face
             return TryAddNewFace(id, faceInfo);
         }
 
+        private readonly object _idLock = new object();
         private void UpdateNextId(int id)
         {
-            if (id >= NextId)
+            lock (_idLock)
             {
-                NextId = id + 1;
+                if (id >= NextId)
+                {
+                    NextId = id + 1;
+                }
             }
         }
 
@@ -124,9 +133,9 @@ namespace Core.Face
         {
             var matches = from f in _storedFaces.AsParallel()
                 let faceInfo = f.Value
-                let ageRatio = template.Age == 0 || faceInfo.Age == 0 ? 1 : faceInfo.Age / template.Age
-                where ageRatio > 0.66f && ageRatio < 1.5f
-                where faceInfo.Gender == template.Gender || faceInfo.Gender == Gender.Unknown
+                let ageRatio = !EnableAgeFiltering || template.Age == 0 || faceInfo.Age == 0 ? 1 : faceInfo.Age / template.Age
+                where !EnableAgeFiltering || (ageRatio > 0.66f && ageRatio < 1.5f)
+                where !EnableGenderFiltering || (faceInfo.Gender == template.Gender || faceInfo.Gender == Gender.Unknown)
                 let match = faceInfo.GetSimilarity(template)
                 select new Match<TTemplate>(f.Key, match.similarity, match.snapshot, faceInfo);
 
@@ -159,7 +168,7 @@ namespace Core.Face
             }
             else
             {
-                var newInfo = _baseInstance.NewInstance();
+                var newInfo = _baseFaceInfo.NewInstance();
                 newInfo.AddTemplate(template);
                 if (newInfo.IsValid(template.Template))
                 {
@@ -181,7 +190,7 @@ namespace Core.Face
             }
             else
             {
-                var newInfo = _baseInstance.NewInstance();
+                var newInfo = _baseFaceInfo.NewInstance();
                 newInfo.AddTemplate(template);
                 if (newInfo.IsValid(template))
                 {
@@ -226,7 +235,7 @@ namespace Core.Face
                 return false;
 
             info1.Merge(info2);
-            return _storedFaces.TryRemove(id2, out var _);
+            return _storedFaces.TryRemove(id2, out _);
         }
 
         public void Serialize(Stream stream)
@@ -237,13 +246,13 @@ namespace Core.Face
 
         public void Deserialize(Stream stream)
         {
-            var deserializer = new FaceDatabaseDeserializer(_baseInstance, this);
+            var deserializer = new FaceDatabaseDeserializer(_baseFaceInfo, this);
             deserializer.Deserialize(stream);
         }
 
         public IFaceDatabase<TTemplate> Backup()
         {
-            return new DictionaryFaceDatabase<TTemplate>(_baseInstance, _storedFaces)
+            return new DictionaryFaceDatabase<TTemplate>(_baseFaceInfo, _storedFaces)
             {
                 SerializePath = SerializePath,
                 NextId = NextId

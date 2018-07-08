@@ -18,6 +18,7 @@ namespace FsdkFaceLib
         private int _cacheClearingCounter;
         private readonly IFaceDatabase<byte[]> _faceDb;
         private readonly ConcurrentDictionary<long, TrackingStatus> _trackedFaces;
+        public bool EnableAutoLearning { get; set; } = FsdkSettings.Default.EnableAutoLearning;
 
         public TemplateProcessor(IFaceDatabase<byte[]> faceDb,
             IReadOnlyDictionary<long, TrackingStatus> trackedFaces = null)
@@ -52,19 +53,18 @@ namespace FsdkFaceLib
             if (!_trackedFaces.TryGetValue(t.TrackingId, out var trackingStatus)) return ProcessUntracked(t);
 
             trackingStatus.WasSeen = true;
-            var topCandidate = trackingStatus.TopCandidate;
+            var topCandidate = trackingStatus.TopTrackedCandidate;
             var topCondidateFaceInfo = _faceDb[topCandidate.FaceId];
             var topCandidateMatch = topCondidateFaceInfo.GetSimilarity(t);
 
             if (topCandidateMatch.similarity > MatchingParameters.InstantMatchThreshold)
             {
-                if (topCondidateFaceInfo.Templates.Count() < 5)
+                if (topCondidateFaceInfo.Templates.Count() < 5 && EnableAutoLearning)
                 {
                     AddTemplate(t, topCandidate);
                 }
 
                 return Matched(topCandidate, topCandidateMatch.similarity, topCandidateMatch.snapshot, topCondidateFaceInfo);
-                
             }
 
             if (trackingStatus.Candidates.Count > 1)
@@ -73,9 +73,9 @@ namespace FsdkFaceLib
                 if (bestOfTheRest.similarity > MatchingParameters.InstantMatchThreshold)
                 {
                     var match = Matched(bestOfTheRest.candidate, bestOfTheRest.similarity, bestOfTheRest.snapshot, _faceDb[bestOfTheRest.candidate.FaceId]);
-                    if (bestOfTheRest.candidate.Confirmations > topCandidate.Confirmations)
+                    if (bestOfTheRest.candidate.FusionScore > topCandidate.FusionScore)
                     {
-                        trackingStatus.TopCandidate = bestOfTheRest.candidate;
+                        trackingStatus.TopTrackedCandidate = bestOfTheRest.candidate;
                     }
 
                     return match;
@@ -88,7 +88,7 @@ namespace FsdkFaceLib
                 }
             }
 
-            if (topCandidateMatch.similarity > MatchingParameters.NewTemplateThreshold)
+            if (topCandidateMatch.similarity > MatchingParameters.NewTemplateThreshold && EnableAutoLearning)
             {
                 AddTemplate(t, topCandidate);
             }
@@ -113,7 +113,7 @@ namespace FsdkFaceLib
             }
 
             _trackedFaces[t.TrackingId] =
-                new TrackingStatus(new CandidateStatus { Confirmations = bestMatch.Similarity, FaceId = bestMatch.FaceId });
+                new TrackingStatus(new TrackedCandidate { FusionScore = bestMatch.Similarity, FaceId = bestMatch.FaceId });
 
             return bestMatch;
         }
@@ -122,36 +122,36 @@ namespace FsdkFaceLib
         {
             if (forceNewFace || !_trackedFaces.TryGetValue(template.TrackingId, out var trackingStatus))
             {
-                trackingStatus = _trackedFaces[template.TrackingId] = new TrackingStatus(new CandidateStatus { FaceId = _faceDb.NextId, Confirmations = 1 });
+                trackingStatus = _trackedFaces[template.TrackingId] = new TrackingStatus(new TrackedCandidate { FaceId = _faceDb.NextId, FusionScore = 2 });
             }
 
-            AddTemplate(template, trackingStatus.TopCandidate);
+            AddTemplate(template, trackingStatus.TopTrackedCandidate);
 
             return trackingStatus;
         }
 
-        private Match<byte[]> Matched(CandidateStatus cs, float confidence, FaceSnapshot<byte[]> snapshot, IFaceInfo<byte[]> faceInfo)
+        private Match<byte[]> Matched(TrackedCandidate cs, float confidence, FaceSnapshot<byte[]> snapshot, IFaceInfo<byte[]> faceInfo)
         {
-            cs.Confirmations += confidence;
+            cs.FusionScore += confidence;
             return new Match<byte[]>(cs.FaceId, confidence, snapshot, faceInfo);
         }
 
-        private void AddTemplate(FaceTemplate template, CandidateStatus candidateStatus)
+        private void AddTemplate(FaceTemplate template, TrackedCandidate trackedCandidate)
         {
-            _faceDb.AddOrUpdate(candidateStatus.FaceId, template);
+            _faceDb.AddOrUpdate(trackedCandidate.FaceId, template);
         }
 
         /// <summary>
-        ///     Gets the best-matching candidate in <paramref name="ts" /> excluding the <see cref="TrackingStatus.TopCandidate" />
+        ///     Gets the best-matching candidate in <paramref name="ts" /> excluding the <see cref="TrackingStatus.TopTrackedCandidate" />
         /// </summary>
         /// <param name="ts">Where to look for candidates</param>
         /// <param name="template">What to match candidates to</param>
-        /// <returns>The best-maching <see cref="CandidateStatus" /> and match confidence (between 0 and 1).</returns>
-        private (CandidateStatus candidate, float similarity, FaceSnapshot<byte[]> snapshot) 
+        /// <returns>The best-maching <see cref="TrackedCandidate" /> and match confidence (between 0 and 1).</returns>
+        private (TrackedCandidate candidate, float similarity, FaceSnapshot<byte[]> snapshot) 
         GetBestOfTheRest(TrackingStatus ts, IFaceTemplate<byte[]> template)
         {
             (float simimilarity, FaceSnapshot<byte[]> snapshot) bestMatch = default;
-            CandidateStatus bestCand = default;
+            TrackedCandidate bestCand = default;
             var candidates = ts.Candidates;
             for (int i = 1; i < candidates.Count; i++)
             {

@@ -3,18 +3,18 @@
   <Profiles />
   <Settings>
     <Setting Name="FsdkInternalResizeWidth" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">100</Value>
+      <Value Profile="(Default)">80</Value>
     </Setting>
     <Setting Name="FsdkFaceDetectionThreshold" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">3</Value>
     </Setting>
     <Setting Name="FsdkHandleArbitraryRot" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="FsdkDetermineRotAngle" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
-    <Setting Name="SkipMinimumConfirmations" Type="System.Int32" Scope="User">
+    <Setting Name="SkipMinimumFusionScore" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">8</Value>
     </Setting>
     <Setting Name="MaxSkippedFrames" Type="System.Int32" Scope="User">
@@ -39,13 +39,16 @@
       <Value Profile="(Default)">qVyhlxKiB1+NfuKH8HjrN2QA5oaMXI/aYiH9AS9oDDTjdGZ9fwODv9iTJG/rAow2uRnGFkvZnjVbCHWSKThqoetUYxlMAI1j+Gm9sjl8eEi7zN01FgwY/bK7R6+NrSZ1aOMiWPP1NG8JcrzgIfH9qNCTI+9kQkw6Ns/mHES7O2E=</Value>
     </Setting>
     <Setting Name="InstantMatchThreshold" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">0.998</Value>
+      <Value Profile="(Default)">0.997</Value>
     </Setting>
     <Setting Name="NewTemplateThreshold" Type="System.Single" Scope="User">
       <Value Profile="(Default)">0.992</Value>
     </Setting>
     <Setting Name="MatchThreshold" Type="System.Single" Scope="User">
       <Value Profile="(Default)">0.987</Value>
+    </Setting>
+    <Setting Name="EnableAutoLearning" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>
 </SettingsFile>
