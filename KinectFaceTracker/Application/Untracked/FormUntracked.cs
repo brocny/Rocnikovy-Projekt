@@ -23,10 +23,20 @@ namespace App.Untracked
         private (Rectangle Rectangle, IFaceInfo<byte[]> FaceInfo)[] _faces;
         private FpsCounter _fpsCounter = new FpsCounter();
 
+        private bool _enableAutoLearning = UntrackedAppSettings.Default.EnableAutoLearning;
+
+        private readonly float _instantMatchThreshold, _newTemplateThreshold, _matchThreshold;
+
         public FormUntracked()
         {
             InitializeComponent();
+
             FSDKFacePipeline.InitializeLibrary();
+            FSDK.SetFaceDetectionParameters(
+                UntrackedAppSettings.Default.FsdkHandleArbitraryRotations,
+                UntrackedAppSettings.Default.FsdkDetermineRotationAngle,
+                UntrackedAppSettings.Default.FsdkInternalResizeWidth);
+
             _kinect = KinectInitializeHelper.InitializeKinect();
             _colorFrameStream = _kinect.ColorFrameStream;
             _colorFrameStream.ColorFrameReady += ColorFrameStreamOnColorFrameReady;
@@ -36,6 +46,10 @@ namespace App.Untracked
             _kinect.Open();
             _colorFrameStream.Open(true);
             _programState = ProgramState.Running;
+
+            _instantMatchThreshold = FsdkSettings.Default.InstantMatchThreshold;
+            _newTemplateThreshold = FsdkSettings.Default.NewTemplateThreshold;
+            _matchThreshold = FsdkSettings.Default.MatchThreshold;
         }
 
         private void ColorFrameStreamOnColorFrameReady(object sender, ColorFrameReadyEventArgs e)
@@ -68,7 +82,7 @@ namespace App.Untracked
                 });
 
                 _fpsCounter.NewFrame();
-                statusLabel.Text = $"FPS: {_fpsCounter.CurrentFps:F2} (Mean {_fpsCounter.AverageFps:F2} Min {_fpsCounter.MinFps:F2} Max {_fpsCounter.MaxFps:F2})";
+                statusLabel.Text = $"FPS: {_fpsCounter.CurrentFps:F2} (Mean {_fpsCounter.AverageFps:F2} Min {_fpsCounter.MinFps:F2} Max {_fpsCounter.MaxFps:F2}){Environment.NewLine}Frames: {_fpsCounter.TotalFrames}";
 
                 previousImage.CreateFsdkImageHandle(out int fsdkImageHandle);
                 int detectedFaceCount = 0;
@@ -139,18 +153,22 @@ namespace App.Untracked
                     if (bestMatch == null || !bestMatch.IsValid)
                         return;
 
+                    float bestMatchSimilarity = bestMatch.Similarity;
 
-                    if (bestMatch.Similarity > FsdkSettings.Default.NewTemplateThreshold)
+                    if (!(bestMatchSimilarity >= _matchThreshold)) return;
+
+
+                    if (bestMatchSimilarity >= _newTemplateThreshold 
+                        && bestMatchSimilarity < _instantMatchThreshold)
                     {
-                        if (bestMatch.Similarity < FsdkSettings.Default.InstantMatchThreshold)
-                        {
-                            var faceImageBuffer = previousImage.GetRectangle(faceRect);
-                            bestMatch.FaceInfo.AddTemplate(template, faceImageBuffer);
-                        }
+                        var faceImageBuffer = previousImage.GetRectangle(faceRect);
 
-                        names[i] = bestMatch.FaceInfo.Name ?? $"ID: {bestMatch.FaceId}";
-                        _faces[i].FaceInfo = bestMatch.FaceInfo;
+
+                        bestMatch.FaceInfo.AddTemplate(template, faceImageBuffer);
                     }
+
+                    names[i] = bestMatch.FaceInfo.Name ?? $"ID: {bestMatch.FaceId}";
+                    _faces[i].FaceInfo = bestMatch.FaceInfo;
                 });
 
                 return names;

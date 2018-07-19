@@ -133,9 +133,6 @@
     <Reference Include="FaceSDK.NET">
       <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\Luxand\FaceSDK\bin\win64\FaceSDK.NET.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.QualityTools.Testing.Fakes, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -158,6 +155,7 @@
       <DependentUpon>ChooseModeForm.cs</DependentUpon>
     </Compile>
     <Compile Include="DatabaseHelper.cs" />
+    <Compile Include="FsdkInitializeHelper.cs" />
     <Compile Include="FSDKTracked\FormFSDKTracked.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -205,6 +203,11 @@
     <Compile Include="Untracked\FormUntracked.Designer.cs">
       <DependentUpon>FormUntracked.cs</DependentUpon>
     </Compile>
+    <Compile Include="Untracked\UntrackedAppSettings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>UntrackedAppSettings.settings</DependentUpon>
+    </Compile>
     <None Include="FSDKTracked\FSDKTrackedAppSettings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>FSDKTrackedAppSettings.Designer.cs</LastGenOutput>
@@ -222,6 +225,10 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="Untracked\UntrackedAppSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>UntrackedAppSettings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

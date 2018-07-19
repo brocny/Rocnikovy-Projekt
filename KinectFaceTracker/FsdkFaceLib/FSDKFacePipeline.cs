@@ -90,13 +90,12 @@ namespace FsdkFaceLib
 
         public IFaceDatabase<byte[]> FaceDb { get; set; }
 
-        private static readonly string ActivationKey = FsdkSettings.Default.FsdkActiovationKey;
 
         private static bool _isLibraryActivated;
         public static void InitializeLibrary()
         {
             if (_isLibraryActivated) return;
-            if (FSDK.FSDKE_OK != FSDK.ActivateLibrary(ActivationKey))
+            if (FSDK.FSDKE_OK != FSDK.ActivateLibrary(FsdkSettings.Default.FsdkActivationKey))
             {
                 throw new ApplicationException("Invalid Luxand FSDK activation key! If the key is expired, a new key can be requested at https://www.luxand.com/facesdk/requestkey/");
             }
@@ -119,6 +118,10 @@ namespace FsdkFaceLib
             SetFSDKParams();
         }
 
+        /// <summary>
+        /// Construct the dataflow pipeline
+        /// </summary>
+        /// <param name="options">Dataflow block options</param>
         private void ConstructPipeline(ExecutionDataflowBlockOptions options)
         {
             _faceCuttingBlock = new TransformBlock<FaceLocationResult, FaceCutout[]>
@@ -164,20 +167,20 @@ namespace FsdkFaceLib
         }
 
         /// <summary>
-        /// Computes approximate positions of faces based on joint data in  <paramref name="bodyFrame"/>,  
+        /// Computes approximate positions of faces based on joint data in  <paramref name="bodyFrame"/>,
+        /// the result is returned and posted to continue along the pipeline
         /// </summary>
         /// <param name="colorFrame">An <see cref="IColorFrame"/></param>
         /// <param name="bodyFrame">An <see cref="IBodyFrame"/> containing the bodies found in frame</param>
         /// <param name="mapper">An <see cref="ICoordinateMapper"/> used to map body positions in the <paramref name="bodyFrame"/></param>
-        /// <param name="post">If set to <c>true</c>, the results will be sent along the pipeline, if it has capacity</param>
         /// <returns>A Task of type <see cref="FaceLocationResult"/> containing processed information
         /// from the <paramref name="bodyFrame"/> and <paramref name="colorFrame"/>
         /// </returns>
-        public async Task<FaceLocationResult> LocateFacesAsync
-        (IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper, bool post = true)
+        public async Task<FaceLocationResult> PostAsync
+        (IColorFrame colorFrame, IBodyFrame bodyFrame, ICoordinateMapper mapper)
         {
             var faces = await Task.Run(() => LocateFaces(colorFrame, bodyFrame, mapper), _options.CancellationToken);
-            if (post) _faceCuttingBlock.Post(faces);
+            _faceCuttingBlock.Post(faces);
             return faces;
         }
 
@@ -233,7 +236,12 @@ namespace FsdkFaceLib
                 TrackingIds = bodyResult.faceIds
             };
         }
-
+        
+        /// <summary>
+        /// Create small rectangular face images
+        /// </summary>
+        /// <param name="faceLocations"></param>
+        /// <returns>An array of small rectangular images ready to be sent further down the pipeline</returns>
         private FaceCutout[] CreateFaceImageCutouts(FaceLocationResult faceLocations) 
         {
             if (faceLocations?.FaceRectangles == null || faceLocations.FaceRectangles.Length == 0)
@@ -262,6 +270,11 @@ namespace FsdkFaceLib
             return result;
         }
 
+        /// <summary>
+        /// Creates image representations processable by FSDK
+        /// </summary>
+        /// <param name="faceCutouts"></param>
+        /// <returns></returns>
         private FSDKFaceImage[] CreateFSDKImages(FaceCutout[] faceCutouts)
         {
             var fsdkFaceImages = new List<FSDKFaceImage>(faceCutouts.Length);
@@ -269,7 +282,7 @@ namespace FsdkFaceLib
             {
                 if (_templateProc.TrackedFaces.TryGetValue(faceCutout.TrackingId, out var status))
                 {
-                    if (status.TopTrackedCandidate.FusionScore >=  _skipMinimumFusionScore && status.SkippedFrames <= _skipMaxSkippedFrames)
+                    if (status.TopTrackedCandidate.FusionScore >=  _skipMinimumFusionScore && status.SkippedFrames < _skipMaxSkippedFrames)
                     {
                         status.SkippedFrames++;
                         continue;
@@ -297,6 +310,11 @@ namespace FsdkFaceLib
             return res;
         }
 
+        /// <summary>
+        /// Detects faces in FSDK images
+        /// </summary>
+        /// <param name="fsdkFaceImages"></param>
+        /// <returns></returns>
         private FSDKFaceImage[] DetectFaces(FSDKFaceImage[] fsdkFaceImages)
         {
             if (!_detectFace)

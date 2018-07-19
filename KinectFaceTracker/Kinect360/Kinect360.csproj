@@ -82,7 +82,7 @@
     <Compile Include="CoordinateMapper360.cs" />
     <Compile Include="DepthFrameStream360.cs" />
     <Compile Include="Kinect360.cs" />
-    <Compile Include="MultiManager360.cs" />
+    <Compile Include="MultiFrameStream360.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

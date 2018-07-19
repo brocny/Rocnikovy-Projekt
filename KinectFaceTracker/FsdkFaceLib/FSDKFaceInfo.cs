@@ -86,23 +86,9 @@ namespace FsdkFaceLib
 
         public (float similarity, FaceSnapshot<byte[]> snapshot) GetSimilarity(IFaceTemplate<byte[]> faceTemplate)
         {
-            const float wrongGenderPenalty = 0.75f,
-                maxAgeRatioWithoutPenalty = 1.25f,
-                minAgeRatioWithoutPenalty = 1f / maxAgeRatioWithoutPenalty;
+            var match = GetSimilarity(faceTemplate.Template);
 
-            var baseMatch = GetSimilarity(faceTemplate.Template);
-            
-            float ageRatio = Age / faceTemplate.Age;
-            if (ageRatio > maxAgeRatioWithoutPenalty) baseMatch.similarity /= ageRatio;
-            if (ageRatio < minAgeRatioWithoutPenalty) baseMatch.similarity *= ageRatio;
-
-
-            if (faceTemplate.Gender != Gender.Unknown && faceTemplate.Gender != Gender)
-            {
-                baseMatch.similarity *= wrongGenderPenalty;
-            }
-
-            return baseMatch;
+            return match;
         }
 
         public void AddTemplate(byte[] faceTemplate, Core.ImageBuffer imageBuffer = null)

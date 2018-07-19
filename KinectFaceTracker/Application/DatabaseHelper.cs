@@ -16,7 +16,7 @@ namespace App
         public string FileFilter { get; set; } = Settings.Default.FileFilter;
         private readonly string _defaultSerializePath = 
             string.IsNullOrWhiteSpace(Settings.Default.DefaultSerializePath) ?
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\KFT\FaceDb" :
+                ".\\FaceDB" :
                 Settings.Default.DefaultSerializePath;
 
         public IFaceDatabase<T> Open()

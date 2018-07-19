@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Drawing.Text;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -36,6 +35,7 @@ namespace Core.Face
         {
             if (baseInstance == null)
             {
+                // if no IFaceInfo base instance is supplied, find a suitable type using reflection
                 var firstType = (from t in Assembly.GetExecutingAssembly().GetExportedTypes()
                         where !t.IsAbstract && !t.IsInterface && typeof(IFaceInfo<TTemplate>).IsAssignableFrom(t) && t.GetConstructor(Type.EmptyTypes) != null
                         select t)
@@ -71,6 +71,7 @@ namespace Core.Face
         public IEnumerable<int> Keys => _storedFaces.Keys;
         [XmlIgnore]
         public IEnumerable<IFaceInfo<TTemplate>> Values => _storedFaces.Values;
+
         public bool ContainsKey(int key) => _storedFaces.ContainsKey(key);
 
         /// <summary>

@@ -25,7 +25,7 @@ namespace App.FSDKTracked {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("540")]
+        [global::System.Configuration.DefaultSettingValueAttribute("480")]
         public int FsdkInternalResizeWidth {
             get {
                 return ((int)(this["FsdkInternalResizeWidth"]));
@@ -80,6 +80,78 @@ namespace App.FSDKTracked {
             }
             set {
                 this["FileFilter"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool EnableLearning {
+            get {
+                return ((bool)(this["EnableLearning"]));
+            }
+            set {
+                this["EnableLearning"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.992")]
+        public float MatchThreshold {
+            get {
+                return ((float)(this["MatchThreshold"]));
+            }
+            set {
+                this["MatchThreshold"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DetectFeatures {
+            get {
+                return ((bool)(this["DetectFeatures"]));
+            }
+            set {
+                this["DetectFeatures"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DetectExpression {
+            get {
+                return ((bool)(this["DetectExpression"]));
+            }
+            set {
+                this["DetectExpression"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DetectGender {
+            get {
+                return ((bool)(this["DetectGender"]));
+            }
+            set {
+                this["DetectGender"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool DetectAge {
+            get {
+                return ((bool)(this["DetectAge"]));
+            }
+            set {
+                this["DetectAge"] = value;
             }
         }
     }

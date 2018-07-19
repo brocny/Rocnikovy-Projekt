@@ -5,9 +5,9 @@ using Microsoft.Kinect;
 
 namespace Kinect360
 {
-    public class MultiManager360 : IMultiFrameStream
+    public class MultiFrameStream360 : IMultiFrameStream
     {
-        public MultiManager360(Kinect360 kinect, MultiFrameTypes frameTypes, bool preferResolutionOverFps)
+        public MultiFrameStream360(Kinect360 kinect, MultiFrameTypes frameTypes, bool preferResolutionOverFps)
         {
             _kinect360 = kinect;
             var colorImageFormat = preferResolutionOverFps
@@ -58,7 +58,6 @@ namespace Kinect360
             MultiFrameArrived?.Invoke(this, new MultiFrameReadyEventArgs(new MultiFrame(colorFrame360, bodyFrame360, depthFrame360)));
         }
 
-        
 
         public event EventHandler<MultiFrameReadyEventArgs> MultiFrameArrived;
         public MultiFrameTypes FrameTypes { get; }

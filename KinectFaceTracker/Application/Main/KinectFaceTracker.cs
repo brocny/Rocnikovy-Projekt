@@ -81,7 +81,7 @@ namespace App.Main
                 try
                 {
                     var faceLocations =
-                        await FacePipeline.LocateFacesAsync(colorFrame, bodyFrame, _coordinateMapper);
+                        await FacePipeline.PostAsync(colorFrame, bodyFrame, _coordinateMapper);
                     FrameArrived?.Invoke(this, new FrameArrivedEventArgs(faceLocations));
                 }
                 catch (TaskCanceledException)

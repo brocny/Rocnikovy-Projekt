@@ -15,28 +15,28 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="SkipMinimumFusionScore" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">8</Value>
+      <Value Profile="(Default)">6</Value>
     </Setting>
     <Setting Name="MaxSkippedFrames" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">12</Value>
+      <Value Profile="(Default)">10</Value>
     </Setting>
     <Setting Name="PipelineParallelism" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">1</Value>
+      <Value Profile="(Default)">2</Value>
     </Setting>
     <Setting Name="PipelineQueueDepth" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">2</Value>
     </Setting>
     <Setting Name="FsdkDetectFeatures" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="FsdkDetectFace" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="FsdkDetectExpression" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="FsdkActiovationKey" Type="System.String" Scope="User">
-      <Value Profile="(Default)">qVyhlxKiB1+NfuKH8HjrN2QA5oaMXI/aYiH9AS9oDDTjdGZ9fwODv9iTJG/rAow2uRnGFkvZnjVbCHWSKThqoetUYxlMAI1j+Gm9sjl8eEi7zN01FgwY/bK7R6+NrSZ1aOMiWPP1NG8JcrzgIfH9qNCTI+9kQkw6Ns/mHES7O2E=</Value>
+    <Setting Name="FsdkActivationKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">UJC+Du1VRKrPuVM5zLaKVOxTtraXP+UWc7KXQusqjYYDqoxQGayoxo3dhLAZtT8zVU516R9U39p2XB+eS+D1QuXangk4urbl/5gvbi9IbcedlUkzFQxs0ytqH2nXXZv2RiEAZlKvrUDxI8Xyj8+V2uRpPUJC+Du1VRKrPuVM5zLaKVOxTtraXP+UWc7KXQusqjYYDqoxQGayoxo3dhLAZtT8zVU516R9U39p2XB+eS+D1QuXangk4urbl/5gvbi9IbcedlUkzFQxs0ytqH2nXXZv2RiEAZlKvrUDxI8Xyj8+V2uRpP+kATMhVVo/VQPtT0ew=</Value>
     </Setting>
     <Setting Name="InstantMatchThreshold" Type="System.Single" Scope="User">
       <Value Profile="(Default)">0.997</Value>
@@ -48,7 +48,7 @@
       <Value Profile="(Default)">0.987</Value>
     </Setting>
     <Setting Name="EnableAutoLearning" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

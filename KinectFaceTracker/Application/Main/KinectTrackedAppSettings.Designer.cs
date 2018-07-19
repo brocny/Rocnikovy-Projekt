@@ -8,11 +8,11 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Kinect_Test.Main {
+namespace App.Main {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.6.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.7.0.0")]
     internal sealed partial class KinectTrackedAppSettings : global::System.Configuration.ApplicationSettingsBase {
         
         private static KinectTrackedAppSettings defaultInstance = ((KinectTrackedAppSettings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new KinectTrackedAppSettings())));
@@ -20,6 +20,30 @@ namespace Kinect_Test.Main {
         public static KinectTrackedAppSettings Default {
             get {
                 return defaultInstance;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool RenderFace {
+            get {
+                return ((bool)(this["RenderFace"]));
+            }
+            set {
+                this["RenderFace"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool RenderMatch {
+            get {
+                return ((bool)(this["RenderMatch"]));
+            }
+            set {
+                this["RenderMatch"] = value;
             }
         }
     }

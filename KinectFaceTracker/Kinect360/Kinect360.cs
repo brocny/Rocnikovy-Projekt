@@ -15,7 +15,7 @@ namespace Kinect360
         public ICoordinateMapper CoordinateMapper => _coordinateMapper ?? (_coordinateMapper = new CoordinateMapper360(this));
         public IMultiFrameStream OpenMultiManager(MultiFrameTypes frameTypes, bool preferResolutionOverFps = true)
         {
-            return new MultiManager360(this, frameTypes, preferResolutionOverFps);
+            return new MultiFrameStream360(this, frameTypes, preferResolutionOverFps);
         }
 
         public bool IsRunning => KinectSensor.IsRunning;

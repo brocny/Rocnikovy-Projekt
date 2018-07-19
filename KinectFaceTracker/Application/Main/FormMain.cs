@@ -52,28 +52,16 @@ namespace App.Main
             var cts = new CancellationTokenSource();
             var facePipeline = new FSDKFacePipeline(faceDatabase, TaskScheduler.Default, cts.Token);
 
-            facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
-            facePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
-            facePipeline.TemplateProcessingComplete += FacePipelineOnTemplateProcessingComplete;
+            if(KinectTrackedAppSettings.Default.RenderFace)
+                facePipeline.FaceCuttingComplete += FacePipelineOnFaceCuttingComplete;
 
-            try
-            {
-                FSDKFacePipeline.InitializeLibrary();
-            }
-            catch (ApplicationException e)
-            {
-                var result = MessageBox.Show(e.Message + Environment.NewLine + "Do you wish to enter a new key?", "Face library activation failed!", MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes)
-                {
-                    var inputKeyForm = new InputNameForm("FaceSDK Key", "Enter new FSDK key");
-                    result = inputKeyForm.ShowDialog();
-                    if (result == DialogResult.OK)
-                    {
-                        FsdkSettings.Default.FsdkActiovationKey = inputKeyForm.UserName;
-                        FsdkSettings.Default.Save();
-                    }
-                }
-            }
+            if(FsdkSettings.Default.FsdkDetectFeatures || FsdkSettings.Default.FsdkDetectExpression)
+                facePipeline.FacialFeatureDetectionComplete += FacePipelineOnFeatureDetection;
+
+            if (KinectTrackedAppSettings.Default.RenderMatch)
+                facePipeline.TemplateProcessingComplete += FacePipelineOnTemplateProcessingComplete;
+
+            FsdkInitializeHelper.InitializeLibrary();
 
             _kinectFrameWidth = kinect.ColorFrameStream.FrameHeight;
             _kinectFrameHeight = kinect.ColorFrameStream.FrameWidth;
@@ -144,7 +132,7 @@ namespace App.Main
             _fpsCounter.NewFrame();
             _lastFaceRects = faceLocations.FaceRectangles;
             _lastTrackingIds = faceLocations.TrackingIds;
-            statusLabel.Text = $"FPS: {_fpsCounter.CurrentFps:F2} (Mean {_fpsCounter.AverageFps:F2} Min {_fpsCounter.MinFps:F2} Max {_fpsCounter.MaxFps:F2})";
+            statusLabel.Text = $"FPS: {_fpsCounter.CurrentFps:F2} (Mean {_fpsCounter.AverageFps:F2} Min {_fpsCounter.MinFps:F2} Max {_fpsCounter.MaxFps:F2}){Environment.NewLine}Frames: {_fpsCounter.TotalFrames}";
             mainPictureBox.Image = task.Result;
         }
 

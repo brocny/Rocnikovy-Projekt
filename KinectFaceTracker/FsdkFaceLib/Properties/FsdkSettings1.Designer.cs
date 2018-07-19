@@ -73,7 +73,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("8")]
+        [global::System.Configuration.DefaultSettingValueAttribute("6")]
         public int SkipMinimumFusionScore {
             get {
                 return ((int)(this["SkipMinimumFusionScore"]));
@@ -85,7 +85,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("12")]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
         public int MaxSkippedFrames {
             get {
                 return ((int)(this["MaxSkippedFrames"]));
@@ -97,7 +97,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("2")]
         public int PipelineParallelism {
             get {
                 return ((int)(this["PipelineParallelism"]));
@@ -121,7 +121,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool FsdkDetectFeatures {
             get {
                 return ((bool)(this["FsdkDetectFeatures"]));
@@ -145,7 +145,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool FsdkDetectExpression {
             get {
                 return ((bool)(this["FsdkDetectExpression"]));
@@ -157,15 +157,13 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("qVyhlxKiB1+NfuKH8HjrN2QA5oaMXI/aYiH9AS9oDDTjdGZ9fwODv9iTJG/rAow2uRnGFkvZnjVbCHWSK" +
-            "ThqoetUYxlMAI1j+Gm9sjl8eEi7zN01FgwY/bK7R6+NrSZ1aOMiWPP1NG8JcrzgIfH9qNCTI+9kQkw6N" +
-            "s/mHES7O2E=")]
-        public string FsdkActiovationKey {
+        [global::System.Configuration.DefaultSettingValueAttribute(@"UJC+Du1VRKrPuVM5zLaKVOxTtraXP+UWc7KXQusqjYYDqoxQGayoxo3dhLAZtT8zVU516R9U39p2XB+eS+D1QuXangk4urbl/5gvbi9IbcedlUkzFQxs0ytqH2nXXZv2RiEAZlKvrUDxI8Xyj8+V2uRpPUJC+Du1VRKrPuVM5zLaKVOxTtraXP+UWc7KXQusqjYYDqoxQGayoxo3dhLAZtT8zVU516R9U39p2XB+eS+D1QuXangk4urbl/5gvbi9IbcedlUkzFQxs0ytqH2nXXZv2RiEAZlKvrUDxI8Xyj8+V2uRpP+kATMhVVo/VQPtT0ew=")]
+        public string FsdkActivationKey {
             get {
-                return ((string)(this["FsdkActiovationKey"]));
+                return ((string)(this["FsdkActivationKey"]));
             }
             set {
-                this["FsdkActiovationKey"] = value;
+                this["FsdkActivationKey"] = value;
             }
         }
         
@@ -207,7 +205,7 @@ namespace FsdkFaceLib.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool EnableAutoLearning {
             get {
                 return ((bool)(this["EnableAutoLearning"]));

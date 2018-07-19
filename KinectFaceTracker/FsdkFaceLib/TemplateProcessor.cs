@@ -106,7 +106,7 @@ namespace FsdkFaceLib
             var bestMatch = _faceDb.GetBestMatch(t);
             if (bestMatch == null) return new Match<byte[]>{ IsValid = false };
 
-            if (bestMatch.Similarity <= MatchingParameters.MatchThreshold)
+            if (bestMatch.Similarity < MatchingParameters.MatchThreshold)
             {
                 bestMatch.IsValid = false;
                 return bestMatch;
@@ -191,7 +191,8 @@ namespace FsdkFaceLib
                     var match = ProcessTemplate(t);
                     return new KeyValuePair<long, Match<byte[]>>(t.TrackingId, match);
                 })
-                .Where(pair => pair.Value.IsValid && pair.Value.Similarity >= MatchingParameters.MatchThreshold);
+                .Where(pair => pair.Value.IsValid && pair.Value.Similarity >= MatchingParameters.MatchThreshold)
+                .ToArray();
         }
     }
 
